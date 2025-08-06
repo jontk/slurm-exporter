@@ -7,11 +7,11 @@ import (
 	"time"
 
 	slurm "github.com/jontk/slurm-client"
-	"github.com/jontk/slurm-client/pkg/auth"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/time/rate"
 
 	"github.com/jontk/slurm-exporter/internal/config"
+	authpkg "github.com/jontk/slurm-exporter/internal/slurm/auth"
 )
 
 // Client provides a wrapper around the SLURM client with additional functionality
@@ -42,31 +42,10 @@ func NewClient(cfg *config.SLURMConfig) (*Client, error) {
 	// Create rate limiter
 	rateLimiter := rate.NewLimiter(rate.Limit(cfg.RateLimit.RequestsPerSecond), cfg.RateLimit.BurstSize)
 
-	// Configure authentication
-	var authProvider auth.Provider
-	switch cfg.Auth.Type {
-	case "none":
-		authProvider = auth.NewNoAuth()
-	case "jwt":
-		if cfg.Auth.Token != "" {
-			authProvider = auth.NewTokenAuth(cfg.Auth.Token)
-		} else if cfg.Auth.TokenFile != "" {
-			// TODO: Read token from file
-			authProvider = auth.NewTokenAuth("") // Placeholder
-		} else {
-			return nil, fmt.Errorf("JWT auth requires token or token_file")
-		}
-	case "basic":
-		if cfg.Auth.Username == "" || (cfg.Auth.Password == "" && cfg.Auth.PasswordFile == "") {
-			return nil, fmt.Errorf("basic auth requires username and password")
-		}
-		password := cfg.Auth.Password
-		if cfg.Auth.PasswordFile != "" {
-			// TODO: Read password from file
-		}
-		authProvider = auth.NewBasicAuth(cfg.Auth.Username, password)
-	default:
-		return nil, fmt.Errorf("unsupported auth type: %s", cfg.Auth.Type)
+	// Configure authentication using the auth package
+	authProvider, err := authpkg.ConfigureAuth(&cfg.Auth)
+	if err != nil {
+		return nil, fmt.Errorf("failed to configure authentication: %w", err)
 	}
 
 	// Create the SLURM client
