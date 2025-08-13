@@ -263,3 +263,18 @@ func (b *BaseCollector) SendMetric(ch chan<- prometheus.Metric, metric prometheu
 		b.logger.Warn("Metric channel is full, dropping metric")
 	}
 }
+
+// Describe implements the Collector interface
+// Subclasses should override this method to provide their specific descriptors
+func (b *BaseCollector) Describe(ch chan<- *prometheus.Desc) {
+	// Base collector has no metrics to describe
+	// Subclasses will implement their own Describe method
+}
+
+// Collect implements the Collector interface
+// Subclasses should override this method to provide their specific collection logic
+func (b *BaseCollector) Collect(ctx context.Context, ch chan<- prometheus.Metric) error {
+	// Base collector has no metrics to collect
+	// Subclasses will implement their own Collect method using CollectWithMetrics
+	return nil
+}
