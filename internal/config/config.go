@@ -113,6 +113,7 @@ type CollectorsConfig struct {
 	Partitions  CollectorConfig       `yaml:"partitions"`
 	Performance CollectorConfig       `yaml:"performance"`
 	System      CollectorConfig       `yaml:"system"`
+	Degradation DegradationConfig     `yaml:"degradation"`
 }
 
 // GlobalCollectorConfig holds global collector settings.
@@ -155,6 +156,15 @@ type ErrorHandlingConfig struct {
 	BackoffFactor float64       `yaml:"backoff_factor"`
 	MaxRetryDelay time.Duration `yaml:"max_retry_delay"`
 	FailFast      bool          `yaml:"fail_fast"`
+}
+
+// DegradationConfig holds graceful degradation configuration.
+type DegradationConfig struct {
+	Enabled          bool          `yaml:"enabled"`
+	MaxFailures      int           `yaml:"max_failures"`
+	ResetTimeout     time.Duration `yaml:"reset_timeout"`
+	UseCachedMetrics bool          `yaml:"use_cached_metrics"`
+	CacheTTL         time.Duration `yaml:"cache_ttl"`
 }
 
 // LoggingConfig holds logging configuration.
@@ -322,6 +332,13 @@ func Default() *Config {
 					BackoffFactor: 2.0,
 					MaxRetryDelay: 60 * time.Second,
 				},
+			},
+			Degradation: DegradationConfig{
+				Enabled:          true,
+				MaxFailures:      3,
+				ResetTimeout:     5 * time.Minute,
+				UseCachedMetrics: true,
+				CacheTTL:         10 * time.Minute,
 			},
 		},
 		Logging: LoggingConfig{
@@ -614,6 +631,11 @@ func (c *CollectorsConfig) Validate() error {
 		}
 	}
 
+	// Validate degradation config
+	if err := c.Degradation.Validate(); err != nil {
+		return fmt.Errorf("collectors.degradation: %w", err)
+	}
+
 	return nil
 }
 
@@ -662,6 +684,25 @@ func (e *ErrorHandlingConfig) Validate() error {
 		return fmt.Errorf("max_retry_delay (%v) must be >= retry_delay (%v)", e.MaxRetryDelay, e.RetryDelay)
 	}
 
+	return nil
+}
+
+// Validate validates the degradation configuration.
+func (d *DegradationConfig) Validate() error {
+	if d.Enabled {
+		if d.MaxFailures <= 0 {
+			return fmt.Errorf("max_failures must be positive when degradation is enabled, got %d (example: 3, 5)", d.MaxFailures)
+		}
+		
+		if d.ResetTimeout <= 0 {
+			return fmt.Errorf("reset_timeout must be positive when degradation is enabled, got '%v' (example: '5m', '10m')", d.ResetTimeout)
+		}
+		
+		if d.UseCachedMetrics && d.CacheTTL <= 0 {
+			return fmt.Errorf("cache_ttl must be positive when cached metrics are enabled, got '%v' (example: '10m', '30m')", d.CacheTTL)
+		}
+	}
+	
 	return nil
 }
 
