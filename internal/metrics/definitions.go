@@ -569,6 +569,117 @@ func NewMetricDefinitions(namespace, subsystem string, constLabels prometheus.La
 			[]string{"cluster_name", "job_id", "user", "account", "partition"},
 		),
 		
+		// User and Account Metrics
+		UserJobCount: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace:   namespace,
+				Subsystem:   subsystem,
+				Name:        "user_job_count",
+				Help:        "Number of jobs for each user",
+				ConstLabels: constLabels,
+			},
+			[]string{"cluster_name", "user", "account"},
+		),
+		
+		UserCPUAllocated: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace:   namespace,
+				Subsystem:   subsystem,
+				Name:        "user_cpu_allocated",
+				Help:        "Number of CPUs allocated to each user",
+				ConstLabels: constLabels,
+			},
+			[]string{"cluster_name", "user", "account"},
+		),
+		
+		UserMemoryAllocated: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace:   namespace,
+				Subsystem:   subsystem,
+				Name:        "user_memory_allocated_bytes",
+				Help:        "Amount of memory allocated to each user in bytes",
+				ConstLabels: constLabels,
+			},
+			[]string{"cluster_name", "user", "account"},
+		),
+		
+		UserJobStates: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace:   namespace,
+				Subsystem:   subsystem,
+				Name:        "user_job_states",
+				Help:        "Number of jobs in each state for each user",
+				ConstLabels: constLabels,
+			},
+			[]string{"cluster_name", "user", "account", "state"},
+		),
+		
+		AccountInfo: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace:   namespace,
+				Subsystem:   subsystem,
+				Name:        "account_info",
+				Help:        "Information about accounts in the cluster",
+				ConstLabels: constLabels,
+			},
+			[]string{"cluster_name", "account", "organization", "description", "parent"},
+		),
+		
+		AccountJobCount: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace:   namespace,
+				Subsystem:   subsystem,
+				Name:        "account_job_count",
+				Help:        "Number of jobs for each account",
+				ConstLabels: constLabels,
+			},
+			[]string{"cluster_name", "account"},
+		),
+		
+		AccountCPUAllocated: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace:   namespace,
+				Subsystem:   subsystem,
+				Name:        "account_cpu_allocated",
+				Help:        "Number of CPUs allocated to each account",
+				ConstLabels: constLabels,
+			},
+			[]string{"cluster_name", "account"},
+		),
+		
+		AccountMemoryAllocated: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace:   namespace,
+				Subsystem:   subsystem,
+				Name:        "account_memory_allocated_bytes",
+				Help:        "Amount of memory allocated to each account in bytes",
+				ConstLabels: constLabels,
+			},
+			[]string{"cluster_name", "account"},
+		),
+		
+		AccountFairShare: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace:   namespace,
+				Subsystem:   subsystem,
+				Name:        "account_fair_share",
+				Help:        "Fair-share score for each account",
+				ConstLabels: constLabels,
+			},
+			[]string{"cluster_name", "account"},
+		),
+		
+		AccountUsage: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace:   namespace,
+				Subsystem:   subsystem,
+				Name:        "account_usage",
+				Help:        "Resource usage for each account by usage type",
+				ConstLabels: constLabels,
+			},
+			[]string{"cluster_name", "account", "usage_type"},
+		),
+		
 		// Exporter Self-Monitoring
 		CollectionDuration: prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{
@@ -734,6 +845,18 @@ func (md *MetricDefinitions) Register(registry *prometheus.Registry) error {
 		md.JobEndTime,
 		md.JobExitCode,
 		
+		// User and account metrics
+		md.UserJobCount,
+		md.UserCPUAllocated,
+		md.UserMemoryAllocated,
+		md.UserJobStates,
+		md.AccountInfo,
+		md.AccountJobCount,
+		md.AccountCPUAllocated,
+		md.AccountMemoryAllocated,
+		md.AccountFairShare,
+		md.AccountUsage,
+		
 		// Exporter metrics
 		md.CollectionDuration,
 		md.CollectionErrors,
@@ -805,6 +928,18 @@ func (md *MetricDefinitions) Unregister(registry *prometheus.Registry) {
 		md.JobStartTime,
 		md.JobEndTime,
 		md.JobExitCode,
+		
+		// User and account metrics
+		md.UserJobCount,
+		md.UserCPUAllocated,
+		md.UserMemoryAllocated,
+		md.UserJobStates,
+		md.AccountInfo,
+		md.AccountJobCount,
+		md.AccountCPUAllocated,
+		md.AccountMemoryAllocated,
+		md.AccountFairShare,
+		md.AccountUsage,
 		
 		// Exporter metrics
 		md.CollectionDuration,
