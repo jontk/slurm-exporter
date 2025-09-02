@@ -88,6 +88,12 @@ type MetricDefinitions struct {
 	JobCompletionRate          *prometheus.GaugeVec
 	ResourceWastage            *prometheus.GaugeVec
 	SchedulingLatency          *prometheus.HistogramVec
+	SystemThroughput           *prometheus.GaugeVec
+	SystemEfficiency           *prometheus.GaugeVec
+	QueueWaitTime              *prometheus.GaugeVec
+	QueueDepth                 *prometheus.GaugeVec
+	ResourceUtilization        *prometheus.GaugeVec
+	JobTurnover                *prometheus.GaugeVec
 	
 	// System Metrics
 	SystemLoad                 *prometheus.GaugeVec
@@ -813,6 +819,73 @@ func NewMetricDefinitions(namespace, subsystem string, constLabels prometheus.La
 			[]string{"cluster_name", "partition"},
 		),
 		
+		// Performance Metrics
+		SystemThroughput: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace:   namespace,
+				Subsystem:   subsystem,
+				Name:        "system_throughput",
+				Help:        "System throughput metrics (jobs/hour, CPU hours/hour, etc.)",
+				ConstLabels: constLabels,
+			},
+			[]string{"cluster_name", "metric_type", "time_window", "partition"},
+		),
+		
+		SystemEfficiency: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace:   namespace,
+				Subsystem:   subsystem,
+				Name:        "system_efficiency",
+				Help:        "System efficiency metrics (resource utilization ratios)",
+				ConstLabels: constLabels,
+			},
+			[]string{"cluster_name", "efficiency_type", "partition", "time_window"},
+		),
+		
+		QueueWaitTime: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace:   namespace,
+				Subsystem:   subsystem,
+				Name:        "queue_wait_time_seconds",
+				Help:        "Queue wait time statistics in seconds",
+				ConstLabels: constLabels,
+			},
+			[]string{"cluster_name", "partition", "statistic", "priority"},
+		),
+		
+		QueueDepth: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace:   namespace,
+				Subsystem:   subsystem,
+				Name:        "queue_depth",
+				Help:        "Number of jobs waiting in queue by partition",
+				ConstLabels: constLabels,
+			},
+			[]string{"cluster_name", "partition", "priority"},
+		),
+		
+		ResourceUtilization: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace:   namespace,
+				Subsystem:   subsystem,
+				Name:        "resource_utilization_ratio",
+				Help:        "Resource utilization ratio by type and partition",
+				ConstLabels: constLabels,
+			},
+			[]string{"cluster_name", "resource_type", "partition"},
+		),
+		
+		JobTurnover: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace:   namespace,
+				Subsystem:   subsystem,
+				Name:        "job_turnover_rate",
+				Help:        "Job turnover rate (jobs completed per hour) by partition",
+				ConstLabels: constLabels,
+			},
+			[]string{"cluster_name", "partition"},
+		),
+		
 		// Exporter Self-Monitoring
 		CollectionDuration: prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{
@@ -1004,6 +1077,14 @@ func (md *MetricDefinitions) Register(registry *prometheus.Registry) error {
 		md.PartitionDefaultTime,
 		md.PartitionPriority,
 		
+		// Performance metrics
+		md.SystemThroughput,
+		md.SystemEfficiency,
+		md.QueueWaitTime,
+		md.QueueDepth,
+		md.ResourceUtilization,
+		md.JobTurnover,
+		
 		// Exporter metrics
 		md.CollectionDuration,
 		md.CollectionErrors,
@@ -1101,6 +1182,14 @@ func (md *MetricDefinitions) Unregister(registry *prometheus.Registry) {
 		md.PartitionMaxTime,
 		md.PartitionDefaultTime,
 		md.PartitionPriority,
+		
+		// Performance metrics
+		md.SystemThroughput,
+		md.SystemEfficiency,
+		md.QueueWaitTime,
+		md.QueueDepth,
+		md.ResourceUtilization,
+		md.JobTurnover,
 		
 		// Exporter metrics
 		md.CollectionDuration,
