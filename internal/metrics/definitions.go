@@ -680,6 +680,139 @@ func NewMetricDefinitions(namespace, subsystem string, constLabels prometheus.La
 			[]string{"cluster_name", "account", "usage_type"},
 		),
 		
+		// Partition Metrics
+		PartitionInfo: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace:   namespace,
+				Subsystem:   subsystem,
+				Name:        "partition_info",
+				Help:        "Information about partitions in the cluster",
+				ConstLabels: constLabels,
+			},
+			[]string{"cluster_name", "partition", "state", "allow_groups", "allow_users"},
+		),
+		
+		PartitionNodes: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace:   namespace,
+				Subsystem:   subsystem,
+				Name:        "partition_nodes",
+				Help:        "Number of nodes in each partition",
+				ConstLabels: constLabels,
+			},
+			[]string{"cluster_name", "partition"},
+		),
+		
+		PartitionCPUs: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace:   namespace,
+				Subsystem:   subsystem,
+				Name:        "partition_cpus",
+				Help:        "Number of CPUs in each partition",
+				ConstLabels: constLabels,
+			},
+			[]string{"cluster_name", "partition"},
+		),
+		
+		PartitionMemory: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace:   namespace,
+				Subsystem:   subsystem,
+				Name:        "partition_memory_bytes",
+				Help:        "Amount of memory in each partition in bytes",
+				ConstLabels: constLabels,
+			},
+			[]string{"cluster_name", "partition"},
+		),
+		
+		PartitionState: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace:   namespace,
+				Subsystem:   subsystem,
+				Name:        "partition_state",
+				Help:        "Current state of each partition (1 for current state, 0 otherwise)",
+				ConstLabels: constLabels,
+			},
+			[]string{"cluster_name", "partition", "state"},
+		),
+		
+		PartitionJobCount: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace:   namespace,
+				Subsystem:   subsystem,
+				Name:        "partition_job_count",
+				Help:        "Number of jobs in each partition",
+				ConstLabels: constLabels,
+			},
+			[]string{"cluster_name", "partition"},
+		),
+		
+		PartitionAllocatedCPUs: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace:   namespace,
+				Subsystem:   subsystem,
+				Name:        "partition_allocated_cpus",
+				Help:        "Number of allocated CPUs in each partition",
+				ConstLabels: constLabels,
+			},
+			[]string{"cluster_name", "partition"},
+		),
+		
+		PartitionAllocatedMemory: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace:   namespace,
+				Subsystem:   subsystem,
+				Name:        "partition_allocated_memory_bytes",
+				Help:        "Amount of allocated memory in each partition in bytes",
+				ConstLabels: constLabels,
+			},
+			[]string{"cluster_name", "partition"},
+		),
+		
+		PartitionUtilization: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace:   namespace,
+				Subsystem:   subsystem,
+				Name:        "partition_utilization_ratio",
+				Help:        "Resource utilization ratio for each partition by resource type",
+				ConstLabels: constLabels,
+			},
+			[]string{"cluster_name", "partition", "resource_type"},
+		),
+		
+		PartitionMaxTime: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace:   namespace,
+				Subsystem:   subsystem,
+				Name:        "partition_max_time_seconds",
+				Help:        "Maximum time limit for jobs in each partition in seconds",
+				ConstLabels: constLabels,
+			},
+			[]string{"cluster_name", "partition"},
+		),
+		
+		PartitionDefaultTime: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace:   namespace,
+				Subsystem:   subsystem,
+				Name:        "partition_default_time_seconds",
+				Help:        "Default time limit for jobs in each partition in seconds",
+				ConstLabels: constLabels,
+			},
+			[]string{"cluster_name", "partition"},
+		),
+		
+		PartitionPriority: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace:   namespace,
+				Subsystem:   subsystem,
+				Name:        "partition_priority",
+				Help:        "Priority of each partition for scheduling",
+				ConstLabels: constLabels,
+			},
+			[]string{"cluster_name", "partition"},
+		),
+		
 		// Exporter Self-Monitoring
 		CollectionDuration: prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{
@@ -857,6 +990,20 @@ func (md *MetricDefinitions) Register(registry *prometheus.Registry) error {
 		md.AccountFairShare,
 		md.AccountUsage,
 		
+		// Partition metrics
+		md.PartitionInfo,
+		md.PartitionNodes,
+		md.PartitionCPUs,
+		md.PartitionMemory,
+		md.PartitionState,
+		md.PartitionJobCount,
+		md.PartitionAllocatedCPUs,
+		md.PartitionAllocatedMemory,
+		md.PartitionUtilization,
+		md.PartitionMaxTime,
+		md.PartitionDefaultTime,
+		md.PartitionPriority,
+		
 		// Exporter metrics
 		md.CollectionDuration,
 		md.CollectionErrors,
@@ -940,6 +1087,20 @@ func (md *MetricDefinitions) Unregister(registry *prometheus.Registry) {
 		md.AccountMemoryAllocated,
 		md.AccountFairShare,
 		md.AccountUsage,
+		
+		// Partition metrics
+		md.PartitionInfo,
+		md.PartitionNodes,
+		md.PartitionCPUs,
+		md.PartitionMemory,
+		md.PartitionState,
+		md.PartitionJobCount,
+		md.PartitionAllocatedCPUs,
+		md.PartitionAllocatedMemory,
+		md.PartitionUtilization,
+		md.PartitionMaxTime,
+		md.PartitionDefaultTime,
+		md.PartitionPriority,
 		
 		// Exporter metrics
 		md.CollectionDuration,
