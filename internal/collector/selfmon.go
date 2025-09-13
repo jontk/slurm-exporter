@@ -32,7 +32,7 @@ func NewSelfMonitoringCollector(
 		Errors:   metrics.CollectionErrors,
 		Duration: metrics.CollectionDuration,
 		Up:       metrics.CollectorUp,
-	})
+	}, nil)
 
 	return &SelfMonitoringCollector{
 		BaseCollector: base,

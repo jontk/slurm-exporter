@@ -41,7 +41,7 @@ func TestBaseCollector(t *testing.T) {
 	var client interface{} = nil
 
 	// Create base collector
-	base := NewBaseCollector("test_collector", cfg, opts, client, metrics)
+	base := NewBaseCollector("test_collector", cfg, opts, client, metrics, nil)
 
 	t.Run("Name", func(t *testing.T) {
 		if base.Name() != "test_collector" {

@@ -32,7 +32,7 @@ func NewJobCollector(
 		Errors:   metrics.CollectionErrors,
 		Duration: metrics.CollectionDuration,
 		Up:       metrics.CollectorUp,
-	})
+	}, nil)
 
 	return &JobCollector{
 		BaseCollector: base,

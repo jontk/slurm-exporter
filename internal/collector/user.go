@@ -31,7 +31,7 @@ func NewUserCollector(
 		Errors:   metrics.CollectionErrors,
 		Duration: metrics.CollectionDuration,
 		Up:       metrics.CollectorUp,
-	})
+	}, nil)
 
 	return &UserCollector{
 		BaseCollector: base,

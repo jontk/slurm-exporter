@@ -247,6 +247,7 @@ func TestRegistry(t *testing.T) {
 			&CollectorOptions{},
 			nil,
 			NewCollectorMetrics("test", "collector"),
+			nil,
 		)
 
 		registry.Register("mock", mockCol)

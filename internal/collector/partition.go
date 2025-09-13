@@ -32,7 +32,7 @@ func NewPartitionCollector(
 		Errors:   metrics.CollectionErrors,
 		Duration: metrics.CollectionDuration,
 		Up:       metrics.CollectorUp,
-	})
+	}, nil)
 
 	return &PartitionCollector{
 		BaseCollector: base,

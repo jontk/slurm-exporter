@@ -32,7 +32,7 @@ func NewClusterCollector(
 		Errors:   metrics.CollectionErrors,
 		Duration: metrics.CollectionDuration,
 		Up:       metrics.CollectorUp,
-	})
+	}, nil)
 	
 	return &ClusterCollector{
 		BaseCollector: base,

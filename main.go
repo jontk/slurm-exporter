@@ -9,8 +9,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 
+	"github.com/jontk/slurm-exporter/internal/collector"
 	"github.com/jontk/slurm-exporter/internal/config"
 	"github.com/jontk/slurm-exporter/internal/server"
 	"github.com/jontk/slurm-exporter/pkg/version"
@@ -68,8 +70,17 @@ func main() {
 		"metrics_path": cfg.Server.MetricsPath,
 	}).Info("Starting SLURM Prometheus Exporter")
 
+	// Create Prometheus registry for collectors
+	promRegistry := prometheus.NewRegistry()
+	
+	// Create collector registry
+	registry, err := collector.NewRegistry(&cfg.Collectors, promRegistry)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to create collector registry")
+	}
+
 	// Create and start the server
-	srv, err := server.New(cfg, logger)
+	srv, err := server.New(cfg, logger, registry)
 	if err != nil {
 		logger.WithError(err).Fatal("Failed to create server")
 	}
