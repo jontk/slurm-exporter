@@ -1,0 +1,262 @@
+package server
+
+import (
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/sirupsen/logrus"
+
+	"github.com/jontk/slurm-exporter/internal/config"
+)
+
+func createTestServer() *Server {
+	cfg := &config.Config{
+		Server: config.ServerConfig{
+			Address:      ":8080",
+			MetricsPath:  "/metrics",
+			ReadTimeout:  30 * time.Second,
+			WriteTimeout: 30 * time.Second,
+			IdleTimeout:  60 * time.Second,
+		},
+	}
+	logger := logrus.New()
+	logger.SetLevel(logrus.DebugLevel)
+	
+	return &Server{
+		config: cfg,
+		logger: logger,
+	}
+}
+
+func TestLoggingMiddleware(t *testing.T) {
+	server := createTestServer()
+	
+	// Capture log output
+	var buf bytes.Buffer
+	server.logger.SetOutput(&buf)
+	server.logger.SetFormatter(&logrus.JSONFormatter{})
+
+	// Create a test handler
+	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("test response"))
+	})
+
+	// Wrap with logging middleware
+	handler := server.LoggingMiddleware(testHandler)
+
+	// Create request
+	req := httptest.NewRequest("GET", "/test", nil)
+	req.Header.Set("User-Agent", "test-agent")
+	w := httptest.NewRecorder()
+
+	// Execute request
+	handler.ServeHTTP(w, req)
+
+	// Check response
+	if w.Code != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", w.Code)
+	}
+
+	// Check log output
+	logOutput := buf.String()
+	if !strings.Contains(logOutput, "HTTP request") {
+		t.Error("Expected log to contain 'HTTP request'")
+	}
+
+	// Parse log entry
+	var logEntry map[string]interface{}
+	if err := json.Unmarshal(buf.Bytes(), &logEntry); err != nil {
+		t.Fatalf("Failed to parse log JSON: %v", err)
+	}
+
+	// Verify log fields
+	if logEntry["method"] != "GET" {
+		t.Errorf("Expected method 'GET', got %v", logEntry["method"])
+	}
+
+	if logEntry["path"] != "/test" {
+		t.Errorf("Expected path '/test', got %v", logEntry["path"])
+	}
+
+	if logEntry["user_agent"] != "test-agent" {
+		t.Errorf("Expected user_agent 'test-agent', got %v", logEntry["user_agent"])
+	}
+
+	if logEntry["status"].(float64) != 200 {
+		t.Errorf("Expected status 200, got %v", logEntry["status"])
+	}
+
+	if logEntry["duration"] == nil {
+		t.Error("Expected duration field to be present")
+	}
+}
+
+func TestHeadersMiddleware(t *testing.T) {
+	server := createTestServer()
+
+	// Create a test handler
+	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("test response"))
+	})
+
+	// Wrap with headers middleware
+	handler := server.HeadersMiddleware(testHandler)
+
+	t.Run("StandardHeaders", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/test", nil)
+		w := httptest.NewRecorder()
+
+		handler.ServeHTTP(w, req)
+
+		// Check security headers
+		expectedHeaders := map[string]string{
+			"X-Content-Type-Options": "nosniff",
+			"X-Frame-Options":        "DENY",
+			"X-XSS-Protection":       "1; mode=block",
+			"Server":                 "slurm-exporter",
+		}
+
+		for header, expectedValue := range expectedHeaders {
+			if actual := w.Header().Get(header); actual != expectedValue {
+				t.Errorf("Expected header %s to be '%s', got '%s'", header, expectedValue, actual)
+			}
+		}
+	})
+
+	t.Run("MetricsEndpointHeaders", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/metrics", nil)
+		w := httptest.NewRecorder()
+
+		handler.ServeHTTP(w, req)
+
+		// Check cache control header for metrics endpoint
+		if cacheControl := w.Header().Get("Cache-Control"); cacheControl != "no-cache, no-store, must-revalidate" {
+			t.Errorf("Expected Cache-Control header for metrics endpoint, got '%s'", cacheControl)
+		}
+	})
+}
+
+func TestRecoveryMiddleware(t *testing.T) {
+	server := createTestServer()
+	
+	// Capture log output
+	var buf bytes.Buffer
+	server.logger.SetOutput(&buf)
+	server.logger.SetFormatter(&logrus.JSONFormatter{})
+
+	// Create a test handler that panics
+	panicHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		panic("test panic")
+	})
+
+	// Wrap with recovery middleware
+	handler := server.RecoveryMiddleware(panicHandler)
+
+	// Create request
+	req := httptest.NewRequest("GET", "/test", nil)
+	w := httptest.NewRecorder()
+
+	// Execute request (should not panic)
+	handler.ServeHTTP(w, req)
+
+	// Check response
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("Expected status 500, got %d", w.Code)
+	}
+
+	if !strings.Contains(w.Body.String(), "Internal Server Error") {
+		t.Error("Expected response to contain 'Internal Server Error'")
+	}
+
+	// Check log output
+	logOutput := buf.String()
+	if !strings.Contains(logOutput, "HTTP handler panic recovered") {
+		t.Error("Expected log to contain panic recovery message")
+	}
+
+	if !strings.Contains(logOutput, "test panic") {
+		t.Error("Expected log to contain panic message")
+	}
+}
+
+func TestCombinedMiddleware(t *testing.T) {
+	server := createTestServer()
+	
+	// Capture log output
+	var buf bytes.Buffer
+	server.logger.SetOutput(&buf)
+	server.logger.SetFormatter(&logrus.JSONFormatter{})
+
+	// Create a test handler
+	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("test response"))
+	})
+
+	// Apply combined middleware
+	handler := server.CombinedMiddleware(testHandler)
+
+	// Create request
+	req := httptest.NewRequest("GET", "/test", nil)
+	req.Header.Set("User-Agent", "test-agent")
+	w := httptest.NewRecorder()
+
+	// Execute request
+	handler.ServeHTTP(w, req)
+
+	// Check that all middleware is applied
+	// Security headers should be present
+	if w.Header().Get("X-Content-Type-Options") != "nosniff" {
+		t.Error("Expected security headers from HeadersMiddleware")
+	}
+
+	// Logging should occur
+	logOutput := buf.String()
+	if !strings.Contains(logOutput, "HTTP request") {
+		t.Error("Expected logging from LoggingMiddleware")
+	}
+
+	// Response should be successful
+	if w.Code != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", w.Code)
+	}
+}
+
+func TestResponseWriter(t *testing.T) {
+	w := httptest.NewRecorder()
+	rw := &responseWriter{ResponseWriter: w}
+
+	// Test default status code
+	rw.Write([]byte("test"))
+	if rw.statusCode != http.StatusOK {
+		t.Errorf("Expected default status code 200, got %d", rw.statusCode)
+	}
+
+	// Test explicit status code
+	rw2 := &responseWriter{ResponseWriter: httptest.NewRecorder()}
+	rw2.WriteHeader(http.StatusCreated)
+	if rw2.statusCode != http.StatusCreated {
+		t.Errorf("Expected status code 201, got %d", rw2.statusCode)
+	}
+
+	// Test written bytes tracking
+	rw3 := &responseWriter{ResponseWriter: httptest.NewRecorder()}
+	testData := []byte("test data")
+	n, err := rw3.Write(testData)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	if n != len(testData) {
+		t.Errorf("Expected %d bytes written, got %d", len(testData), n)
+	}
+	if rw3.written != int64(len(testData)) {
+		t.Errorf("Expected %d bytes tracked, got %d", len(testData), rw3.written)
+	}
+}

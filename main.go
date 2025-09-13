@@ -14,6 +14,7 @@ import (
 
 	"github.com/jontk/slurm-exporter/internal/collector"
 	"github.com/jontk/slurm-exporter/internal/config"
+	"github.com/jontk/slurm-exporter/internal/logging"
 	"github.com/jontk/slurm-exporter/internal/server"
 	"github.com/jontk/slurm-exporter/pkg/version"
 )
@@ -36,24 +37,28 @@ func main() {
 		os.Exit(0)
 	}
 
-	// Set up logging
-	logger := logrus.New()
-	level, err := logrus.ParseLevel(*logLevel)
+	// Load configuration first
+	cfg, err := config.Load(*configFile)
 	if err != nil {
-		logger.WithError(err).Fatal("Invalid log level")
+		// Use basic logrus for configuration errors
+		logrus.WithError(err).Fatal("Failed to load configuration")
 	}
-	logger.SetLevel(level)
-	logger.SetFormatter(&logrus.JSONFormatter{})
+
+	// Override log level from command line if provided
+	if *logLevel != "info" {
+		cfg.Logging.Level = *logLevel
+	}
+
+	// Set up structured logging
+	logger, err := logging.NewLogger(&cfg.Logging)
+	if err != nil {
+		logrus.WithError(err).Fatal("Failed to initialize logger")
+	}
+	defer logger.Close()
 
 	// Create context that can be cancelled
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-
-	// Load configuration
-	cfg, err := config.Load(*configFile)
-	if err != nil {
-		logger.WithError(err).Fatal("Failed to load configuration")
-	}
 
 	// Override config with command line flags if provided
 	if *addr != ":8080" {
@@ -63,11 +68,13 @@ func main() {
 		cfg.Server.MetricsPath = *metricsPath
 	}
 
-	logger.WithFields(logrus.Fields{
+	logger.WithComponent("main").WithFields(logrus.Fields{
 		"version":      version.Get().Short(),
 		"config_file":  *configFile,
 		"address":      cfg.Server.Address,
 		"metrics_path": cfg.Server.MetricsPath,
+		"log_level":    cfg.Logging.Level,
+		"log_format":   cfg.Logging.Format,
 	}).Info("Starting SLURM Prometheus Exporter")
 
 	// Create Prometheus registry for collectors
@@ -76,13 +83,13 @@ func main() {
 	// Create collector registry
 	registry, err := collector.NewRegistry(&cfg.Collectors, promRegistry)
 	if err != nil {
-		logger.WithError(err).Fatal("Failed to create collector registry")
+		logger.WithComponent("main").WithError(err).Fatal("Failed to create collector registry")
 	}
 
 	// Create and start the server
-	srv, err := server.New(cfg, logger, registry)
+	srv, err := server.New(cfg, logger.Logger, registry)
 	if err != nil {
-		logger.WithError(err).Fatal("Failed to create server")
+		logger.WithComponent("main").WithError(err).Fatal("Failed to create server")
 	}
 
 	// Handle graceful shutdown

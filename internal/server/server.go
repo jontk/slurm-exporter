@@ -41,13 +41,13 @@ func New(cfg *config.Config, logger *logrus.Logger, registry RegistryInterface) 
 		promRegistry: promRegistry,
 	}
 	
-	// Create HTTP mux and setup routes
-	mux := s.setupRoutes()
+	// Create HTTP handler and setup routes with middleware
+	handler := s.setupRoutes()
 	
 	// Configure HTTP server
 	server := &http.Server{
 		Addr:         cfg.Server.Address,
-		Handler:      mux,
+		Handler:      handler,
 		ReadTimeout:  cfg.Server.ReadTimeout,
 		WriteTimeout: cfg.Server.WriteTimeout,
 		IdleTimeout:  cfg.Server.IdleTimeout,
@@ -58,7 +58,7 @@ func New(cfg *config.Config, logger *logrus.Logger, registry RegistryInterface) 
 }
 
 // setupRoutes configures HTTP routes
-func (s *Server) setupRoutes() *http.ServeMux {
+func (s *Server) setupRoutes() http.Handler {
 	mux := http.NewServeMux()
 	
 	// Health check endpoint
@@ -73,7 +73,8 @@ func (s *Server) setupRoutes() *http.ServeMux {
 	// Root endpoint with basic info
 	mux.HandleFunc("/", s.handleRoot)
 	
-	return mux
+	// Apply middleware to all routes
+	return s.CombinedMiddleware(mux)
 }
 
 // Start starts the HTTP server.
@@ -101,7 +102,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 
 // handleHealth handles the health check endpoint
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
-	s.logger.Debug("Health check requested")
+	s.logger.WithField("component", "health_handler").Debug("Health check requested")
 	
 	// Simple health check - always returns OK
 	// Could be extended to check dependencies
@@ -112,7 +113,8 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 
 // handleReady handles the readiness check endpoint
 func (s *Server) handleReady(w http.ResponseWriter, r *http.Request) {
-	s.logger.Debug("Readiness check requested")
+	logger := s.logger.WithField("component", "ready_handler")
+	logger.Debug("Readiness check requested")
 	
 	// Check if collectors are ready
 	if s.registry != nil {
@@ -120,12 +122,19 @@ func (s *Server) handleReady(w http.ResponseWriter, r *http.Request) {
 		
 		// Consider ready if at least one collector is enabled
 		ready := false
+		enabledCount := 0
 		for _, stat := range stats {
 			if stat.Enabled {
 				ready = true
-				break
+				enabledCount++
 			}
 		}
+		
+		logger.WithFields(logrus.Fields{
+			"total_collectors":   len(stats),
+			"enabled_collectors": enabledCount,
+			"ready":             ready,
+		}).Debug("Collector status checked")
 		
 		if !ready {
 			w.Header().Set("Content-Type", "text/plain")
@@ -142,7 +151,7 @@ func (s *Server) handleReady(w http.ResponseWriter, r *http.Request) {
 
 // handleRoot handles the root endpoint
 func (s *Server) handleRoot(w http.ResponseWriter, r *http.Request) {
-	s.logger.Debug("Root endpoint requested")
+	s.logger.WithField("component", "root_handler").Debug("Root endpoint requested")
 	
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
@@ -211,34 +220,26 @@ func (s *Server) createMetricsHandler() http.Handler {
 		Timeout:       30 * time.Second,
 	})
 	
-	// Wrap with request logging and collection triggering
+	// Wrap with collection triggering
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		s.logger.WithFields(logrus.Fields{
-			"method":     r.Method,
-			"path":       r.URL.Path,
-			"user_agent": r.Header.Get("User-Agent"),
-		}).Debug("Metrics request received")
-		
 		// Trigger collection from all collectors if registry is available
 		if s.registry != nil {
 			ctx, cancel := context.WithTimeout(r.Context(), 25*time.Second)
 			defer cancel()
 			
 			if err := s.registry.CollectAll(ctx); err != nil {
-				s.logger.WithError(err).Warn("Failed to collect all metrics")
+				s.logger.WithFields(logrus.Fields{
+					"component": "metrics_handler",
+					"error":     err.Error(),
+				}).Warn("Failed to collect all metrics")
 				// Continue serving cached/existing metrics
+			} else {
+				s.logger.WithField("component", "metrics_handler").Debug("Metrics collection triggered successfully")
 			}
 		}
 		
 		// Serve the metrics
 		handler.ServeHTTP(w, r)
-		
-		duration := time.Since(start)
-		s.logger.WithFields(logrus.Fields{
-			"duration": duration,
-			"status":   "completed",
-		}).Debug("Metrics request completed")
 	})
 }
 
