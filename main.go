@@ -4,9 +4,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"net/http"
 	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -92,35 +91,50 @@ func main() {
 		logger.WithComponent("main").WithError(err).Fatal("Failed to create server")
 	}
 
-	// Handle graceful shutdown
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	// Setup graceful shutdown handling
+	shutdown := NewShutdownManager(logger.Logger, 30*time.Second)
+	
+	// Register shutdown hooks for proper cleanup
+	shutdown.AddShutdownHook("server", func(ctx context.Context) error {
+		logger.WithComponent("shutdown").Info("Shutting down HTTP server")
+		return srv.Shutdown(ctx)
+	})
+	
+	shutdown.AddShutdownHook("logger", func(ctx context.Context) error {
+		logger.WithComponent("shutdown").Info("Closing logger")
+		return logger.Close()
+	})
+
+	// Start the shutdown manager
+	shutdown.Start(ctx)
 
 	// Start server in a goroutine
 	errChan := make(chan error, 1)
 	go func() {
-		if err := srv.Start(ctx); err != nil {
+		if err := srv.Start(ctx); err != nil && err != http.ErrServerClosed {
 			errChan <- err
 		}
 	}()
 
 	// Wait for shutdown signal or error
+	var exitCode int
 	select {
-	case sig := <-sigChan:
-		logger.WithField("signal", sig).Info("Received shutdown signal")
+	case sig := <-shutdown.SignalChan():
+		logger.WithComponent("main").WithField("signal", sig).Info("Received shutdown signal")
+		exitCode = 0
 	case err := <-errChan:
-		logger.WithError(err).Error("Server error")
+		logger.WithComponent("main").WithError(err).Error("Server error")
+		exitCode = 1
 	}
 
-	// Graceful shutdown
-	logger.Info("Initiating graceful shutdown...")
-	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer shutdownCancel()
-
-	if err := srv.Shutdown(shutdownCtx); err != nil {
-		logger.WithError(err).Error("Server shutdown error")
-		os.Exit(1)
+	// Trigger graceful shutdown
+	logger.WithComponent("main").Info("Initiating graceful shutdown...")
+	if err := shutdown.Shutdown(); err != nil {
+		logger.WithComponent("main").WithError(err).Error("Shutdown completed with errors")
+		exitCode = 1
+	} else {
+		logger.WithComponent("main").Info("Graceful shutdown completed successfully")
 	}
 
-	logger.Info("Server shut down gracefully")
+	os.Exit(exitCode)
 }

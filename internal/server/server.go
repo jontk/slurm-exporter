@@ -22,11 +22,12 @@ type RegistryInterface interface {
 
 // Server represents the HTTP server.
 type Server struct {
-	config   *config.Config
-	logger   *logrus.Logger
-	server   *http.Server
-	registry RegistryInterface
+	config       *config.Config
+	logger       *logrus.Logger
+	server       *http.Server
+	registry     RegistryInterface
 	promRegistry *prometheus.Registry
+	isShuttingDown bool
 }
 
 // New creates a new server instance.
@@ -97,7 +98,13 @@ func (s *Server) Start(ctx context.Context) error {
 // Shutdown gracefully shuts down the server.
 func (s *Server) Shutdown(ctx context.Context) error {
 	s.logger.Info("Shutting down HTTP server")
+	s.isShuttingDown = true
 	return s.server.Shutdown(ctx)
+}
+
+// IsShuttingDown returns whether the server is in shutdown mode
+func (s *Server) IsShuttingDown() bool {
+	return s.isShuttingDown
 }
 
 // handleHealth handles the health check endpoint
@@ -115,6 +122,14 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleReady(w http.ResponseWriter, r *http.Request) {
 	logger := s.logger.WithField("component", "ready_handler")
 	logger.Debug("Readiness check requested")
+	
+	// Not ready if shutting down
+	if s.isShuttingDown {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusServiceUnavailable)
+		w.Write([]byte("Server is shutting down"))
+		return
+	}
 	
 	// Check if collectors are ready
 	if s.registry != nil {
@@ -134,6 +149,7 @@ func (s *Server) handleReady(w http.ResponseWriter, r *http.Request) {
 			"total_collectors":   len(stats),
 			"enabled_collectors": enabledCount,
 			"ready":             ready,
+			"shutting_down":     s.isShuttingDown,
 		}).Debug("Collector status checked")
 		
 		if !ready {
