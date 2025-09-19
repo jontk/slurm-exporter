@@ -291,6 +291,182 @@ func TestMetricsMiddleware(t *testing.T) {
 	}
 }
 
+func TestBasicAuthMiddleware(t *testing.T) {
+	t.Run("BasicAuthDisabled", func(t *testing.T) {
+		cfg := &config.Config{
+			Server: config.ServerConfig{
+				MetricsPath: "/metrics",
+				BasicAuth: config.BasicAuthConfig{
+					Enabled: false,
+				},
+			},
+		}
+		server := &Server{
+			config: cfg,
+			logger: logrus.New(),
+		}
+
+		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("success"))
+		})
+
+		handler := server.BasicAuthMiddleware(testHandler)
+
+		req := httptest.NewRequest("GET", "/metrics", nil)
+		w := httptest.NewRecorder()
+
+		handler.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("Expected status 200, got %d", w.Code)
+		}
+	})
+
+	t.Run("BasicAuthEnabledNonMetricsEndpoint", func(t *testing.T) {
+		cfg := &config.Config{
+			Server: config.ServerConfig{
+				MetricsPath: "/metrics",
+				BasicAuth: config.BasicAuthConfig{
+					Enabled:  true,
+					Username: "user",
+					Password: "pass",
+				},
+			},
+		}
+		server := &Server{
+			config: cfg,
+			logger: logrus.New(),
+		}
+
+		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("success"))
+		})
+
+		handler := server.BasicAuthMiddleware(testHandler)
+
+		// Test non-metrics endpoint (should not require auth)
+		req := httptest.NewRequest("GET", "/health", nil)
+		w := httptest.NewRecorder()
+
+		handler.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("Expected status 200 for non-metrics endpoint, got %d", w.Code)
+		}
+	})
+
+	t.Run("BasicAuthEnabledNoCredentials", func(t *testing.T) {
+		cfg := &config.Config{
+			Server: config.ServerConfig{
+				MetricsPath: "/metrics",
+				BasicAuth: config.BasicAuthConfig{
+					Enabled:  true,
+					Username: "user",
+					Password: "pass",
+				},
+			},
+		}
+		server := &Server{
+			config: cfg,
+			logger: logrus.New(),
+		}
+
+		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("success"))
+		})
+
+		handler := server.BasicAuthMiddleware(testHandler)
+
+		req := httptest.NewRequest("GET", "/metrics", nil)
+		w := httptest.NewRecorder()
+
+		handler.ServeHTTP(w, req)
+
+		if w.Code != http.StatusUnauthorized {
+			t.Errorf("Expected status 401, got %d", w.Code)
+		}
+
+		if w.Header().Get("WWW-Authenticate") == "" {
+			t.Error("Expected WWW-Authenticate header")
+		}
+	})
+
+	t.Run("BasicAuthEnabledInvalidCredentials", func(t *testing.T) {
+		cfg := &config.Config{
+			Server: config.ServerConfig{
+				MetricsPath: "/metrics",
+				BasicAuth: config.BasicAuthConfig{
+					Enabled:  true,
+					Username: "user",
+					Password: "pass",
+				},
+			},
+		}
+		server := &Server{
+			config: cfg,
+			logger: logrus.New(),
+		}
+
+		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("success"))
+		})
+
+		handler := server.BasicAuthMiddleware(testHandler)
+
+		req := httptest.NewRequest("GET", "/metrics", nil)
+		req.SetBasicAuth("wrong", "credentials")
+		w := httptest.NewRecorder()
+
+		handler.ServeHTTP(w, req)
+
+		if w.Code != http.StatusUnauthorized {
+			t.Errorf("Expected status 401, got %d", w.Code)
+		}
+	})
+
+	t.Run("BasicAuthEnabledValidCredentials", func(t *testing.T) {
+		cfg := &config.Config{
+			Server: config.ServerConfig{
+				MetricsPath: "/metrics",
+				BasicAuth: config.BasicAuthConfig{
+					Enabled:  true,
+					Username: "user",
+					Password: "pass",
+				},
+			},
+		}
+		server := &Server{
+			config: cfg,
+			logger: logrus.New(),
+		}
+
+		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("success"))
+		})
+
+		handler := server.BasicAuthMiddleware(testHandler)
+
+		req := httptest.NewRequest("GET", "/metrics", nil)
+		req.SetBasicAuth("user", "pass")
+		w := httptest.NewRecorder()
+
+		handler.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("Expected status 200, got %d", w.Code)
+		}
+
+		if w.Body.String() != "success" {
+			t.Errorf("Expected body 'success', got '%s'", w.Body.String())
+		}
+	})
+}
+
 func TestTimeoutMiddleware(t *testing.T) {
 	server := createTestServer()
 

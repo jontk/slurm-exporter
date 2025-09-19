@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"crypto/subtle"
 	"net/http"
 	"strconv"
 	"time"
@@ -296,6 +297,67 @@ func (s *Server) TimeoutMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+// BasicAuthMiddleware provides HTTP basic authentication for protected endpoints
+func (s *Server) BasicAuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Only apply basic auth to metrics endpoint if enabled
+		if !s.config.Server.BasicAuth.Enabled {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		// Check if this is the metrics endpoint
+		if r.URL.Path != s.config.Server.MetricsPath {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		// Get credentials from request
+		username, password, ok := r.BasicAuth()
+		if !ok {
+			s.logger.WithFields(logrus.Fields{
+				"component":   "basic_auth",
+				"path":        r.URL.Path,
+				"remote_addr": r.RemoteAddr,
+			}).Warn("Missing basic auth credentials")
+
+			w.Header().Set("WWW-Authenticate", `Basic realm="SLURM Exporter Metrics"`)
+			http.Error(w, "Authentication required", http.StatusUnauthorized)
+			return
+		}
+
+		// Validate credentials using constant time comparison
+		expectedUsername := s.config.Server.BasicAuth.Username
+		expectedPassword := s.config.Server.BasicAuth.Password
+
+		usernameMatch := subtle.ConstantTimeCompare([]byte(username), []byte(expectedUsername)) == 1
+		passwordMatch := subtle.ConstantTimeCompare([]byte(password), []byte(expectedPassword)) == 1
+
+		if !usernameMatch || !passwordMatch {
+			s.logger.WithFields(logrus.Fields{
+				"component":   "basic_auth",
+				"path":        r.URL.Path,
+				"remote_addr": r.RemoteAddr,
+				"username":    username,
+			}).Warn("Invalid basic auth credentials")
+
+			w.Header().Set("WWW-Authenticate", `Basic realm="SLURM Exporter Metrics"`)
+			http.Error(w, "Authentication failed", http.StatusUnauthorized)
+			return
+		}
+
+		s.logger.WithFields(logrus.Fields{
+			"component":   "basic_auth",
+			"path":        r.URL.Path,
+			"remote_addr": r.RemoteAddr,
+			"username":    username,
+		}).Debug("Basic auth successful")
+
+		// Authentication successful
+		next.ServeHTTP(w, r)
+	})
+}
+
 // CombinedMiddleware applies all middleware in the correct order
 func (s *Server) CombinedMiddleware(next http.Handler) http.Handler {
 	// Apply middleware in reverse order (last applied = first executed)
@@ -303,6 +365,7 @@ func (s *Server) CombinedMiddleware(next http.Handler) http.Handler {
 	handler = s.MetricsMiddleware(handler)
 	handler = s.LoggingMiddleware(handler)
 	handler = s.TimeoutMiddleware(handler)
+	handler = s.BasicAuthMiddleware(handler) // Apply basic auth before other middleware
 	handler = s.HeadersMiddleware(handler)
 	handler = s.RecoveryMiddleware(handler)
 

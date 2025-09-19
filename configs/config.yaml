@@ -43,6 +43,12 @@ server:
     username: ""
     password: ""
 
+  # Example basic auth configuration:
+  # basic_auth:
+  #   enabled: true
+  #   username: "prometheus"
+  #   password: "secure-password-here"
+
   # CORS configuration (optional)
   cors:
     enabled: false
