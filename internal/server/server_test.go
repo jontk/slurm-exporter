@@ -497,6 +497,139 @@ func TestServerConfiguration(t *testing.T) {
 	})
 }
 
+func TestTLSConfiguration(t *testing.T) {
+	logger := logrus.New()
+	logger.SetLevel(logrus.DebugLevel)
+
+	t.Run("TLSDisabled", func(t *testing.T) {
+		cfg := &config.Config{
+			Server: config.ServerConfig{
+				Address:      ":8080",
+				MetricsPath:  "/metrics",
+				ReadTimeout:  30 * time.Second,
+				WriteTimeout: 30 * time.Second,
+				IdleTimeout:  60 * time.Second,
+				TLS: config.TLSConfig{
+					Enabled: false,
+				},
+			},
+		}
+
+		server, err := New(cfg, logger, nil)
+		if err != nil {
+			t.Fatalf("Failed to create server: %v", err)
+		}
+
+		// TLS should not be configured
+		if server.server.TLSConfig != nil {
+			t.Error("Expected TLS config to be nil when TLS is disabled")
+		}
+	})
+
+	t.Run("TLSEnabledMissingCertFile", func(t *testing.T) {
+		cfg := &config.Config{
+			Server: config.ServerConfig{
+				Address:      ":8443",
+				MetricsPath:  "/metrics",
+				ReadTimeout:  30 * time.Second,
+				WriteTimeout: 30 * time.Second,
+				IdleTimeout:  60 * time.Second,
+				TLS: config.TLSConfig{
+					Enabled:  true,
+					CertFile: "", // Missing cert file
+					KeyFile:  "/path/to/key.pem",
+				},
+			},
+		}
+
+		_, err := New(cfg, logger, nil)
+		if err == nil {
+			t.Error("Expected error when cert_file is missing")
+		}
+		if !strings.Contains(err.Error(), "cert_file is required") {
+			t.Errorf("Expected error about cert_file, got: %v", err)
+		}
+	})
+
+	t.Run("TLSEnabledMissingKeyFile", func(t *testing.T) {
+		cfg := &config.Config{
+			Server: config.ServerConfig{
+				Address:      ":8443",
+				MetricsPath:  "/metrics",
+				ReadTimeout:  30 * time.Second,
+				WriteTimeout: 30 * time.Second,
+				IdleTimeout:  60 * time.Second,
+				TLS: config.TLSConfig{
+					Enabled:  true,
+					CertFile: "/path/to/cert.pem",
+					KeyFile:  "", // Missing key file
+				},
+			},
+		}
+
+		_, err := New(cfg, logger, nil)
+		if err == nil {
+			t.Error("Expected error when key_file is missing")
+		}
+		if !strings.Contains(err.Error(), "key_file is required") {
+			t.Errorf("Expected error about key_file, got: %v", err)
+		}
+	})
+
+	t.Run("TLSMinVersionParsing", func(t *testing.T) {
+		// Create a test server to test TLS config parsing
+		cfg := &config.Config{
+			Server: config.ServerConfig{
+				TLS: config.TLSConfig{
+					Enabled:    true,
+					CertFile:   "/nonexistent/cert.pem", // We won't actually load the cert
+					KeyFile:    "/nonexistent/key.pem",
+					MinVersion: "1.3",
+				},
+			},
+		}
+
+		server := &Server{
+			config: cfg,
+			logger: logger,
+		}
+
+		// This will fail because files don't exist, but we can test the version parsing logic
+		_, err := server.createTLSConfig()
+		// We expect it to fail on certificate loading, not version parsing
+		if !strings.Contains(err.Error(), "failed to load TLS certificate") {
+			t.Errorf("Expected certificate loading error, got: %v", err)
+		}
+	})
+
+	t.Run("TLSInvalidMinVersion", func(t *testing.T) {
+		cfg := &config.Config{
+			Server: config.ServerConfig{
+				TLS: config.TLSConfig{
+					Enabled:    true,
+					CertFile:   "/path/to/cert.pem",
+					KeyFile:    "/path/to/key.pem",
+					MinVersion: "invalid",
+				},
+			},
+		}
+
+		server := &Server{
+			config: cfg,
+			logger: logger,
+		}
+
+		_, err := server.createTLSConfig()
+		if err == nil {
+			t.Error("Expected error for invalid TLS version")
+		}
+		// Now version validation happens first
+		if !strings.Contains(err.Error(), "unsupported TLS version") {
+			t.Errorf("Expected unsupported TLS version error, got: %v", err)
+		}
+	})
+}
+
 func TestSetupRoutes(t *testing.T) {
 	cfg := createTestConfig()
 	logger := createTestLogger()

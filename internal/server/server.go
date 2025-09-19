@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"net/http"
 	"time"
@@ -143,8 +144,92 @@ func New(cfg *config.Config, logger *logrus.Logger, registry RegistryInterface) 
 		IdleTimeout:  cfg.Server.IdleTimeout,
 	}
 
+	// Configure TLS if enabled
+	if cfg.Server.TLS.Enabled {
+		tlsConfig, err := s.createTLSConfig()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create TLS config: %w", err)
+		}
+		server.TLSConfig = tlsConfig
+	}
+
 	s.server = server
 	return s, nil
+}
+
+// createTLSConfig creates and configures TLS settings
+func (s *Server) createTLSConfig() (*tls.Config, error) {
+	cfg := s.config.Server.TLS
+
+	tlsConfig := &tls.Config{
+		MinVersion: tls.VersionTLS12, // Default to TLS 1.2
+	}
+
+	// Configure minimum TLS version if specified (validate before loading certificates)
+	if cfg.MinVersion != "" {
+		switch cfg.MinVersion {
+		case "1.0":
+			tlsConfig.MinVersion = tls.VersionTLS10
+		case "1.1":
+			tlsConfig.MinVersion = tls.VersionTLS11
+		case "1.2":
+			tlsConfig.MinVersion = tls.VersionTLS12
+		case "1.3":
+			tlsConfig.MinVersion = tls.VersionTLS13
+		default:
+			return nil, fmt.Errorf("unsupported TLS version: %s", cfg.MinVersion)
+		}
+	}
+
+	// Validate required files
+	if cfg.CertFile == "" {
+		return nil, fmt.Errorf("TLS cert_file is required when TLS is enabled")
+	}
+	if cfg.KeyFile == "" {
+		return nil, fmt.Errorf("TLS key_file is required when TLS is enabled")
+	}
+
+	// Load certificate and key
+	cert, err := tls.LoadX509KeyPair(cfg.CertFile, cfg.KeyFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load TLS certificate: %w", err)
+	}
+
+	tlsConfig.Certificates = []tls.Certificate{cert}
+
+	// Configure cipher suites if specified
+	if len(cfg.CipherSuites) > 0 {
+		cipherSuites := make([]uint16, 0, len(cfg.CipherSuites))
+		cipherMap := map[string]uint16{
+			"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256":       tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384":       tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256":     tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384":     tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+			"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256": tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+			"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305":      tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+		}
+
+		for _, suite := range cfg.CipherSuites {
+			if cipherID, ok := cipherMap[suite]; ok {
+				cipherSuites = append(cipherSuites, cipherID)
+			} else {
+				s.logger.WithField("cipher_suite", suite).Warn("Unknown cipher suite, skipping")
+			}
+		}
+
+		if len(cipherSuites) > 0 {
+			tlsConfig.CipherSuites = cipherSuites
+		}
+	}
+
+	s.logger.WithFields(logrus.Fields{
+		"min_version":    cfg.MinVersion,
+		"cipher_suites":  len(cfg.CipherSuites),
+		"cert_file":      cfg.CertFile,
+		"key_file":       cfg.KeyFile,
+	}).Info("TLS configuration created")
+
+	return tlsConfig, nil
 }
 
 // setupRoutes configures HTTP routes
@@ -169,7 +254,16 @@ func (s *Server) setupRoutes() http.Handler {
 
 // Start starts the HTTP server.
 func (s *Server) Start(ctx context.Context) error {
-	s.logger.WithField("address", s.config.Server.Address).Info("Starting HTTP server")
+	scheme := "HTTP"
+	if s.config.Server.TLS.Enabled {
+		scheme = "HTTPS"
+	}
+	
+	s.logger.WithFields(logrus.Fields{
+		"address": s.config.Server.Address,
+		"scheme":  scheme,
+		"tls":     s.config.Server.TLS.Enabled,
+	}).Info("Starting HTTP server")
 
 	go func() {
 		<-ctx.Done()
@@ -177,7 +271,16 @@ func (s *Server) Start(ctx context.Context) error {
 		s.server.Shutdown(context.Background())
 	}()
 
-	if err := s.server.ListenAndServe(); err != http.ErrServerClosed {
+	var err error
+	if s.config.Server.TLS.Enabled {
+		// Start HTTPS server
+		err = s.server.ListenAndServeTLS(s.config.Server.TLS.CertFile, s.config.Server.TLS.KeyFile)
+	} else {
+		// Start HTTP server
+		err = s.server.ListenAndServe()
+	}
+
+	if err != http.ErrServerClosed {
 		return fmt.Errorf("server error: %w", err)
 	}
 
