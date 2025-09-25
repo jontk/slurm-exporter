@@ -1,0 +1,43 @@
+# Development overrides for Docker Compose
+# This file is automatically loaded by docker-compose and provides development-specific settings
+
+version: '3.8'
+
+services:
+  slurm-exporter:
+    # Override for development - use local build and dev config
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    environment:
+      - SLURM_EXPORTER_CONFIG_FILE=/etc/slurm-exporter/dev-config.yaml
+      - SLURM_EXPORTER_LOG_LEVEL=debug
+    volumes:
+      - ./configs/dev-config.yaml:/etc/slurm-exporter/config.yaml:ro
+    command: ["--config", "/etc/slurm-exporter/config.yaml", "--log-level", "debug"]
+
+  # Add development tools
+  slurm-exporter-dev:
+    # Development container with source code mounted for live reloading
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: slurm-exporter-dev
+    working_dir: /build
+    volumes:
+      - .:/build:cached
+      - go_modules:/go/pkg/mod
+    environment:
+      - CGO_ENABLED=0
+      - GOOS=linux
+      - GOARCH=amd64
+    networks:
+      - monitoring
+    command: ["sleep", "infinity"]  # Keep container running for development
+    profiles:
+      - dev
+
+volumes:
+  go_modules:

@@ -1,0 +1,94 @@
+# Development configuration for SLURM Prometheus Exporter
+# This configuration is optimized for local development and testing
+
+# Server configuration
+server:
+  address: ":8080"
+  metrics_path: "/metrics"
+  health_path: "/health"
+  ready_path: "/ready"
+  timeout: "30s"
+  read_timeout: "10s"
+  write_timeout: "10s"
+  idle_timeout: "60s"
+  max_request_size: 1048576  # 1MB
+
+  # TLS disabled for local development
+  tls:
+    enabled: false
+
+  # Basic auth disabled for local development
+  basic_auth:
+    enabled: false
+
+  # CORS configuration for development
+  cors:
+    enabled: true
+    allowed_origins: ["*"]
+    allowed_methods: ["GET", "OPTIONS"]
+    allowed_headers: ["Accept", "Authorization", "Content-Type", "X-CSRF-Token"]
+
+# SLURM connection configuration (mock server)
+slurm:
+  base_url: "http://slurm-mock:8080"
+  api_version: "v0.0.42"
+  timeout: "30s"
+  retry_attempts: 3
+  retry_delay: "5s"
+
+  # No authentication for mock server
+  auth:
+    type: "none"
+
+  # Connection pool settings for development
+  max_idle_conns: 10
+  max_conns_per_host: 20
+  idle_conn_timeout: "90s"
+
+# Collectors configuration - enable more for development/testing
+collectors:
+  cluster:
+    enabled: true
+    interval: "30s"
+  
+  node:
+    enabled: true
+    interval: "30s"
+  
+  job:
+    enabled: true
+    interval: "15s"  # More frequent for development
+  
+  user:
+    enabled: true
+    interval: "60s"
+  
+  partition:
+    enabled: true
+    interval: "45s"
+  
+  performance:
+    enabled: true
+    interval: "30s"
+
+  scheduler:
+    enabled: true
+    interval: "30s"
+
+  selfmon:
+    enabled: true
+    interval: "10s"  # Frequent self-monitoring for development
+
+# Logging configuration for development
+logging:
+  level: "debug"  # Verbose logging for development
+  format: "json"
+  output: "stdout"
+  add_caller: true
+  disable_stacktrace: false
+
+# Metrics configuration
+metrics:
+  namespace: "slurm"
+  max_cardinality: 100000  # Higher limit for development
+  cardinality_check_interval: "60s"

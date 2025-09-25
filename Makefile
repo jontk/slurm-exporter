@@ -97,6 +97,36 @@ security:
 # Run all checks (lint, vet, test)
 check: fmt vet lint test
 
+# Docker Compose commands for development
+dev-up:
+	@echo "Starting development environment..."
+	docker-compose up -d
+
+dev-down:
+	@echo "Stopping development environment..."
+	docker-compose down
+
+dev-logs:
+	@echo "Showing development logs..."
+	docker-compose logs -f slurm-exporter
+
+dev-restart:
+	@echo "Restarting SLURM exporter..."
+	docker-compose restart slurm-exporter
+
+dev-build:
+	@echo "Building development images..."
+	docker-compose build
+
+dev-shell:
+	@echo "Starting development shell..."
+	docker-compose run --rm slurm-exporter-dev bash
+
+dev-clean:
+	@echo "Cleaning development environment..."
+	docker-compose down -v
+	docker-compose rm -f
+
 # Docker build
 docker-build:
 	@echo "Building Docker image $(DOCKER_IMAGE):$(DOCKER_TAG)..."
