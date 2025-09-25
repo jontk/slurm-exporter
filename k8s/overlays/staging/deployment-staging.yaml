@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: slurm-exporter
+spec:
+  template:
+    spec:
+      containers:
+      - name: slurm-exporter
+        env:
+        - name: SLURM_EXPORTER_CONFIG_FILE
+          value: "/etc/slurm-exporter/config.yaml"
+        - name: SLURM_EXPORTER_LOG_LEVEL
+          value: "info"
+        volumeMounts:
+        - name: config
+          mountPath: /etc/slurm-exporter
+          readOnly: true
+        - name: staging-secrets
+          mountPath: /etc/slurm-exporter/secrets
+          readOnly: true
+      volumes:
+      - name: config
+        configMap:
+          name: slurm-exporter-config-staging
+          defaultMode: 0444
+      - name: staging-secrets
+        secret:
+          secretName: slurm-exporter-staging-auth
+          defaultMode: 0400

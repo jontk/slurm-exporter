@@ -13,6 +13,8 @@ resources:
 - deployment.yaml
 - service.yaml
 - configmap.yaml
+- secrets.yaml
+- servicemonitor.yaml
 - networkpolicy.yaml
 - poddisruptionbudget.yaml
 - hpa.yaml

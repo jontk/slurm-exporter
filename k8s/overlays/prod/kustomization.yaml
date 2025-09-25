@@ -1,0 +1,38 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: slurm-monitoring
+
+resources:
+- ../../
+
+patchesStrategicMerge:
+- deployment-prod.yaml
+
+images:
+- name: slurm-exporter
+  newTag: v1.0.0
+
+replicas:
+- name: slurm-exporter
+  count: 2
+
+commonLabels:
+  environment: production
+
+patches:
+- target:
+    kind: ConfigMap
+    name: slurm-exporter-config
+  patch: |-
+    - op: replace
+      path: /data/config.yaml
+      value: |
+        # Production configuration loaded from slurm-exporter-config-prod
+- target:
+    kind: Deployment
+    name: slurm-exporter
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/volumes/0/configMap/name
+      value: slurm-exporter-config-prod

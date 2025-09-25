@@ -1,0 +1,76 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: slurm-exporter
+  namespace: monitoring
+  labels:
+    app: slurm-exporter
+    component: metrics
+    service: metrics-endpoint
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+    prometheus.io/path: "/metrics"
+    service.alpha.kubernetes.io/tolerate-unready-endpoints: "false"
+spec:
+  type: ClusterIP
+  selector:
+    app: slurm-exporter
+  ports:
+  - name: http-metrics
+    port: 8080
+    targetPort: http-metrics
+    protocol: TCP
+  # Session affinity for consistent metrics collection
+  sessionAffinity: None
+  # Internal traffic policy for better performance
+  internalTrafficPolicy: Cluster
+
+---
+# Headless service for StatefulSet scenarios or direct pod access
+apiVersion: v1
+kind: Service
+metadata:
+  name: slurm-exporter-headless
+  namespace: monitoring
+  labels:
+    app: slurm-exporter
+    component: metrics
+    service: headless
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app: slurm-exporter
+  ports:
+  - name: http-metrics
+    port: 8080
+    targetPort: http-metrics
+    protocol: TCP
+  publishNotReadyAddresses: false
+
+---
+# NodePort service for external access (optional, for development/testing)
+apiVersion: v1
+kind: Service
+metadata:
+  name: slurm-exporter-nodeport
+  namespace: monitoring
+  labels:
+    app: slurm-exporter
+    component: metrics
+    service: external-access
+  annotations:
+    description: "NodePort service for external access to SLURM exporter metrics"
+spec:
+  type: NodePort
+  selector:
+    app: slurm-exporter
+  ports:
+  - name: http-metrics
+    port: 8080
+    targetPort: http-metrics
+    protocol: TCP
+    nodePort: 30080  # Fixed NodePort for consistent external access
+  externalTrafficPolicy: Local

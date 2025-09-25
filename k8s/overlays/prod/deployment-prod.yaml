@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: slurm-exporter
+spec:
+  template:
+    spec:
+      containers:
+      - name: slurm-exporter
+        resources:
+          requests:
+            cpu: 200m
+            memory: 256Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        env:
+        - name: SLURM_EXPORTER_CONFIG_FILE
+          value: "/etc/slurm-exporter/config.yaml"
+        - name: SLURM_EXPORTER_LOG_LEVEL
+          value: "warn"
+        volumeMounts:
+        - name: config
+          mountPath: /etc/slurm-exporter
+          readOnly: true
+        - name: auth-secrets
+          mountPath: /etc/slurm-exporter/secrets
+          readOnly: true
+        - name: tls-certs
+          mountPath: /etc/ssl/slurm-exporter
+          readOnly: true
+      volumes:
+      - name: config
+        configMap:
+          name: slurm-exporter-config-prod
+          defaultMode: 0444
+      - name: auth-secrets
+        secret:
+          secretName: slurm-exporter-auth
+          defaultMode: 0400
+      - name: tls-certs
+        secret:
+          secretName: slurm-exporter-tls
+          defaultMode: 0400
