@@ -1,0 +1,490 @@
+package collector
+
+import (
+	"context"
+	"fmt"
+	"log/slog"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/jontk/slurm-client"
+	"github.com/prometheus/client_golang/prometheus"
+)
+
+// SimplifiedJobPerformanceCollector provides basic job performance metrics using existing SLURM client types
+type SimplifiedJobPerformanceCollector struct {
+	slurmClient     slurm.SlurmClient
+	logger          *slog.Logger
+	config          *JobPerformanceConfig
+	metrics         *SimplifiedJobMetrics
+	lastCollection  time.Time
+	mu              sync.RWMutex
+	
+	// Cache for recent job data
+	jobCache        map[string]*slurm.Job
+	cacheTTL        time.Duration
+}
+
+// SimplifiedJobMetrics holds basic Prometheus metrics for job performance
+type SimplifiedJobMetrics struct {
+	// Basic job metrics from existing data
+	JobDuration           *prometheus.GaugeVec
+	JobCPUAllocated       *prometheus.GaugeVec
+	JobMemoryAllocated    *prometheus.GaugeVec
+	JobNodesAllocated     *prometheus.GaugeVec
+	JobGPUAllocated       *prometheus.GaugeVec
+	JobQueueTime          *prometheus.GaugeVec
+	JobStartDelay         *prometheus.GaugeVec
+	
+	// Job state tracking
+	JobStateTransitions   *prometheus.CounterVec
+	JobsByState           *prometheus.GaugeVec
+	JobsByUser            *prometheus.GaugeVec
+	JobsByAccount         *prometheus.GaugeVec
+	JobsByPartition       *prometheus.GaugeVec
+	
+	// Performance indicators (estimated)
+	JobResourceRatio      *prometheus.GaugeVec
+	JobEfficiencyEstimate *prometheus.GaugeVec
+	
+	// Collection performance metrics
+	CollectionDuration    prometheus.Histogram
+	CollectionErrors      *prometheus.CounterVec
+	JobsProcessed         prometheus.Counter
+	CacheHitRatio         prometheus.Gauge
+}
+
+// NewSimplifiedJobPerformanceCollector creates a new simplified job performance collector
+func NewSimplifiedJobPerformanceCollector(slurmClient slurm.SlurmClient, logger *slog.Logger, config *JobPerformanceConfig) (*SimplifiedJobPerformanceCollector, error) {
+	if config == nil {
+		config = &JobPerformanceConfig{
+			CollectionInterval:   30 * time.Second,
+			MaxJobsPerCollection: 1000,
+			CacheTTL:             5 * time.Minute,
+		}
+	}
+
+	metrics := &SimplifiedJobMetrics{
+		JobDuration: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "slurm_job_duration_seconds",
+				Help: "Job duration in seconds",
+			},
+			[]string{"job_id", "job_name", "user", "account", "partition", "state"},
+		),
+		JobCPUAllocated: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "slurm_job_cpus_allocated_total",
+				Help: "Number of CPUs allocated to job",
+			},
+			[]string{"job_id", "job_name", "user", "account", "partition", "state"},
+		),
+		JobMemoryAllocated: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "slurm_job_memory_allocated_bytes",
+				Help: "Memory allocated to job in bytes",
+			},
+			[]string{"job_id", "job_name", "user", "account", "partition", "state"},
+		),
+		JobNodesAllocated: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "slurm_job_nodes_allocated_total",
+				Help: "Number of nodes allocated to job",
+			},
+			[]string{"job_id", "job_name", "user", "account", "partition", "state"},
+		),
+		JobGPUAllocated: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "slurm_job_gpus_allocated_total",
+				Help: "Number of GPUs allocated to job",
+			},
+			[]string{"job_id", "job_name", "user", "account", "partition", "state"},
+		),
+		JobQueueTime: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "slurm_job_queue_time_seconds",
+				Help: "Time job spent in queue before starting",
+			},
+			[]string{"job_id", "job_name", "user", "account", "partition"},
+		),
+		JobStartDelay: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "slurm_job_start_delay_seconds",
+				Help: "Delay between job submission and start",
+			},
+			[]string{"job_id", "job_name", "user", "account", "partition"},
+		),
+		JobStateTransitions: prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "slurm_job_state_transitions_total",
+				Help: "Total number of job state transitions",
+			},
+			[]string{"user", "account", "partition", "from_state", "to_state"},
+		),
+		JobsByState: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "slurm_jobs_by_state_total",
+				Help: "Number of jobs in each state",
+			},
+			[]string{"state", "partition"},
+		),
+		JobsByUser: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "slurm_jobs_by_user_total",
+				Help: "Number of jobs per user",
+			},
+			[]string{"user", "account", "state"},
+		),
+		JobsByAccount: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "slurm_jobs_by_account_total",
+				Help: "Number of jobs per account",
+			},
+			[]string{"account", "state"},
+		),
+		JobsByPartition: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "slurm_jobs_by_partition_total",
+				Help: "Number of jobs per partition",
+			},
+			[]string{"partition", "state"},
+		),
+		JobResourceRatio: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "slurm_job_resource_ratio",
+				Help: "Job resource allocation ratio (nodes * cpus_per_node)",
+			},
+			[]string{"job_id", "job_name", "user", "account", "partition", "state"},
+		),
+		JobEfficiencyEstimate: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "slurm_job_efficiency_estimate_ratio",
+				Help: "Estimated job efficiency based on runtime vs time limit",
+			},
+			[]string{"job_id", "job_name", "user", "account", "partition", "state"},
+		),
+		CollectionDuration: prometheus.NewHistogram(
+			prometheus.HistogramOpts{
+				Name:    "slurm_job_performance_collection_duration_seconds",
+				Help:    "Time spent collecting job performance metrics",
+				Buckets: prometheus.DefBuckets,
+			},
+		),
+		CollectionErrors: prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "slurm_job_performance_collection_errors_total",
+				Help: "Total number of job performance collection errors",
+			},
+			[]string{"error_type"},
+		),
+		JobsProcessed: prometheus.NewCounter(
+			prometheus.CounterOpts{
+				Name: "slurm_job_performance_jobs_processed_total",
+				Help: "Total number of jobs processed for performance metrics",
+			},
+		),
+		CacheHitRatio: prometheus.NewGauge(
+			prometheus.GaugeOpts{
+				Name: "slurm_job_performance_cache_hit_ratio",
+				Help: "Cache hit ratio for job performance data",
+			},
+		),
+	}
+
+	collector := &SimplifiedJobPerformanceCollector{
+		slurmClient:    slurmClient,
+		logger:         logger,
+		config:         config,
+		metrics:        metrics,
+		jobCache:       make(map[string]*slurm.Job),
+		cacheTTL:       config.CacheTTL,
+		lastCollection: time.Time{},
+	}
+
+	return collector, nil
+}
+
+// Describe implements the prometheus.Collector interface
+func (c *SimplifiedJobPerformanceCollector) Describe(ch chan<- *prometheus.Desc) {
+	c.metrics.JobDuration.Describe(ch)
+	c.metrics.JobCPUAllocated.Describe(ch)
+	c.metrics.JobMemoryAllocated.Describe(ch)
+	c.metrics.JobNodesAllocated.Describe(ch)
+	c.metrics.JobGPUAllocated.Describe(ch)
+	c.metrics.JobQueueTime.Describe(ch)
+	c.metrics.JobStartDelay.Describe(ch)
+	c.metrics.JobStateTransitions.Describe(ch)
+	c.metrics.JobsByState.Describe(ch)
+	c.metrics.JobsByUser.Describe(ch)
+	c.metrics.JobsByAccount.Describe(ch)
+	c.metrics.JobsByPartition.Describe(ch)
+	c.metrics.JobResourceRatio.Describe(ch)
+	c.metrics.JobEfficiencyEstimate.Describe(ch)
+	c.metrics.CollectionDuration.Describe(ch)
+	c.metrics.CollectionErrors.Describe(ch)
+	c.metrics.JobsProcessed.Describe(ch)
+	c.metrics.CacheHitRatio.Describe(ch)
+}
+
+// Collect implements the prometheus.Collector interface
+func (c *SimplifiedJobPerformanceCollector) Collect(ch chan<- prometheus.Metric) {
+	start := time.Now()
+	defer func() {
+		c.metrics.CollectionDuration.Observe(time.Since(start).Seconds())
+	}()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := c.collectJobMetrics(ctx); err != nil {
+		c.logger.Error("Failed to collect job metrics", "error", err)
+		c.metrics.CollectionErrors.WithLabelValues("job_collection").Inc()
+	}
+
+	// Collect metrics from all registered collectors
+	c.metrics.JobDuration.Collect(ch)
+	c.metrics.JobCPUAllocated.Collect(ch)
+	c.metrics.JobMemoryAllocated.Collect(ch)
+	c.metrics.JobNodesAllocated.Collect(ch)
+	c.metrics.JobGPUAllocated.Collect(ch)
+	c.metrics.JobQueueTime.Collect(ch)
+	c.metrics.JobStartDelay.Collect(ch)
+	c.metrics.JobStateTransitions.Collect(ch)
+	c.metrics.JobsByState.Collect(ch)
+	c.metrics.JobsByUser.Collect(ch)
+	c.metrics.JobsByAccount.Collect(ch)
+	c.metrics.JobsByPartition.Collect(ch)
+	c.metrics.JobResourceRatio.Collect(ch)
+	c.metrics.JobEfficiencyEstimate.Collect(ch)
+	c.metrics.CollectionDuration.Collect(ch)
+	c.metrics.CollectionErrors.Collect(ch)
+	c.metrics.JobsProcessed.Collect(ch)
+	c.metrics.CacheHitRatio.Collect(ch)
+}
+
+// collectJobMetrics collects basic job metrics using existing SLURM client
+func (c *SimplifiedJobPerformanceCollector) collectJobMetrics(ctx context.Context) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// Get job manager from SLURM client
+	jobManager := c.slurmClient.Jobs()
+	if jobManager == nil {
+		return fmt.Errorf("job manager not available")
+	}
+
+	// List jobs with filters
+	listOptions := &slurm.ListJobsOptions{
+		States:   []string{"RUNNING", "PENDING", "COMPLETING", "COMPLETED", "FAILED", "CANCELLED"},
+		MaxCount: c.config.MaxJobsPerCollection,
+	}
+
+	if c.config.IncludeCompletedJobs {
+		listOptions.StartTime = time.Now().Add(-c.config.CompletedJobsMaxAge)
+	}
+
+	jobs, err := jobManager.List(ctx, listOptions)
+	if err != nil {
+		return fmt.Errorf("failed to list jobs: %w", err)
+	}
+
+	c.logger.Debug("Collecting basic job metrics", "job_count", len(jobs.Jobs))
+
+	// Reset aggregation metrics
+	c.resetAggregationMetrics()
+
+	cacheHits := 0
+	totalJobs := len(jobs.Jobs)
+	
+	// Track state counts for aggregation
+	stateCounts := make(map[string]map[string]int) // partition -> state -> count
+	userStateCounts := make(map[string]map[string]int) // user -> state -> count
+	accountStateCounts := make(map[string]int) // account -> count
+
+	// Process each job
+	for _, job := range jobs.Jobs {
+		// Check cache first
+		if cachedJob, exists := c.jobCache[job.JobID]; exists {
+			c.updateMetricsFromJob(cachedJob)
+			c.updateAggregationCounters(cachedJob, stateCounts, userStateCounts, accountStateCounts)
+			cacheHits++
+			continue
+		}
+
+		// Cache the job data
+		c.jobCache[job.JobID] = job
+
+		// Update Prometheus metrics
+		c.updateMetricsFromJob(job)
+		c.updateAggregationCounters(job, stateCounts, userStateCounts, accountStateCounts)
+		c.metrics.JobsProcessed.Inc()
+	}
+
+	// Update aggregation metrics
+	c.updateAggregationMetrics(stateCounts, userStateCounts, accountStateCounts)
+
+	// Update cache hit ratio
+	if totalJobs > 0 {
+		c.metrics.CacheHitRatio.Set(float64(cacheHits) / float64(totalJobs))
+	}
+
+	// Clean expired cache entries
+	c.cleanExpiredCache()
+
+	c.lastCollection = time.Now()
+	return nil
+}
+
+// updateMetricsFromJob updates Prometheus metrics from basic job data
+func (c *SimplifiedJobPerformanceCollector) updateMetricsFromJob(job *slurm.Job) {
+	labels := []string{
+		job.JobID,
+		job.Name,
+		job.UserName,
+		job.Account,
+		job.Partition,
+		job.JobState,
+	}
+
+	// Job duration (for completed jobs)
+	if job.EndTime != nil && job.StartTime != nil {
+		duration := job.EndTime.Sub(*job.StartTime).Seconds()
+		c.metrics.JobDuration.WithLabelValues(labels...).Set(duration)
+	}
+
+	// Resource allocation
+	if job.CPUs > 0 {
+		c.metrics.JobCPUAllocated.WithLabelValues(labels...).Set(float64(job.CPUs))
+	}
+	
+	if job.Memory > 0 {
+		// Convert MB to bytes
+		memoryBytes := float64(job.Memory) * 1024 * 1024
+		c.metrics.JobMemoryAllocated.WithLabelValues(labels...).Set(memoryBytes)
+	}
+	
+	if job.Nodes > 0 {
+		c.metrics.JobNodesAllocated.WithLabelValues(labels...).Set(float64(job.Nodes))
+	}
+
+	// GPU allocation (if available)
+	if job.TresCPU != "" {
+		// Parse TRES for GPU count - simplified parsing
+		// In real implementation, would parse TRES string properly
+		c.metrics.JobGPUAllocated.WithLabelValues(labels...).Set(0) // Placeholder
+	}
+
+	// Queue time calculation
+	if job.StartTime != nil && job.SubmitTime != nil {
+		queueTime := job.StartTime.Sub(*job.SubmitTime).Seconds()
+		queueLabels := labels[:5] // Exclude state for queue metrics
+		c.metrics.JobQueueTime.WithLabelValues(queueLabels...).Set(queueTime)
+		c.metrics.JobStartDelay.WithLabelValues(queueLabels...).Set(queueTime)
+	}
+
+	// Resource ratio (rough efficiency indicator)
+	if job.CPUs > 0 && job.Nodes > 0 {
+		resourceRatio := float64(job.CPUs) / float64(job.Nodes)
+		c.metrics.JobResourceRatio.WithLabelValues(labels...).Set(resourceRatio)
+	}
+
+	// Efficiency estimate based on runtime vs time limit
+	if job.EndTime != nil && job.StartTime != nil && job.TimeLimit > 0 {
+		runtime := job.EndTime.Sub(*job.StartTime).Seconds()
+		timeLimit := float64(job.TimeLimit) * 60 // Convert minutes to seconds
+		if timeLimit > 0 {
+			efficiencyEstimate := runtime / timeLimit
+			c.metrics.JobEfficiencyEstimate.WithLabelValues(labels...).Set(efficiencyEstimate)
+		}
+	}
+}
+
+// updateAggregationCounters updates counters for aggregation metrics
+func (c *SimplifiedJobPerformanceCollector) updateAggregationCounters(
+	job *slurm.Job,
+	stateCounts map[string]map[string]int,
+	userStateCounts map[string]map[string]int,
+	accountStateCounts map[string]int,
+) {
+	// State counts by partition
+	if stateCounts[job.Partition] == nil {
+		stateCounts[job.Partition] = make(map[string]int)
+	}
+	stateCounts[job.Partition][job.JobState]++
+
+	// User state counts
+	userKey := fmt.Sprintf("%s:%s", job.UserName, job.Account)
+	if userStateCounts[userKey] == nil {
+		userStateCounts[userKey] = make(map[string]int)
+	}
+	userStateCounts[userKey][job.JobState]++
+
+	// Account counts
+	accountStateCounts[job.Account]++
+}
+
+// resetAggregationMetrics resets aggregation metrics before collection
+func (c *SimplifiedJobPerformanceCollector) resetAggregationMetrics() {
+	c.metrics.JobsByState.Reset()
+	c.metrics.JobsByUser.Reset()
+	c.metrics.JobsByAccount.Reset()
+	c.metrics.JobsByPartition.Reset()
+}
+
+// updateAggregationMetrics updates aggregation metrics from collected counts
+func (c *SimplifiedJobPerformanceCollector) updateAggregationMetrics(
+	stateCounts map[string]map[string]int,
+	userStateCounts map[string]map[string]int,
+	accountStateCounts map[string]int,
+) {
+	// Jobs by state and partition
+	for partition, states := range stateCounts {
+		for state, count := range states {
+			c.metrics.JobsByState.WithLabelValues(state, partition).Set(float64(count))
+			c.metrics.JobsByPartition.WithLabelValues(partition, state).Set(float64(count))
+		}
+	}
+
+	// Jobs by user and account
+	for userKey, states := range userStateCounts {
+		// Parse user:account key
+		parts := strings.SplitN(userKey, ":", 2)
+		if len(parts) == 2 {
+			user, account := parts[0], parts[1]
+			for state, count := range states {
+				c.metrics.JobsByUser.WithLabelValues(user, account, state).Set(float64(count))
+			}
+		}
+	}
+
+	// Jobs by account
+	for account, count := range accountStateCounts {
+		c.metrics.JobsByAccount.WithLabelValues(account, "total").Set(float64(count))
+	}
+}
+
+// cleanExpiredCache removes expired entries from the job cache
+func (c *SimplifiedJobPerformanceCollector) cleanExpiredCache() {
+	now := time.Now()
+	for jobID, job := range c.jobCache {
+		// Use job submit time as reference for cache expiration
+		if job.SubmitTime != nil && now.Sub(*job.SubmitTime) > c.cacheTTL {
+			delete(c.jobCache, jobID)
+		}
+	}
+}
+
+// GetCacheSize returns the current size of the job cache
+func (c *SimplifiedJobPerformanceCollector) GetCacheSize() int {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return len(c.jobCache)
+}
+
+// GetLastCollection returns the timestamp of the last successful collection
+func (c *SimplifiedJobPerformanceCollector) GetLastCollection() time.Time {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.lastCollection
+}
