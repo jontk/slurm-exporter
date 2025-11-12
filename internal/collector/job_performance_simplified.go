@@ -14,16 +14,18 @@ import (
 
 // SimplifiedJobPerformanceCollector provides basic job performance metrics using existing SLURM client types
 type SimplifiedJobPerformanceCollector struct {
-	slurmClient     slurm.SlurmClient
-	logger          *slog.Logger
-	config          *JobPerformanceConfig
-	metrics         *SimplifiedJobMetrics
-	lastCollection  time.Time
-	mu              sync.RWMutex
+	slurmClient        slurm.SlurmClient
+	logger             *slog.Logger
+	config             *JobPerformanceConfig
+	metrics            *SimplifiedJobMetrics
+	efficiencyCalc     *EfficiencyCalculator
+	lastCollection     time.Time
+	mu                 sync.RWMutex
 	
 	// Cache for recent job data
-	jobCache        map[string]*slurm.Job
-	cacheTTL        time.Duration
+	jobCache           map[string]*slurm.Job
+	efficiencyCache    map[string]*EfficiencyMetrics
+	cacheTTL           time.Duration
 }
 
 // SimplifiedJobMetrics holds basic Prometheus metrics for job performance
@@ -47,6 +49,13 @@ type SimplifiedJobMetrics struct {
 	// Performance indicators (estimated)
 	JobResourceRatio      *prometheus.GaugeVec
 	JobEfficiencyEstimate *prometheus.GaugeVec
+	
+	// Efficiency metrics from calculator
+	JobCPUEfficiencyScore     *prometheus.GaugeVec
+	JobMemoryEfficiencyScore  *prometheus.GaugeVec
+	JobOverallEfficiencyScore *prometheus.GaugeVec
+	JobEfficiencyGrade        *prometheus.GaugeVec
+	JobWasteRatio             *prometheus.GaugeVec
 	
 	// Collection performance metrics
 	CollectionDuration    prometheus.Histogram
@@ -164,6 +173,41 @@ func NewSimplifiedJobPerformanceCollector(slurmClient slurm.SlurmClient, logger 
 			},
 			[]string{"job_id", "job_name", "user", "account", "partition", "state"},
 		),
+		JobCPUEfficiencyScore: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "slurm_job_cpu_efficiency_score",
+				Help: "CPU efficiency score calculated by efficiency algorithm",
+			},
+			[]string{"job_id", "job_name", "user", "account", "partition", "state"},
+		),
+		JobMemoryEfficiencyScore: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "slurm_job_memory_efficiency_score",
+				Help: "Memory efficiency score calculated by efficiency algorithm",
+			},
+			[]string{"job_id", "job_name", "user", "account", "partition", "state"},
+		),
+		JobOverallEfficiencyScore: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "slurm_job_overall_efficiency_score",
+				Help: "Overall efficiency score calculated by efficiency algorithm",
+			},
+			[]string{"job_id", "job_name", "user", "account", "partition", "state"},
+		),
+		JobEfficiencyGrade: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "slurm_job_efficiency_grade_info",
+				Help: "Job efficiency grade (A=5, B=4, C=3, D=2, F=1)",
+			},
+			[]string{"job_id", "job_name", "user", "account", "partition", "state", "grade"},
+		),
+		JobWasteRatio: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "slurm_job_waste_ratio",
+				Help: "Resource waste ratio calculated by efficiency algorithm",
+			},
+			[]string{"job_id", "job_name", "user", "account", "partition", "state"},
+		),
 		CollectionDuration: prometheus.NewHistogram(
 			prometheus.HistogramOpts{
 				Name:    "slurm_job_performance_collection_duration_seconds",
@@ -192,14 +236,19 @@ func NewSimplifiedJobPerformanceCollector(slurmClient slurm.SlurmClient, logger 
 		),
 	}
 
+	// Create efficiency calculator
+	efficiencyCalc := NewEfficiencyCalculator(logger, nil)
+
 	collector := &SimplifiedJobPerformanceCollector{
-		slurmClient:    slurmClient,
-		logger:         logger,
-		config:         config,
-		metrics:        metrics,
-		jobCache:       make(map[string]*slurm.Job),
-		cacheTTL:       config.CacheTTL,
-		lastCollection: time.Time{},
+		slurmClient:     slurmClient,
+		logger:          logger,
+		config:          config,
+		metrics:         metrics,
+		efficiencyCalc:  efficiencyCalc,
+		jobCache:        make(map[string]*slurm.Job),
+		efficiencyCache: make(map[string]*EfficiencyMetrics),
+		cacheTTL:        config.CacheTTL,
+		lastCollection:  time.Time{},
 	}
 
 	return collector, nil
@@ -221,6 +270,11 @@ func (c *SimplifiedJobPerformanceCollector) Describe(ch chan<- *prometheus.Desc)
 	c.metrics.JobsByPartition.Describe(ch)
 	c.metrics.JobResourceRatio.Describe(ch)
 	c.metrics.JobEfficiencyEstimate.Describe(ch)
+	c.metrics.JobCPUEfficiencyScore.Describe(ch)
+	c.metrics.JobMemoryEfficiencyScore.Describe(ch)
+	c.metrics.JobOverallEfficiencyScore.Describe(ch)
+	c.metrics.JobEfficiencyGrade.Describe(ch)
+	c.metrics.JobWasteRatio.Describe(ch)
 	c.metrics.CollectionDuration.Describe(ch)
 	c.metrics.CollectionErrors.Describe(ch)
 	c.metrics.JobsProcessed.Describe(ch)
@@ -257,6 +311,11 @@ func (c *SimplifiedJobPerformanceCollector) Collect(ch chan<- prometheus.Metric)
 	c.metrics.JobsByPartition.Collect(ch)
 	c.metrics.JobResourceRatio.Collect(ch)
 	c.metrics.JobEfficiencyEstimate.Collect(ch)
+	c.metrics.JobCPUEfficiencyScore.Collect(ch)
+	c.metrics.JobMemoryEfficiencyScore.Collect(ch)
+	c.metrics.JobOverallEfficiencyScore.Collect(ch)
+	c.metrics.JobEfficiencyGrade.Collect(ch)
+	c.metrics.JobWasteRatio.Collect(ch)
 	c.metrics.CollectionDuration.Collect(ch)
 	c.metrics.CollectionErrors.Collect(ch)
 	c.metrics.JobsProcessed.Collect(ch)
@@ -318,6 +377,10 @@ func (c *SimplifiedJobPerformanceCollector) collectJobMetrics(ctx context.Contex
 		// Update Prometheus metrics
 		c.updateMetricsFromJob(job)
 		c.updateAggregationCounters(job, stateCounts, userStateCounts, accountStateCounts)
+		
+		// Calculate and update efficiency metrics
+		c.updateEfficiencyMetrics(job)
+		
 		c.metrics.JobsProcessed.Inc()
 	}
 
@@ -480,6 +543,74 @@ func (c *SimplifiedJobPerformanceCollector) GetCacheSize() int {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return len(c.jobCache)
+}
+
+// updateEfficiencyMetrics calculates and updates efficiency metrics for a job
+func (c *SimplifiedJobPerformanceCollector) updateEfficiencyMetrics(job *slurm.Job) {
+	// Check efficiency cache first
+	if cachedEfficiency, exists := c.efficiencyCache[job.JobID]; exists {
+		c.setEfficiencyMetrics(job, cachedEfficiency)
+		return
+	}
+
+	// Create resource utilization data from job
+	utilizationData := CreateResourceUtilizationDataFromJob(job)
+	
+	// Calculate efficiency metrics
+	efficiencyMetrics, err := c.efficiencyCalc.CalculateEfficiency(utilizationData)
+	if err != nil {
+		c.logger.Warn("Failed to calculate efficiency metrics", "job_id", job.JobID, "error", err)
+		return
+	}
+
+	// Cache the efficiency metrics
+	c.efficiencyCache[job.JobID] = efficiencyMetrics
+
+	// Update Prometheus metrics
+	c.setEfficiencyMetrics(job, efficiencyMetrics)
+}
+
+// setEfficiencyMetrics sets Prometheus metrics from efficiency calculations
+func (c *SimplifiedJobPerformanceCollector) setEfficiencyMetrics(job *slurm.Job, effMetrics *EfficiencyMetrics) {
+	labels := []string{
+		job.JobID,
+		job.Name,
+		job.UserName,
+		job.Account,
+		job.Partition,
+		job.JobState,
+	}
+
+	// Set individual efficiency scores
+	c.metrics.JobCPUEfficiencyScore.WithLabelValues(labels...).Set(effMetrics.CPUEfficiency)
+	c.metrics.JobMemoryEfficiencyScore.WithLabelValues(labels...).Set(effMetrics.MemoryEfficiency)
+	c.metrics.JobOverallEfficiencyScore.WithLabelValues(labels...).Set(effMetrics.OverallEfficiency)
+
+	// Set waste ratio
+	c.metrics.JobWasteRatio.WithLabelValues(labels...).Set(effMetrics.WasteRatio)
+
+	// Set efficiency grade as numeric value
+	gradeLabels := append(labels, effMetrics.EfficiencyGrade)
+	gradeValue := c.gradeToNumeric(effMetrics.EfficiencyGrade)
+	c.metrics.JobEfficiencyGrade.WithLabelValues(gradeLabels...).Set(gradeValue)
+}
+
+// gradeToNumeric converts letter grade to numeric value
+func (c *SimplifiedJobPerformanceCollector) gradeToNumeric(grade string) float64 {
+	switch grade {
+	case "A":
+		return 5.0
+	case "B":
+		return 4.0
+	case "C":
+		return 3.0
+	case "D":
+		return 2.0
+	case "F":
+		return 1.0
+	default:
+		return 0.0
+	}
 }
 
 // GetLastCollection returns the timestamp of the last successful collection
