@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -13,7 +14,11 @@ import (
 
 	"github.com/jontk/slurm-exporter/internal/collector"
 	"github.com/jontk/slurm-exporter/internal/config"
+	"github.com/jontk/slurm-exporter/internal/health"
 )
+
+// startTime tracks when the server package was loaded
+var startTime = time.Now()
 
 // RegistryInterface defines the methods needed by the server from the registry
 type RegistryInterface interface {
@@ -110,6 +115,7 @@ type Server struct {
 	registry       RegistryInterface
 	promRegistry   *prometheus.Registry
 	httpMetrics    *HTTPMetrics
+	healthChecker  *health.HealthChecker
 	isShuttingDown bool
 }
 
@@ -126,13 +132,20 @@ func New(cfg *config.Config, logger *logrus.Logger, registry RegistryInterface, 
 		return nil, fmt.Errorf("failed to register HTTP metrics: %w", err)
 	}
 
+	// Create health checker
+	healthChecker := health.NewHealthChecker(logger)
+
 	s := &Server{
-		config:       cfg,
-		logger:       logger,
-		registry:     registry,
-		promRegistry: promRegistry,
-		httpMetrics:  httpMetrics,
+		config:        cfg,
+		logger:        logger,
+		registry:      registry,
+		promRegistry:  promRegistry,
+		httpMetrics:   httpMetrics,
+		healthChecker: healthChecker,
 	}
+
+	// Setup health checks
+	s.setupHealthChecks()
 
 	// Create HTTP handler and setup routes with middleware
 	handler := s.setupRoutes()
@@ -234,21 +247,82 @@ func (s *Server) createTLSConfig() (*tls.Config, error) {
 	return tlsConfig, nil
 }
 
+// setupHealthChecks configures health check functions
+func (s *Server) setupHealthChecks() {
+	// Basic service liveness check
+	s.healthChecker.RegisterCheck("service", func(ctx context.Context) health.Check {
+		return health.Check{
+			Status:  health.StatusHealthy,
+			Message: "Service is running",
+		}
+	})
+
+	// Registry availability check
+	s.healthChecker.RegisterCheck("registry", func(ctx context.Context) health.Check {
+		if s.registry == nil {
+			return health.Check{
+				Status: health.StatusUnhealthy,
+				Error:  "Collector registry is not available",
+			}
+		}
+
+		stats := s.registry.GetStats()
+		enabledCount := 0
+		for _, stat := range stats {
+			if stat.Enabled {
+				enabledCount++
+			}
+		}
+
+		if enabledCount == 0 {
+			return health.Check{
+				Status:  health.StatusDegraded,
+				Message: "No collectors are enabled",
+			}
+		}
+
+		return health.Check{
+			Status:  health.StatusHealthy,
+			Message: fmt.Sprintf("%d collectors enabled", enabledCount),
+			Metadata: map[string]string{
+				"enabled_collectors": fmt.Sprintf("%d", enabledCount),
+				"total_collectors":   fmt.Sprintf("%d", len(stats)),
+			},
+		}
+	})
+
+	// Metrics endpoint self-check
+	s.healthChecker.RegisterCheck("metrics_endpoint", health.MetricsEndpointCheck(
+		fmt.Sprintf("http://localhost%s%s", s.config.Server.Address, s.config.Server.MetricsPath),
+		&http.Client{Timeout: 10 * time.Second},
+	))
+
+	// TODO: Add SLURM connectivity check when SLURM client is available
+	// This would be added in the main.go where we have access to the SLURM client
+}
+
 // setupRoutes configures HTTP routes
 func (s *Server) setupRoutes() http.Handler {
 	mux := http.NewServeMux()
 
-	// Health check endpoint
-	mux.HandleFunc("/health", s.handleHealth)
+	// Health check endpoints using our health checker
+	mux.Handle("/health", s.healthChecker.HealthHandler())
+	mux.Handle("/ready", s.healthChecker.ReadinessHandler())
+	mux.Handle("/live", s.healthChecker.LivenessHandler())
 
-	// Readiness check endpoint
-	mux.HandleFunc("/ready", s.handleReady)
+	// Legacy health endpoints (for backwards compatibility)
+	mux.HandleFunc("/healthz", s.handleHealth)
+	mux.HandleFunc("/readyz", s.handleReady)
 
 	// Metrics endpoint
 	mux.Handle(s.config.Server.MetricsPath, s.createMetricsHandler())
 
 	// Root endpoint with basic info
 	mux.HandleFunc("/", s.handleRoot)
+
+	// Debug endpoints (for troubleshooting)
+	mux.HandleFunc("/debug/health", s.handleDebugHealth)
+	mux.HandleFunc("/debug/collectors", s.handleDebugCollectors)
 
 	// Apply middleware to all routes
 	return s.CombinedMiddleware(mux)
@@ -566,4 +640,68 @@ func (s *Server) GetMetricsPath() string {
 // GetAddress returns the server address
 func (s *Server) GetAddress() string {
 	return s.config.Server.Address
+}
+
+// handleDebugHealth provides detailed health information for debugging
+func (s *Server) handleDebugHealth(w http.ResponseWriter, r *http.Request) {
+	logger := s.logger.WithField("component", "debug_health_handler")
+	logger.Debug("Debug health check requested")
+
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
+
+	report := s.healthChecker.CheckHealth(ctx)
+	
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-cache")
+	
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{
+		"health_report": report,
+		"server_info": map[string]interface{}{
+			"address":      s.config.Server.Address,
+			"metrics_path": s.config.Server.MetricsPath,
+			"uptime":       time.Since(startTime),
+		},
+	}); err != nil {
+		logger.WithError(err).Error("Failed to encode debug health response")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
+}
+
+// handleDebugCollectors provides detailed collector information for debugging
+func (s *Server) handleDebugCollectors(w http.ResponseWriter, r *http.Request) {
+	logger := s.logger.WithField("component", "debug_collectors_handler")
+	logger.Debug("Debug collectors requested")
+
+	if s.registry == nil {
+		http.Error(w, "Registry not available", http.StatusInternalServerError)
+		return
+	}
+
+	stats := s.registry.GetStats()
+	
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-cache")
+	
+	debugInfo := map[string]interface{}{
+		"collectors": stats,
+		"summary": map[string]interface{}{
+			"total_collectors":   len(stats),
+			"enabled_collectors": func() int {
+				enabled := 0
+				for _, stat := range stats {
+					if stat.Enabled {
+						enabled++
+					}
+				}
+				return enabled
+			}(),
+		},
+		"timestamp": time.Now(),
+	}
+	
+	if err := json.NewEncoder(w).Encode(debugInfo); err != nil {
+		logger.WithError(err).Error("Failed to encode debug collectors response")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
 }

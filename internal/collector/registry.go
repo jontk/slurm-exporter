@@ -378,9 +378,120 @@ func (r *Registry) CreateCollectorsFromConfig(cfg *config.CollectorsConfig, clie
 		r.logger.Info("Reservations collector registered successfully")
 	}
 
-	// Add other collectors as they are implemented
-	// if cfg.Performance.Enabled { ... }
-	// if cfg.System.Enabled { ... }
+	// Jobs collector
+	if cfg.Jobs.Enabled {
+		collector := NewJobsSimpleCollector(slurmClient, logger)
+		
+		// Configure filtering
+		if filterableCollector, ok := (Collector(collector)).(FilterableCollector); ok {
+			filterableCollector.UpdateFilterConfig(cfg.Jobs.Filters)
+		}
+		
+		// Configure cardinality management
+		if cardinalityAware, ok := (Collector(collector)).(CardinalityAwareCollector); ok {
+			cardinalityAware.SetCardinalityManager(r.cardinalityManager)
+		}
+		
+		// Configure custom labels
+		if customLabelsCollector, ok := (Collector(collector)).(CustomLabelsCollector); ok {
+			customLabelsCollector.SetCustomLabels(cfg.Jobs.Labels)
+		}
+		
+		if err := r.Register("jobs", collector); err != nil {
+			return fmt.Errorf("failed to register jobs collector: %w", err)
+		}
+		r.logger.Info("Jobs collector registered successfully")
+	}
+
+	// Nodes collector
+	if cfg.Nodes.Enabled {
+		collector := NewNodesSimpleCollector(slurmClient, logger)
+		
+		// Configure custom labels
+		if customLabelsCollector, ok := (Collector(collector)).(CustomLabelsCollector); ok {
+			customLabelsCollector.SetCustomLabels(cfg.Nodes.Labels)
+		}
+		
+		if err := r.Register("nodes", collector); err != nil {
+			return fmt.Errorf("failed to register nodes collector: %w", err)
+		}
+		r.logger.Info("Nodes collector registered successfully")
+	}
+
+	// Partitions collector
+	if cfg.Partitions.Enabled {
+		collector := NewPartitionsSimpleCollector(slurmClient, logger)
+		if err := r.Register("partitions", collector); err != nil {
+			return fmt.Errorf("failed to register partitions collector: %w", err)
+		}
+		r.logger.Info("Partitions collector registered successfully")
+	}
+
+	// Cluster collector
+	if cfg.Cluster.Enabled {
+		collector := NewClusterSimpleCollector(slurmClient, logger)
+		if err := r.Register("cluster", collector); err != nil {
+			return fmt.Errorf("failed to register cluster collector: %w", err)
+		}
+		r.logger.Info("Cluster collector registered successfully")
+	}
+
+	// Users collector
+	if cfg.Users.Enabled {
+		collector := NewUsersSimpleCollector(slurmClient, logger)
+		if err := r.Register("users", collector); err != nil {
+			return fmt.Errorf("failed to register users collector: %w", err)
+		}
+		r.logger.Info("Users collector registered successfully")
+	}
+
+	// Accounts collector
+	if cfg.Accounts.Enabled {
+		collector := NewAccountsSimpleCollector(slurmClient, logger)
+		if err := r.Register("accounts", collector); err != nil {
+			return fmt.Errorf("failed to register accounts collector: %w", err)
+		}
+		r.logger.Info("Accounts collector registered successfully")
+	}
+
+	// Associations collector
+	if cfg.Associations.Enabled {
+		collector := NewAssociationsSimpleCollector(slurmClient, logger)
+		if err := r.Register("associations", collector); err != nil {
+			return fmt.Errorf("failed to register associations collector: %w", err)
+		}
+		r.logger.Info("Associations collector registered successfully")
+	}
+
+	// Performance collector
+	if cfg.Performance.Enabled {
+		collector := NewPerformanceSimpleCollector(slurmClient, logger)
+		
+		// Configure custom labels
+		if customLabelsCollector, ok := (Collector(collector)).(CustomLabelsCollector); ok {
+			customLabelsCollector.SetCustomLabels(cfg.Performance.Labels)
+		}
+		
+		if err := r.Register("performance", collector); err != nil {
+			return fmt.Errorf("failed to register performance collector: %w", err)
+		}
+		r.logger.Info("Performance collector registered successfully")
+	}
+
+	// System collector
+	if cfg.System.Enabled {
+		collector := NewSystemSimpleCollector(slurmClient, logger)
+		
+		// Configure custom labels
+		if customLabelsCollector, ok := (Collector(collector)).(CustomLabelsCollector); ok {
+			customLabelsCollector.SetCustomLabels(cfg.System.Labels)
+		}
+		
+		if err := r.Register("system", collector); err != nil {
+			return fmt.Errorf("failed to register system collector: %w", err)
+		}
+		r.logger.Info("System collector registered successfully")
+	}
 
 	r.logger.WithField("count", len(r.collectors)).Info("Collectors created and registered")
 	return nil

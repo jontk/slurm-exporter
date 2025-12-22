@@ -111,6 +111,8 @@ type CollectorsConfig struct {
 	Nodes        CollectorConfig       `yaml:"nodes"`
 	Jobs         CollectorConfig       `yaml:"jobs"`
 	Users        CollectorConfig       `yaml:"users"`
+	Accounts     CollectorConfig       `yaml:"accounts"`
+	Associations CollectorConfig       `yaml:"associations"`
 	Partitions   CollectorConfig       `yaml:"partitions"`
 	Performance  CollectorConfig       `yaml:"performance"`
 	System       CollectorConfig       `yaml:"system"`
@@ -142,6 +144,7 @@ type CollectorConfig struct {
 
 // FilterConfig holds filtering configuration for collectors.
 type FilterConfig struct {
+	// Entity filters
 	IncludeNodes      []string `yaml:"include_nodes"`
 	ExcludeNodes      []string `yaml:"exclude_nodes"`
 	IncludePartitions []string `yaml:"include_partitions"`
@@ -154,6 +157,26 @@ type FilterConfig struct {
 	ExcludeQoS        []string `yaml:"exclude_qos"`
 	JobStates         []string `yaml:"job_states"`
 	NodeStates        []string `yaml:"node_states"`
+	
+	// Metric filters
+	Metrics MetricFilterConfig `yaml:"metrics"`
+}
+
+// MetricFilterConfig holds metric-specific filtering configuration.
+type MetricFilterConfig struct {
+	// Enable all metrics by default, disable specific ones
+	EnableAll      bool     `yaml:"enable_all"`
+	IncludeMetrics []string `yaml:"include_metrics"`
+	ExcludeMetrics []string `yaml:"exclude_metrics"`
+	
+	// Metric-specific configurations
+	OnlyInfo           bool `yaml:"only_info"`            // Only collect info metrics
+	OnlyCounters       bool `yaml:"only_counters"`        // Only collect counter metrics
+	OnlyGauges         bool `yaml:"only_gauges"`          // Only collect gauge metrics
+	OnlyHistograms     bool `yaml:"only_histograms"`      // Only collect histogram metrics
+	SkipHistograms     bool `yaml:"skip_histograms"`      // Skip histogram metrics (reduce cardinality)
+	SkipTimingMetrics  bool `yaml:"skip_timing_metrics"`  // Skip timing-related metrics
+	SkipResourceMetrics bool `yaml:"skip_resource_metrics"` // Skip resource usage metrics
 }
 
 // ErrorHandlingConfig holds error handling configuration.
@@ -409,8 +432,8 @@ func Load(filename string) (*Config, error) {
 			return cfg, fmt.Errorf("failed to apply environment overrides: %w", err)
 		}
 
-		// Validate configuration
-		if err := cfg.Validate(); err != nil {
+		// Validate configuration with enhanced validation
+		if err := cfg.ValidateEnhanced(); err != nil {
 			return cfg, fmt.Errorf("configuration validation failed: %w", err)
 		}
 
@@ -438,8 +461,8 @@ func Load(filename string) (*Config, error) {
 		return cfg, fmt.Errorf("failed to apply environment overrides: %w", err)
 	}
 
-	// Validate configuration
-	if err := cfg.Validate(); err != nil {
+	// Validate configuration with enhanced validation
+	if err := cfg.ValidateEnhanced(); err != nil {
 		return cfg, fmt.Errorf("configuration validation failed: %w", err)
 	}
 
