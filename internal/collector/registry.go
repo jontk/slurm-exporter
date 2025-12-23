@@ -32,6 +32,9 @@ type Registry struct {
 	// Cardinality management
 	cardinalityManager *metrics.CardinalityManager
 
+	// Performance monitoring
+	performanceMonitor *PerformanceMonitor
+
 	// Logger
 	logger *logrus.Entry
 }
@@ -52,12 +55,26 @@ func NewRegistry(cfg *config.CollectorsConfig, promRegistry *prometheus.Registry
 		return nil, fmt.Errorf("failed to register cardinality metrics: %w", err)
 	}
 
+	// Create performance monitor with default SLAs
+	slaConfig := SLAConfig{
+		MaxCollectionDuration:   30 * time.Second,
+		MaxErrorRate:            0.1, // 0.1 errors per minute
+		MinSuccessRate:          95.0, // 95% success rate
+		MaxMemoryUsage:          100 * 1024 * 1024, // 100MB per collector
+		MaxMetricsPerCollection: 10000,
+	}
+	performanceMonitor := NewPerformanceMonitor("slurm", "exporter", slaConfig, logger)
+	if err := performanceMonitor.RegisterMetrics(promRegistry); err != nil {
+		return nil, fmt.Errorf("failed to register performance metrics: %w", err)
+	}
+
 	registry := &Registry{
 		collectors:         make(map[string]Collector),
 		promRegistry:       promRegistry,
 		metrics:            collectorMetrics,
 		config:             cfg,
 		cardinalityManager: cardinalityManager,
+		performanceMonitor: performanceMonitor,
 		logger:             logger,
 	}
 
@@ -79,7 +96,10 @@ func (r *Registry) Register(name string, collector Collector) error {
 	}
 
 	// Register collector with Prometheus
-	if err := r.promRegistry.Register(&collectorAdapter{collector: collector}); err != nil {
+	if err := r.promRegistry.Register(&collectorAdapter{
+		collector:          collector,
+		performanceMonitor: r.performanceMonitor,
+	}); err != nil {
 		return fmt.Errorf("failed to register collector %s with prometheus: %w", name, err)
 	}
 
@@ -273,7 +293,8 @@ func (r *Registry) Collect(ch chan<- prometheus.Metric) {
 
 // collectorAdapter adapts our Collector interface to prometheus.Collector
 type collectorAdapter struct {
-	collector Collector
+	collector          Collector
+	performanceMonitor *PerformanceMonitor
 }
 
 // Describe implements prometheus.Collector
@@ -284,7 +305,32 @@ func (ca *collectorAdapter) Describe(ch chan<- *prometheus.Desc) {
 // Collect implements prometheus.Collector
 func (ca *collectorAdapter) Collect(ch chan<- prometheus.Metric) {
 	ctx := context.Background()
-	if err := ca.collector.Collect(ctx, ch); err != nil {
+	startTime := time.Now()
+
+	// Create a wrapper channel to count metrics
+	metricsChan := make(chan prometheus.Metric, 1000)
+	var metricsCount int
+
+	// Start a goroutine to forward metrics and count them
+	go func() {
+		for metric := range metricsChan {
+			ch <- metric
+			metricsCount++
+		}
+	}()
+
+	// Collect metrics
+	err := ca.collector.Collect(ctx, metricsChan)
+	close(metricsChan)
+
+	duration := time.Since(startTime)
+
+	// Record performance metrics
+	if ca.performanceMonitor != nil {
+		ca.performanceMonitor.RecordCollection(ca.collector.Name(), duration, metricsCount, err)
+	}
+
+	if err != nil {
 		logrus.WithError(err).WithField("collector", ca.collector.Name()).Error("Collection failed")
 	}
 }
@@ -324,6 +370,30 @@ func (r *Registry) StartCardinalityMonitoring(ctx context.Context) {
 	}
 }
 
+// StartPerformanceMonitoring begins background performance monitoring
+func (r *Registry) StartPerformanceMonitoring(ctx context.Context, reportInterval time.Duration) {
+	if r.performanceMonitor != nil {
+		go r.performanceMonitor.StartPeriodicReporting(ctx, reportInterval)
+		r.logger.Info("Performance monitoring started")
+	}
+}
+
+// GetPerformanceStats returns performance statistics for all collectors
+func (r *Registry) GetPerformanceStats() map[string]*CollectorPerformanceStats {
+	if r.performanceMonitor != nil {
+		return r.performanceMonitor.GetStats()
+	}
+	return make(map[string]*CollectorPerformanceStats)
+}
+
+// GetCollectorPerformanceStats returns performance statistics for a specific collector
+func (r *Registry) GetCollectorPerformanceStats(collector string) (*CollectorPerformanceStats, bool) {
+	if r.performanceMonitor != nil {
+		return r.performanceMonitor.GetCollectorStats(collector)
+	}
+	return nil, false
+}
+
 // RegistryOptions provides options for creating a registry
 type RegistryOptions struct {
 	// Maximum concurrent collections
@@ -334,6 +404,115 @@ type RegistryOptions struct {
 
 	// Whether to continue on collector failures
 	ContinueOnError bool
+}
+
+// ReconfigureCollectors updates collector configurations without restart
+func (r *Registry) ReconfigureCollectors(cfg *config.CollectorsConfig) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	r.logger.Info("Reconfiguring collectors")
+
+	// Update registry config
+	r.config = cfg
+
+	// Update each collector's configuration
+	var errors []error
+	for name, collector := range r.collectors {
+		// Update enabled state based on configuration
+		var enabled bool
+		var filterConfig config.FilterConfig
+		var customLabels map[string]string
+
+		switch name {
+		case "jobs":
+			enabled = cfg.Jobs.Enabled
+			filterConfig = cfg.Jobs.Filters
+			customLabels = cfg.Jobs.CustomLabels
+		case "nodes":
+			enabled = cfg.Nodes.Enabled
+			filterConfig = cfg.Nodes.Filters
+			customLabels = cfg.Nodes.CustomLabels
+		case "partitions":
+			enabled = cfg.Partitions.Enabled
+			filterConfig = cfg.Partitions.Filters
+			customLabels = cfg.Partitions.CustomLabels
+		case "accounts":
+			enabled = cfg.Accounts.Enabled
+			filterConfig = cfg.Accounts.Filters
+			customLabels = cfg.Accounts.CustomLabels
+		case "users":
+			enabled = cfg.Users.Enabled
+			filterConfig = cfg.Users.Filters
+			customLabels = cfg.Users.CustomLabels
+		case "qos":
+			enabled = cfg.QoS.Enabled
+			filterConfig = cfg.QoS.Filters
+			customLabels = cfg.QoS.CustomLabels
+		case "reservations":
+			enabled = cfg.Reservations.Enabled
+			filterConfig = cfg.Reservations.Filters
+			customLabels = cfg.Reservations.CustomLabels
+		case "associations":
+			enabled = cfg.Associations.Enabled
+			filterConfig = cfg.Associations.Filters
+			customLabels = cfg.Associations.CustomLabels
+		case "cluster":
+			enabled = cfg.Cluster.Enabled
+			filterConfig = cfg.Cluster.Filters
+			customLabels = cfg.Cluster.CustomLabels
+		case "performance":
+			enabled = cfg.Performance.Enabled
+			filterConfig = cfg.Performance.Filters
+			customLabels = cfg.Performance.CustomLabels
+		case "system":
+			enabled = cfg.System.Enabled
+			filterConfig = cfg.System.Filters
+			customLabels = cfg.System.CustomLabels
+		default:
+			r.logger.WithField("collector", name).Warn("Unknown collector in registry")
+			continue
+		}
+
+		// Update enabled state
+		collector.SetEnabled(enabled)
+		labels := prometheus.Labels{"collector": name}
+		if enabled {
+			r.metrics.Up.With(labels).Set(1)
+		} else {
+			r.metrics.Up.With(labels).Set(0)
+		}
+
+		// Update filter configuration if supported
+		if filterableCollector, ok := collector.(FilterableCollector); ok {
+			filterableCollector.UpdateFilterConfig(filterConfig)
+			r.logger.WithField("collector", name).Debug("Updated filter configuration")
+		}
+
+		// Update custom labels if supported
+		if customLabelsCollector, ok := collector.(CustomLabelsCollector); ok {
+			customLabelsCollector.SetCustomLabels(customLabels)
+			r.logger.WithField("collector", name).Debug("Updated custom labels")
+		}
+	}
+
+	// Update cardinality limits
+	if r.cardinalityManager != nil && cfg.CardinalityLimits != nil {
+		for metric, limit := range cfg.CardinalityLimits {
+			r.cardinalityManager.SetLimit(metric, metrics.CardinalityLimit{
+				MaxLabels:        limit.MaxLabels,
+				MaxSeriesPerLabel: limit.MaxSeriesPerLabel,
+				Action:           metrics.CardinalityAction(limit.Action),
+			})
+		}
+	}
+
+	if len(errors) > 0 {
+		return fmt.Errorf("reconfiguration errors: %v", errors)
+	}
+
+	r.logger.Info("Collectors reconfigured successfully")
+	return nil
 }
 
 // CollectorFactory is a function that creates a collector
@@ -381,22 +560,22 @@ func (r *Registry) CreateCollectorsFromConfig(cfg *config.CollectorsConfig, clie
 	// Jobs collector
 	if cfg.Jobs.Enabled {
 		collector := NewJobsSimpleCollector(slurmClient, logger)
-		
+
 		// Configure filtering
 		if filterableCollector, ok := (Collector(collector)).(FilterableCollector); ok {
 			filterableCollector.UpdateFilterConfig(cfg.Jobs.Filters)
 		}
-		
+
 		// Configure cardinality management
 		if cardinalityAware, ok := (Collector(collector)).(CardinalityAwareCollector); ok {
 			cardinalityAware.SetCardinalityManager(r.cardinalityManager)
 		}
-		
+
 		// Configure custom labels
 		if customLabelsCollector, ok := (Collector(collector)).(CustomLabelsCollector); ok {
 			customLabelsCollector.SetCustomLabels(cfg.Jobs.Labels)
 		}
-		
+
 		if err := r.Register("jobs", collector); err != nil {
 			return fmt.Errorf("failed to register jobs collector: %w", err)
 		}
@@ -406,12 +585,12 @@ func (r *Registry) CreateCollectorsFromConfig(cfg *config.CollectorsConfig, clie
 	// Nodes collector
 	if cfg.Nodes.Enabled {
 		collector := NewNodesSimpleCollector(slurmClient, logger)
-		
+
 		// Configure custom labels
 		if customLabelsCollector, ok := (Collector(collector)).(CustomLabelsCollector); ok {
 			customLabelsCollector.SetCustomLabels(cfg.Nodes.Labels)
 		}
-		
+
 		if err := r.Register("nodes", collector); err != nil {
 			return fmt.Errorf("failed to register nodes collector: %w", err)
 		}
@@ -466,12 +645,12 @@ func (r *Registry) CreateCollectorsFromConfig(cfg *config.CollectorsConfig, clie
 	// Performance collector
 	if cfg.Performance.Enabled {
 		collector := NewPerformanceSimpleCollector(slurmClient, logger)
-		
+
 		// Configure custom labels
 		if customLabelsCollector, ok := (Collector(collector)).(CustomLabelsCollector); ok {
 			customLabelsCollector.SetCustomLabels(cfg.Performance.Labels)
 		}
-		
+
 		if err := r.Register("performance", collector); err != nil {
 			return fmt.Errorf("failed to register performance collector: %w", err)
 		}
@@ -481,12 +660,12 @@ func (r *Registry) CreateCollectorsFromConfig(cfg *config.CollectorsConfig, clie
 	// System collector
 	if cfg.System.Enabled {
 		collector := NewSystemSimpleCollector(slurmClient, logger)
-		
+
 		// Configure custom labels
 		if customLabelsCollector, ok := (Collector(collector)).(CustomLabelsCollector); ok {
 			customLabelsCollector.SetCustomLabels(cfg.System.Labels)
 		}
-		
+
 		if err := r.Register("system", collector); err != nil {
 			return fmt.Errorf("failed to register system collector: %w", err)
 		}

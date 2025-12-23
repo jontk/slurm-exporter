@@ -111,6 +111,24 @@ func main() {
 		logger.WithComponent("main").WithError(err).Fatal("Failed to create collectors")
 	}
 
+	// Start performance monitoring with 5-minute reporting interval
+	registry.StartPerformanceMonitoring(ctx, 5*time.Minute)
+	logger.WithComponent("main").Info("Performance monitoring started")
+
+	// Create configuration watcher for hot-reload
+	configWatcher, err := config.NewWatcher(*configFile, config.CreateReloadHandler(registry, logger.Logger), logger.Logger)
+	if err != nil {
+		logger.WithComponent("main").WithError(err).Error("Failed to create config watcher, hot-reload disabled")
+		// Continue without hot-reload
+	} else {
+		if err := configWatcher.Start(ctx); err != nil {
+			logger.WithComponent("main").WithError(err).Error("Failed to start config watcher")
+		} else {
+			logger.WithComponent("main").Info("Configuration hot-reload enabled")
+		}
+		defer configWatcher.Stop()
+	}
+
 	// Create and start the server
 	srv, err := server.New(cfg, logger.Logger, registry, promRegistry)
 	if err != nil {

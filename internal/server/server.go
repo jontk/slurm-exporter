@@ -24,6 +24,7 @@ var startTime = time.Now()
 type RegistryInterface interface {
 	GetStats() map[string]collector.CollectorState
 	CollectAll(ctx context.Context) error
+	GetPerformanceStats() map[string]*collector.CollectorPerformanceStats
 }
 
 // HTTPMetrics holds HTTP-related metrics
@@ -323,6 +324,7 @@ func (s *Server) setupRoutes() http.Handler {
 	// Debug endpoints (for troubleshooting)
 	mux.HandleFunc("/debug/health", s.handleDebugHealth)
 	mux.HandleFunc("/debug/collectors", s.handleDebugCollectors)
+	mux.HandleFunc("/debug/performance", s.handleDebugPerformance)
 
 	// Apply middleware to all routes
 	return s.CombinedMiddleware(mux)
@@ -702,6 +704,135 @@ func (s *Server) handleDebugCollectors(w http.ResponseWriter, r *http.Request) {
 	
 	if err := json.NewEncoder(w).Encode(debugInfo); err != nil {
 		logger.WithError(err).Error("Failed to encode debug collectors response")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
+}
+
+// handleDebugPerformance provides detailed performance statistics for collectors
+func (s *Server) handleDebugPerformance(w http.ResponseWriter, r *http.Request) {
+	logger := s.logger.WithField("component", "debug_performance_handler")
+	logger.Debug("Debug performance requested")
+
+	if s.registry == nil {
+		http.Error(w, "Registry not available", http.StatusInternalServerError)
+		return
+	}
+
+	perfStats := s.registry.GetPerformanceStats()
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-cache")
+
+	// Calculate aggregated statistics
+	summary := map[string]interface{}{
+		"total_collectors": len(perfStats),
+		"total_collections": func() int64 {
+			var total int64
+			for _, stats := range perfStats {
+				total += stats.CollectionCount
+			}
+			return total
+		}(),
+		"total_errors": func() int64 {
+			var total int64
+			for _, stats := range perfStats {
+				total += stats.ErrorCount
+			}
+			return total
+		}(),
+		"total_metrics": func() int64 {
+			var total int64
+			for _, stats := range perfStats {
+				total += stats.TotalMetrics
+			}
+			return total
+		}(),
+		"collectors_with_errors": func() int {
+			count := 0
+			for _, stats := range perfStats {
+				if stats.ErrorCount > 0 {
+					count++
+				}
+			}
+			return count
+		}(),
+		"collectors_with_sla_violations": func() int {
+			count := 0
+			for _, stats := range perfStats {
+				if stats.SLAViolations > 0 {
+					count++
+				}
+			}
+			return count
+		}(),
+	}
+
+	// Format detailed statistics for each collector
+	collectorDetails := make(map[string]interface{})
+	for name, stats := range perfStats {
+		avgDuration := time.Duration(0)
+		if stats.CollectionCount > 0 {
+			avgDuration = stats.TotalDuration / time.Duration(stats.CollectionCount)
+		}
+
+		successRate := float64(0)
+		if stats.CollectionCount > 0 {
+			successRate = float64(stats.SuccessCount) / float64(stats.CollectionCount) * 100
+		}
+
+		avgMetrics := int64(0)
+		if stats.SuccessCount > 0 {
+			avgMetrics = stats.TotalMetrics / stats.SuccessCount
+		}
+
+		collectorDetails[name] = map[string]interface{}{
+			"collection_count":   stats.CollectionCount,
+			"success_count":      stats.SuccessCount,
+			"error_count":        stats.ErrorCount,
+			"success_rate":       fmt.Sprintf("%.2f%%", successRate),
+			"consecutive_errors": stats.ConsecutiveErrors,
+			"last_error":         func() interface{} {
+				if stats.LastError != nil {
+					return map[string]interface{}{
+						"message": stats.LastError.Error(),
+						"time":    stats.LastErrorTime,
+					}
+				}
+				return nil
+			}(),
+			"timing": map[string]interface{}{
+				"last_duration": stats.LastDuration.String(),
+				"avg_duration":  avgDuration.String(),
+				"min_duration":  stats.MinDuration.String(),
+				"max_duration":  stats.MaxDuration.String(),
+			},
+			"metrics": map[string]interface{}{
+				"total_metrics":    stats.TotalMetrics,
+				"last_count":       stats.LastMetricCount,
+				"avg_count":        avgMetrics,
+				"max_count":        stats.MaxMetricCount,
+			},
+			"resources": map[string]interface{}{
+				"last_memory_bytes": stats.LastMemoryUsage,
+				"max_memory_bytes":  stats.MaxMemoryUsage,
+				"goroutines":        stats.GoroutineCount,
+			},
+			"sla": map[string]interface{}{
+				"violations":          stats.SLAViolations,
+				"last_violation_time": stats.LastSLAViolation,
+			},
+			"last_success_time": stats.LastSuccessTime,
+		}
+	}
+
+	debugInfo := map[string]interface{}{
+		"summary":    summary,
+		"collectors": collectorDetails,
+		"timestamp":  time.Now(),
+	}
+
+	if err := json.NewEncoder(w).Encode(debugInfo); err != nil {
+		logger.WithError(err).Error("Failed to encode debug performance response")
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}
 }
