@@ -1,0 +1,208 @@
+# SLURM Health Monitoring Alerts
+# These alerts monitor the overall health of SLURM clusters and the exporter itself
+
+groups:
+  - name: slurm_exporter_health
+    interval: 30s
+    rules:
+      # Exporter availability
+      - alert: SLURMExporterDown
+        expr: up{job="slurm-exporter"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: exporter
+          team: infrastructure
+        annotations:
+          summary: "SLURM exporter is down on {{ $labels.instance }}"
+          description: |
+            The SLURM exporter has been down for more than 2 minutes.
+            Cluster: {{ $labels.cluster_name }}
+            Instance: {{ $labels.instance }}
+            
+            This means we are not collecting any SLURM metrics from this cluster.
+          runbook_url: https://wiki.example.com/runbooks/slurm-exporter-down
+          dashboard_url: https://grafana.example.com/d/slurm-overview
+
+      # Collector failures
+      - alert: SLURMCollectorErrors
+        expr: rate(slurm_exporter_collector_errors_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: collector
+        annotations:
+          summary: "SLURM collector {{ $labels.collector }} is experiencing errors"
+          description: |
+            The {{ $labels.collector }} collector is failing more than 10% of the time.
+            Error rate: {{ $value | humanizePercentage }}
+            Instance: {{ $labels.instance }}
+            
+            This may indicate issues with SLURM API connectivity or collector logic.
+          runbook_url: https://wiki.example.com/runbooks/slurm-collector-errors
+
+      # Collection staleness
+      - alert: SLURMMetricsStale
+        expr: time() - slurm_exporter_collector_last_collection_timestamp > 300
+        for: 5m
+        labels:
+          severity: warning
+          component: collector
+        annotations:
+          summary: "SLURM metrics are stale for collector {{ $labels.collector }}"
+          description: |
+            The {{ $labels.collector }} collector hasn't successfully collected metrics for over 5 minutes.
+            Last collection: {{ $value | humanizeDuration }} ago
+            Instance: {{ $labels.instance }}
+          runbook_url: https://wiki.example.com/runbooks/slurm-metrics-stale
+
+  - name: slurm_api_health
+    interval: 30s
+    rules:
+      # SLURM API connectivity
+      - alert: SLURMAPIUnreachable
+        expr: slurm_system_slurm_daemon_up{daemon_type="slurmctld"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: slurm_api
+          team: hpc
+        annotations:
+          summary: "SLURM API is unreachable on cluster {{ $labels.cluster_name }}"
+          description: |
+            Cannot connect to SLURM API (slurmctld) on cluster {{ $labels.cluster_name }}.
+            This prevents all job scheduling and cluster management operations.
+            
+            Instance: {{ $labels.instance }}
+            Environment: {{ $labels.environment }}
+          runbook_url: https://wiki.example.com/runbooks/slurm-api-unreachable
+          pagerduty_key: slurm-api-down
+
+      # SLURM API latency
+      - alert: SLURMAPIHighLatency
+        expr: slurm_system_slurm_api_latency_seconds{quantile="0.99"} > 5
+        for: 10m
+        labels:
+          severity: warning
+          component: slurm_api
+        annotations:
+          summary: "High SLURM API latency on cluster {{ $labels.cluster_name }}"
+          description: |
+            SLURM API response time is elevated.
+            P99 latency: {{ $value | humanizeDuration }}
+            Endpoint: {{ $labels.endpoint }}
+            
+            This may impact job submission and cluster query performance.
+          runbook_url: https://wiki.example.com/runbooks/slurm-api-latency
+
+      # Database connectivity
+      - alert: SLURMDatabaseConnectionFailure
+        expr: slurm_system_slurm_db_connections == 0 and ON(cluster_name) slurm_cluster_info == 1
+        for: 5m
+        labels:
+          severity: critical
+          component: slurm_database
+          team: database
+        annotations:
+          summary: "SLURM database connection lost on cluster {{ $labels.cluster_name }}"
+          description: |
+            SLURM cannot connect to its database on cluster {{ $labels.cluster_name }}.
+            This will prevent job accounting and historical data collection.
+            
+            Check slurmdbd service and database connectivity.
+          runbook_url: https://wiki.example.com/runbooks/slurm-db-connection
+
+  - name: slurm_cluster_health
+    interval: 1m
+    rules:
+      # Cluster controller health
+      - alert: SLURMControllerDown
+        expr: slurm_system_active_controllers < 1
+        for: 2m
+        labels:
+          severity: critical
+          component: slurm_controller
+          team: hpc
+        annotations:
+          summary: "No active SLURM controllers on cluster {{ $labels.cluster_name }}"
+          description: |
+            All SLURM controllers (slurmctld) are down on cluster {{ $labels.cluster_name }}.
+            The cluster cannot schedule or manage jobs without an active controller.
+            
+            Environment: {{ $labels.environment }}
+            Expected controllers: At least 1
+            Active controllers: {{ $value }}
+          runbook_url: https://wiki.example.com/runbooks/slurm-controller-down
+          pagerduty_key: slurm-controller-failure
+
+      # Node availability
+      - alert: SLURMNodesOffline
+        expr: |
+          (
+            sum by (cluster_name, partition) (slurm_node_state{state="down"}) 
+            / 
+            sum by (cluster_name, partition) (slurm_node_state)
+          ) > 0.1
+        for: 15m
+        labels:
+          severity: warning
+          component: compute_nodes
+          team: infrastructure
+        annotations:
+          summary: "High percentage of nodes offline in partition {{ $labels.partition }}"
+          description: |
+            More than 10% of nodes are down in partition {{ $labels.partition }} on cluster {{ $labels.cluster_name }}.
+            Offline percentage: {{ $value | humanizePercentage }}
+            
+            This reduces available compute capacity and may impact job scheduling.
+          runbook_url: https://wiki.example.com/runbooks/slurm-nodes-offline
+
+      - alert: SLURMAllNodesOffline
+        expr: |
+          sum by (cluster_name, partition) (slurm_node_state{state!="down"}) == 0
+        for: 5m
+        labels:
+          severity: critical
+          component: compute_nodes
+          team: infrastructure
+        annotations:
+          summary: "All nodes offline in partition {{ $labels.partition }}"
+          description: |
+            All compute nodes are down in partition {{ $labels.partition }} on cluster {{ $labels.cluster_name }}.
+            No jobs can run in this partition.
+            
+            Immediate action required to restore compute capacity.
+          runbook_url: https://wiki.example.com/runbooks/slurm-all-nodes-offline
+          pagerduty_key: slurm-partition-down
+
+      # Partition health
+      - alert: SLURMPartitionInactive
+        expr: slurm_partition_state{state="inactive"} == 1
+        for: 10m
+        labels:
+          severity: warning
+          component: partition
+          team: hpc
+        annotations:
+          summary: "SLURM partition {{ $labels.partition }} is inactive"
+          description: |
+            Partition {{ $labels.partition }} is in inactive state on cluster {{ $labels.cluster_name }}.
+            Jobs cannot be scheduled to inactive partitions.
+            
+            Check partition configuration and node states.
+          runbook_url: https://wiki.example.com/runbooks/slurm-partition-inactive
+
+      # Configuration drift
+      - alert: SLURMConfigurationChanged
+        expr: changes(slurm_system_config_last_modified_timestamp[1h]) > 0
+        labels:
+          severity: info
+          component: configuration
+        annotations:
+          summary: "SLURM configuration changed on cluster {{ $labels.cluster_name }}"
+          description: |
+            SLURM configuration ({{ $labels.config_type }}) was modified on cluster {{ $labels.cluster_name }}.
+            
+            Please verify the changes are intentional and properly tested.
+            Last modified: {{ $value | humanizeTimestamp }}
+          runbook_url: https://wiki.example.com/runbooks/slurm-config-change

@@ -1,0 +1,211 @@
+# SLURM Resource and Capacity Alerts
+# These alerts monitor cluster resources, capacity, and utilization
+
+groups:
+  - name: slurm_resource_availability
+    interval: 1m
+    rules:
+      # CPU availability
+      - alert: SLURMCPUExhaustion
+        expr: |
+          (
+            sum by (cluster_name, partition) (slurm_node_cpus_allocated)
+            /
+            sum by (cluster_name, partition) (slurm_node_cpus_total)
+          ) > 0.95
+        for: 30m
+        labels:
+          severity: warning
+          component: cpu_resources
+          team: capacity_planning
+        annotations:
+          summary: "CPU resources nearly exhausted in partition {{ $labels.partition }}"
+          description: |
+            CPU utilization is above 95% in partition {{ $labels.partition }} on cluster {{ $labels.cluster_name }}.
+            Utilization: {{ $value | humanizePercentage }}
+            
+            Consider adding compute nodes or optimizing job scheduling.
+          runbook_url: https://wiki.example.com/runbooks/slurm-cpu-exhaustion
+          dashboard_url: https://grafana.example.com/d/slurm-resources?var-partition={{ $labels.partition }}
+
+      # Memory availability
+      - alert: SLURMMemoryExhaustion
+        expr: |
+          (
+            sum by (cluster_name, partition) (slurm_node_memory_allocated)
+            /
+            sum by (cluster_name, partition) (slurm_node_memory_total)
+          ) > 0.90
+        for: 30m
+        labels:
+          severity: warning
+          component: memory_resources
+          team: capacity_planning
+        annotations:
+          summary: "Memory resources nearly exhausted in partition {{ $labels.partition }}"
+          description: |
+            Memory utilization is above 90% in partition {{ $labels.partition }} on cluster {{ $labels.cluster_name }}.
+            Utilization: {{ $value | humanizePercentage }}
+            
+            Memory exhaustion can lead to job failures and OOM kills.
+          runbook_url: https://wiki.example.com/runbooks/slurm-memory-exhaustion
+
+      # Node availability
+      - alert: SLURMNoFreeNodes
+        expr: |
+          sum by (cluster_name, partition) (slurm_partition_nodes_idle) == 0
+          and
+          sum by (cluster_name, partition) (slurm_job_state{state="pending"}) > 0
+        for: 1h
+        labels:
+          severity: warning
+          component: node_availability
+          team: hpc
+        annotations:
+          summary: "No free nodes available in partition {{ $labels.partition }}"
+          description: |
+            All nodes are allocated in partition {{ $labels.partition }} with jobs still pending.
+            Cluster: {{ $labels.cluster_name }}
+            
+            This indicates full capacity utilization with unmet demand.
+          runbook_url: https://wiki.example.com/runbooks/slurm-no-free-nodes
+
+  - name: slurm_resource_efficiency
+    interval: 5m
+    rules:
+      # Overall cluster efficiency
+      - alert: SLURMClusterInefficient
+        expr: |
+          slurm_performance_cluster_utilization_ratio{resource_type="cpu"} < 0.5
+          and
+          sum by (cluster_name) (slurm_job_state{state="pending"}) > 100
+        for: 2h
+        labels:
+          severity: warning
+          component: efficiency
+          team: hpc
+        annotations:
+          summary: "Low cluster efficiency despite pending jobs"
+          description: |
+            Cluster {{ $labels.cluster_name }} shows low CPU utilization ({{ $value | humanizePercentage }}) 
+            while having a significant job queue.
+            
+            This suggests inefficient job packing or resource fragmentation.
+          runbook_url: https://wiki.example.com/runbooks/slurm-cluster-efficiency
+
+      # Partition imbalance
+      - alert: SLURMPartitionImbalance
+        expr: |
+          (
+            stddev by (cluster_name) (
+              sum by (cluster_name, partition) (slurm_node_cpus_allocated)
+              /
+              sum by (cluster_name, partition) (slurm_node_cpus_total)
+            ) > 0.3
+          )
+        for: 1h
+        labels:
+          severity: info
+          component: load_balancing
+          team: hpc
+        annotations:
+          summary: "Unbalanced load across partitions on cluster {{ $labels.cluster_name }}"
+          description: |
+            Significant variance in utilization across partitions indicates uneven load distribution.
+            Standard deviation: {{ $value }}
+            
+            Consider job routing policies or partition rebalancing.
+          runbook_url: https://wiki.example.com/runbooks/slurm-partition-imbalance
+
+      # Resource fragmentation
+      - alert: SLURMResourceFragmentation
+        expr: |
+          (
+            sum by (cluster_name, partition) (slurm_node_state{state="mixed"})
+            /
+            sum by (cluster_name, partition) (slurm_node_state{state!="down"})
+          ) > 0.8
+          and
+          slurm_performance_cpu_efficiency_ratio < 0.7
+        for: 2h
+        labels:
+          severity: warning
+          component: fragmentation
+          team: hpc
+        annotations:
+          summary: "High resource fragmentation in partition {{ $labels.partition }}"
+          description: |
+            Most nodes in partition {{ $labels.partition }} are partially allocated, 
+            indicating resource fragmentation.
+            Mixed nodes: {{ $value | humanizePercentage }}
+            
+            This reduces scheduling efficiency for large jobs.
+          runbook_url: https://wiki.example.com/runbooks/slurm-fragmentation
+
+  - name: slurm_capacity_planning
+    interval: 5m
+    rules:
+      # Sustained high utilization
+      - alert: SLURMCapacityPlanningNeeded
+        expr: |
+          avg_over_time(
+            sum by (cluster_name) (slurm_node_cpus_allocated)
+            /
+            sum by (cluster_name) (slurm_node_cpus_total)
+          [7d]) > 0.85
+        for: 1d
+        labels:
+          severity: info
+          component: capacity
+          team: capacity_planning
+        annotations:
+          summary: "Sustained high utilization on cluster {{ $labels.cluster_name }}"
+          description: |
+            Cluster {{ $labels.cluster_name }} has maintained >85% CPU utilization for 7 days.
+            Average utilization: {{ $value | humanizePercentage }}
+            
+            Consider capacity expansion planning.
+          runbook_url: https://wiki.example.com/runbooks/slurm-capacity-planning
+
+      # Growth trend
+      - alert: SLURMUsageGrowthTrend
+        expr: |
+          predict_linear(
+            sum by (cluster_name) (slurm_job_state{state="running"})[7d], 
+            86400 * 30  # 30 days
+          ) > 1.5 * sum by (cluster_name) (slurm_job_state{state="running"})
+        for: 1d
+        labels:
+          severity: info
+          component: trending
+          team: capacity_planning
+        annotations:
+          summary: "Rapid job growth trend on cluster {{ $labels.cluster_name }}"
+          description: |
+            Job count is projected to increase by 50% in the next 30 days based on current trends.
+            Current jobs: {{ $value }}
+            
+            Review capacity planning and budget allocation.
+          runbook_url: https://wiki.example.com/runbooks/slurm-growth-planning
+
+      # Reservation conflicts
+      - alert: SLURMReservationConflicts
+        expr: |
+          (
+            sum by (cluster_name) (slurm_reservation_cpus)
+            /
+            sum by (cluster_name) (slurm_node_cpus_total)
+          ) > 0.5
+        for: 24h
+        labels:
+          severity: warning
+          component: reservations
+          team: hpc
+        annotations:
+          summary: "Excessive reservations limiting cluster availability"
+          description: |
+            More than 50% of cluster {{ $labels.cluster_name }} capacity is reserved.
+            Reserved percentage: {{ $value | humanizePercentage }}
+            
+            This significantly limits general job scheduling capacity.
+          runbook_url: https://wiki.example.com/runbooks/slurm-reservation-policy

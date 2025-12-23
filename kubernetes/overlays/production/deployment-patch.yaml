@@ -1,0 +1,37 @@
+# Production-specific deployment patches
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: slurm-exporter
+spec:
+  template:
+    spec:
+      containers:
+      - name: slurm-exporter
+        resources:
+          requests:
+            cpu: 200m
+            memory: 256Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        env:
+        - name: SLURM_BASE_URL
+          value: "https://slurm-prod.example.com:6820"
+        - name: GOMAXPROCS
+          value: "2"
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                - slurm-exporter
+            topologyKey: kubernetes.io/hostname
+      tolerations:
+      - key: dedicated
+        operator: Equal
+        value: monitoring
+        effect: NoSchedule

@@ -1,0 +1,266 @@
+# SLURM Exporter Performance Monitoring Alerts
+# These alerts monitor the performance and health of the SLURM exporter itself
+
+groups:
+  - name: slurm_exporter_performance
+    interval: 1m
+    rules:
+      # Slow collection performance
+      - alert: SLURMExporterSlowCollection
+        expr: |
+          histogram_quantile(0.95,
+            sum by (collector, le) (
+              rate(slurm_exporter_collector_duration_seconds_bucket[5m])
+            )
+          ) > 10
+        for: 15m
+        labels:
+          severity: warning
+          component: exporter_performance
+          team: monitoring
+        annotations:
+          summary: "SLURM exporter collector {{ $labels.collector }} is slow"
+          description: |
+            The {{ $labels.collector }} collector is taking too long to collect metrics.
+            P95 collection duration: {{ $value | humanizeDuration }}
+            
+            This may cause metrics staleness or timeouts.
+          runbook_url: https://wiki.example.com/runbooks/slurm-exporter-slow-collection
+
+      # Very slow collection (critical)
+      - alert: SLURMExporterCriticalSlowCollection
+        expr: |
+          histogram_quantile(0.99,
+            sum by (collector, le) (
+              rate(slurm_exporter_collector_duration_seconds_bucket[5m])
+            )
+          ) > 25
+        for: 10m
+        labels:
+          severity: critical
+          component: exporter_performance
+          team: monitoring
+        annotations:
+          summary: "SLURM exporter collector {{ $labels.collector }} critically slow"
+          description: |
+            The {{ $labels.collector }} collector is critically slow and may timeout.
+            P99 collection duration: {{ $value | humanizeDuration }}
+            
+            Immediate investigation required to prevent metric loss.
+          runbook_url: https://wiki.example.com/runbooks/slurm-exporter-critical-performance
+
+      # High error rate
+      - alert: SLURMExporterHighErrorRate
+        expr: |
+          (
+            sum by (collector) (rate(slurm_exporter_collector_errors_total[5m]))
+            /
+            (sum by (collector) (rate(slurm_exporter_collector_success_total[5m])) + 
+             sum by (collector) (rate(slurm_exporter_collector_errors_total[5m])))
+          ) > 0.05
+        for: 10m
+        labels:
+          severity: warning
+          component: exporter_reliability
+          team: monitoring
+        annotations:
+          summary: "High error rate for SLURM exporter collector {{ $labels.collector }}"
+          description: |
+            Collector {{ $labels.collector }} has error rate above 5%.
+            Current error rate: {{ $value | humanizePercentage }}
+            
+            Check collector logs for error details.
+          runbook_url: https://wiki.example.com/runbooks/slurm-exporter-errors
+
+      # Persistent errors
+      - alert: SLURMExporterPersistentErrors
+        expr: |
+          sum by (collector) (
+            increase(slurm_exporter_collector_errors_total[1h])
+          ) > 50
+        for: 5m
+        labels:
+          severity: critical
+          component: exporter_reliability
+          team: monitoring
+        annotations:
+          summary: "Persistent errors in SLURM exporter collector {{ $labels.collector }}"
+          description: |
+            Collector {{ $labels.collector }} has recorded {{ $value }} errors in the last hour.
+            
+            This indicates a systematic issue requiring investigation.
+          runbook_url: https://wiki.example.com/runbooks/slurm-exporter-persistent-errors
+
+      # Memory usage high
+      - alert: SLURMExporterHighMemoryUsage
+        expr: |
+          slurm_exporter_collector_memory_bytes > 100 * 1024 * 1024
+        for: 30m
+        labels:
+          severity: warning
+          component: exporter_resources
+          team: monitoring
+        annotations:
+          summary: "High memory usage for SLURM exporter collector {{ $labels.collector }}"
+          description: |
+            Collector {{ $labels.collector }} is using {{ $value | humanize1024 }}B of memory.
+            
+            This exceeds the 100MB threshold and may indicate a memory leak.
+          runbook_url: https://wiki.example.com/runbooks/slurm-exporter-memory
+
+      # Goroutine leak
+      - alert: SLURMExporterGoroutineLeak
+        expr: |
+          deriv(slurm_exporter_collector_goroutines[1h]) > 0.1
+        for: 2h
+        labels:
+          severity: warning
+          component: exporter_resources
+          team: monitoring
+        annotations:
+          summary: "Potential goroutine leak in SLURM exporter collector {{ $labels.collector }}"
+          description: |
+            Collector {{ $labels.collector }} shows increasing goroutine count.
+            Growth rate: {{ $value }} goroutines/second
+            
+            This may indicate a goroutine leak.
+          runbook_url: https://wiki.example.com/runbooks/slurm-exporter-goroutine-leak
+
+      # SLA violations
+      - alert: SLURMExporterFrequentSLAViolations
+        expr: |
+          rate(slurm_exporter_sla_violations_total[1h]) > 0.1
+        for: 30m
+        labels:
+          severity: warning
+          component: exporter_sla
+          team: monitoring
+        annotations:
+          summary: "Frequent SLA violations for SLURM exporter collector {{ $labels.collector }}"
+          description: |
+            Collector {{ $labels.collector }} is violating SLAs frequently.
+            Violation type: {{ $labels.violation_type }}
+            Rate: {{ $value }} violations/second
+            
+            Review collector configuration and performance.
+          runbook_url: https://wiki.example.com/runbooks/slurm-exporter-sla-violations
+
+      # No recent collections
+      - alert: SLURMExporterStaleCollection
+        expr: |
+          time() - slurm_exporter_last_collection_timestamp_seconds > 600
+        for: 5m
+        labels:
+          severity: critical
+          component: exporter_staleness
+          team: monitoring
+        annotations:
+          summary: "No recent collections from SLURM exporter collector {{ $labels.collector }}"
+          description: |
+            Collector {{ $labels.collector }} hasn't successfully collected metrics for {{ $value | humanizeDuration }}.
+            
+            This indicates the collector may be stuck or failing.
+          runbook_url: https://wiki.example.com/runbooks/slurm-exporter-stale-collection
+
+      # Collector timeout rate
+      - alert: SLURMExporterHighTimeoutRate
+        expr: |
+          (
+            rate(slurm_exporter_collector_timeout_total[5m]) /
+            rate(slurm_exporter_collector_success_total[5m])
+          ) > 0.1
+        for: 15m
+        labels:
+          severity: warning
+          component: exporter_timeouts
+          team: monitoring
+        annotations:
+          summary: "High timeout rate for SLURM exporter collector {{ $labels.collector }}"
+          description: |
+            More than 10% of collections are timing out for collector {{ $labels.collector }}.
+            Timeout rate: {{ $value | humanizePercentage }}
+            
+            Consider increasing timeout or investigating SLURM API performance.
+          runbook_url: https://wiki.example.com/runbooks/slurm-exporter-timeouts
+
+      # Overall exporter health
+      - alert: SLURMExporterUnhealthy
+        expr: |
+          (
+            sum(rate(slurm_exporter_collector_success_total[5m])) /
+            (sum(rate(slurm_exporter_collector_success_total[5m])) + 
+             sum(rate(slurm_exporter_collector_errors_total[5m])))
+          ) < 0.9
+        for: 15m
+        labels:
+          severity: critical
+          component: exporter_health
+          team: monitoring
+        annotations:
+          summary: "SLURM exporter overall health degraded"
+          description: |
+            Overall success rate across all collectors is below 90%.
+            Current success rate: {{ $value | humanizePercentage }}
+            
+            Multiple collectors may be experiencing issues.
+          runbook_url: https://wiki.example.com/runbooks/slurm-exporter-health
+
+  - name: slurm_exporter_resource_alerts
+    interval: 5m
+    rules:
+      # Process memory usage
+      - alert: SLURMExporterProcessMemoryHigh
+        expr: |
+          process_resident_memory_bytes{job="slurm-exporter"} > 500 * 1024 * 1024
+        for: 30m
+        labels:
+          severity: warning
+          component: exporter_process
+          team: monitoring
+        annotations:
+          summary: "SLURM exporter process using high memory"
+          description: |
+            SLURM exporter process is using {{ $value | humanize1024 }}B of memory.
+            Instance: {{ $labels.instance }}
+            
+            This is above the 500MB warning threshold.
+          runbook_url: https://wiki.example.com/runbooks/slurm-exporter-process-memory
+
+      # Process CPU usage
+      - alert: SLURMExporterHighCPU
+        expr: |
+          rate(process_cpu_seconds_total{job="slurm-exporter"}[5m]) > 0.8
+        for: 15m
+        labels:
+          severity: warning
+          component: exporter_process
+          team: monitoring
+        annotations:
+          summary: "SLURM exporter using high CPU"
+          description: |
+            SLURM exporter is using {{ $value | humanizePercentage }} CPU.
+            Instance: {{ $labels.instance }}
+            
+            High CPU usage may impact collection performance.
+          runbook_url: https://wiki.example.com/runbooks/slurm-exporter-cpu
+
+      # File descriptor usage
+      - alert: SLURMExporterFileDescriptorLeak
+        expr: |
+          (
+            process_open_fds{job="slurm-exporter"} /
+            process_max_fds{job="slurm-exporter"}
+          ) > 0.8
+        for: 30m
+        labels:
+          severity: warning
+          component: exporter_resources
+          team: monitoring
+        annotations:
+          summary: "SLURM exporter high file descriptor usage"
+          description: |
+            SLURM exporter is using {{ $value | humanizePercentage }} of available file descriptors.
+            Instance: {{ $labels.instance }}
+            
+            This may indicate a file descriptor leak.
+          runbook_url: https://wiki.example.com/runbooks/slurm-exporter-fd-leak

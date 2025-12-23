@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: slurm-monitoring
+  labels:
+    name: slurm-monitoring
+    app.kubernetes.io/part-of: slurm-exporter

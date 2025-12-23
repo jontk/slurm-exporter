@@ -1,0 +1,203 @@
+# SLURM SLA and Performance Monitoring Alerts
+# These alerts track service level agreements and performance metrics
+
+groups:
+  - name: slurm_sla_monitoring
+    interval: 1m
+    rules:
+      # Job start time SLA
+      - alert: SLURMJobStartTimeSLABreach
+        expr: |
+          histogram_quantile(0.95,
+            sum by (cluster_name, partition, qos, le) (
+              rate(slurm_job_queue_time_seconds_bucket{qos="high"}[1h])
+            )
+          ) > 3600  # 1 hour for high priority
+        for: 30m
+        labels:
+          severity: warning
+          component: sla
+          team: hpc
+          sla_type: job_start_time
+        annotations:
+          summary: "Job start time SLA breach for high priority jobs"
+          description: |
+            High priority jobs are waiting more than 1 hour to start in partition {{ $labels.partition }}.
+            P95 wait time: {{ $value | humanizeDuration }}
+            Cluster: {{ $labels.cluster_name }}
+            
+            SLA target: < 1 hour for high priority jobs
+          runbook_url: https://wiki.example.com/runbooks/slurm-sla-job-start
+          sla_dashboard: https://grafana.example.com/d/slurm-sla
+
+      # Availability SLA
+      - alert: SLURMAvailabilitySLABreach
+        expr: |
+          avg_over_time(up{job="slurm-exporter"}[1h]) < 0.99
+        for: 5m
+        labels:
+          severity: critical
+          component: sla
+          team: infrastructure
+          sla_type: availability
+        annotations:
+          summary: "SLURM availability SLA breach on {{ $labels.instance }}"
+          description: |
+            SLURM exporter availability has dropped below 99% over the last hour.
+            Current availability: {{ $value | humanizePercentage }}
+            Instance: {{ $labels.instance }}
+            
+            SLA target: 99% availability
+          runbook_url: https://wiki.example.com/runbooks/slurm-sla-availability
+          pagerduty_key: slurm-availability-sla
+
+      # Compute availability SLA
+      - alert: SLURMComputeAvailabilitySLABreach
+        expr: |
+          (
+            sum by (cluster_name) (slurm_node_state{state!="down"})
+            /
+            sum by (cluster_name) (slurm_node_state)
+          ) < 0.95
+        for: 1h
+        labels:
+          severity: warning
+          component: sla
+          team: infrastructure
+          sla_type: compute_availability
+        annotations:
+          summary: "Compute node availability SLA breach"
+          description: |
+            Less than 95% of compute nodes are available on cluster {{ $labels.cluster_name }}.
+            Current availability: {{ $value | humanizePercentage }}
+            
+            SLA target: 95% compute node availability
+          runbook_url: https://wiki.example.com/runbooks/slurm-sla-compute
+
+  - name: slurm_performance_monitoring
+    interval: 1m
+    rules:
+      # Collection performance
+      - alert: SLURMCollectorSlow
+        expr: |
+          histogram_quantile(0.99,
+            sum by (cluster_name, collector, le) (
+              rate(slurm_exporter_collector_duration_seconds_bucket[5m])
+            )
+          ) > 30
+        for: 15m
+        labels:
+          severity: warning
+          component: collector_performance
+          team: monitoring
+        annotations:
+          summary: "Slow metric collection for {{ $labels.collector }}"
+          description: |
+            The {{ $labels.collector }} collector is taking more than 30 seconds to collect metrics.
+            P99 duration: {{ $value | humanizeDuration }}
+            Cluster: {{ $labels.cluster_name }}
+            
+            This may impact metric freshness and accuracy.
+          runbook_url: https://wiki.example.com/runbooks/slurm-collector-performance
+
+      # Metric cardinality
+      - alert: SLURMHighMetricCardinality
+        expr: |
+          slurm_exporter_metrics_cardinality_total > 100000
+        for: 30m
+        labels:
+          severity: warning
+          component: cardinality
+          team: monitoring
+        annotations:
+          summary: "High metric cardinality on {{ $labels.instance }}"
+          description: |
+            Metric cardinality has exceeded 100,000 unique series.
+            Current cardinality: {{ $value }}
+            Instance: {{ $labels.instance }}
+            
+            High cardinality impacts Prometheus performance and storage.
+          runbook_url: https://wiki.example.com/runbooks/slurm-metric-cardinality
+
+      # API performance degradation
+      - alert: SLURMAPIPerformanceDegraded
+        expr: |
+          (
+            rate(slurm_system_slurm_api_errors_total[5m]) > 0.05
+            or
+            histogram_quantile(0.95,
+              rate(slurm_system_slurm_api_latency_seconds_bucket[5m])
+            ) > 2
+          )
+        for: 15m
+        labels:
+          severity: warning
+          component: api_performance
+          team: hpc
+        annotations:
+          summary: "SLURM API performance degraded"
+          description: |
+            SLURM API is showing elevated error rates or latency.
+            Endpoint: {{ $labels.endpoint }}
+            Cluster: {{ $labels.cluster_name }}
+            
+            This impacts all SLURM operations and job submissions.
+          runbook_url: https://wiki.example.com/runbooks/slurm-api-performance
+
+      # Database performance
+      - alert: SLURMDatabaseSlow
+        expr: |
+          slurm_system_slurm_db_latency_seconds{quantile="0.99"} > 1
+        for: 30m
+        labels:
+          severity: warning
+          component: database_performance
+          team: database
+        annotations:
+          summary: "SLURM database queries are slow"
+          description: |
+            SLURM database query latency is elevated.
+            P99 latency: {{ $value | humanizeDuration }}
+            Query type: {{ $labels.query_type }}
+            
+            This impacts job accounting and historical queries.
+          runbook_url: https://wiki.example.com/runbooks/slurm-db-performance
+
+  - name: slurm_data_quality
+    interval: 5m
+    rules:
+      # Missing metrics
+      - alert: SLURMMissingMetrics
+        expr: |
+          increase(prometheus_target_scrapes_sample_out_of_order_total[1h]) > 100
+        for: 30m
+        labels:
+          severity: warning
+          component: data_quality
+          team: monitoring
+        annotations:
+          summary: "Missing or out-of-order metrics from SLURM exporter"
+          description: |
+            Prometheus is receiving out-of-order samples from SLURM exporter.
+            Out of order samples: {{ $value }}
+            Instance: {{ $labels.instance }}
+            
+            This indicates time synchronization or collection issues.
+          runbook_url: https://wiki.example.com/runbooks/slurm-metric-quality
+
+      # Stale metrics
+      - alert: SLURMStaleMetrics
+        expr: |
+          time() - slurm_exporter_last_scrape_timestamp > 300
+        for: 10m
+        labels:
+          severity: warning
+          component: data_quality
+          team: monitoring
+        annotations:
+          summary: "Stale metrics from SLURM exporter"
+          description: |
+            SLURM exporter hasn't successfully scraped metrics for over 5 minutes.
+            Last scrape: {{ $value | humanizeDuration }} ago
+            Instance: {{ $labels.instance }}
+          runbook_url: https://wiki.example.com/runbooks/slurm-stale-metrics

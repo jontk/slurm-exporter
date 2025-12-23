@@ -1,0 +1,53 @@
+# Network Policy for security
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: slurm-exporter
+  namespace: slurm-monitoring
+  labels:
+    app.kubernetes.io/name: slurm-exporter
+    app.kubernetes.io/part-of: slurm-monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: slurm-exporter
+      app.kubernetes.io/component: exporter
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow Prometheus to scrape metrics
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring  # Adjust to your Prometheus namespace
+    - podSelector:
+        matchLabels:
+          app: prometheus  # Adjust to your Prometheus labels
+    ports:
+    - protocol: TCP
+      port: 8080
+  # Allow health checks from kubelet
+  - from:
+    - namespaceSelector: {}
+      podSelector: {}
+    ports:
+    - protocol: TCP
+      port: 8080
+  egress:
+  # Allow DNS
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+  # Allow access to SLURM API
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 6820  # SLURM REST API port
+    - protocol: TCP
+      port: 443   # HTTPS

@@ -1,0 +1,24 @@
+apiVersion: v2
+name: slurm-exporter
+description: A Helm chart for SLURM Prometheus Exporter
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - slurm
+  - prometheus
+  - exporter
+  - hpc
+  - monitoring
+home: https://github.com/jontk/slurm-exporter
+sources:
+  - https://github.com/jontk/slurm-exporter
+maintainers:
+  - name: SLURM Exporter Team
+    email: team@example.com
+icon: https://prometheus.io/assets/prometheus_logo_grey.svg
+annotations:
+  "artifacthub.io/changes": |
+    - Initial Helm chart release
+  "artifacthub.io/containsSecurityUpdates": "false"
+  "artifacthub.io/license": Apache-2.0

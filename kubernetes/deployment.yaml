@@ -1,0 +1,131 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: slurm-exporter
+  namespace: slurm-monitoring
+  labels:
+    app.kubernetes.io/name: slurm-exporter
+    app.kubernetes.io/part-of: slurm-monitoring
+    app.kubernetes.io/component: exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: slurm-exporter
+      app.kubernetes.io/component: exporter
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: slurm-exporter
+        app.kubernetes.io/part-of: slurm-monitoring
+        app.kubernetes.io/component: exporter
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: slurm-exporter
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534  # nobody user
+        fsGroup: 65534
+      containers:
+      - name: slurm-exporter
+        image: slurm-exporter:latest  # Replace with your registry/image
+        imagePullPolicy: IfNotPresent
+        args:
+          - "-config=/etc/slurm-exporter/config.yaml"
+          - "-log-level=$(LOG_LEVEL)"
+        env:
+        - name: LOG_LEVEL
+          value: "info"
+        - name: CLUSTER_NAME
+          value: "production"  # Change to your cluster name
+        - name: ENVIRONMENT
+          value: "production"
+        - name: SLURM_BASE_URL
+          value: "http://slurm-api.example.com:6820"  # Change to your SLURM API
+        - name: SLURM_AUTH_TYPE
+          value: "jwt"  # jwt, basic, or token
+        # JWT auth (default)
+        - name: SLURM_JWT_PATH
+          value: "/var/run/secrets/slurm-jwt/token"
+        # Basic auth (uncomment if using)
+        # - name: SLURM_USERNAME
+        #   valueFrom:
+        #     secretKeyRef:
+        #       name: slurm-exporter-auth
+        #       key: username
+        # - name: SLURM_PASSWORD
+        #   valueFrom:
+        #     secretKeyRef:
+        #       name: slurm-exporter-auth
+        #       key: password
+        # Token auth (uncomment if using)
+        # - name: SLURM_TOKEN
+        #   valueFrom:
+        #     secretKeyRef:
+        #       name: slurm-exporter-auth
+        #       key: token
+        ports:
+        - name: metrics
+          containerPort: 8080
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /live
+            port: metrics
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: metrics
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        volumeMounts:
+        - name: config
+          mountPath: /etc/slurm-exporter
+          readOnly: true
+        - name: slurm-jwt
+          mountPath: /var/run/secrets/slurm-jwt
+          readOnly: true
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+      volumes:
+      - name: config
+        configMap:
+          name: slurm-exporter-config
+      - name: slurm-jwt
+        secret:
+          secretName: slurm-jwt-token
+          optional: true  # Make optional if using different auth
+      nodeSelector:
+        kubernetes.io/os: linux
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                  - slurm-exporter
+              topologyKey: kubernetes.io/hostname

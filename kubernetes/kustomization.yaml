@@ -1,0 +1,62 @@
+# Kustomization for easy deployment management
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: slurm-monitoring
+
+resources:
+  - namespace.yaml
+  - serviceaccount.yaml
+  - configmap.yaml
+  - deployment.yaml
+  - service.yaml
+  - servicemonitor.yaml
+  - hpa.yaml
+  - pdb.yaml
+  - networkpolicy.yaml
+
+# Common labels applied to all resources
+commonLabels:
+  app.kubernetes.io/name: slurm-exporter
+  app.kubernetes.io/version: "1.0.0"
+  app.kubernetes.io/managed-by: kustomize
+
+# Configure different environments
+configMapGenerator:
+  - name: slurm-exporter-config
+    behavior: replace
+    files:
+      - config.yaml
+
+# Secret generation (create actual secrets separately)
+secretGenerator: []
+  # - name: slurm-exporter-auth
+  #   type: Opaque
+  #   literals:
+  #     - username=admin
+  #     - password=secret
+
+# Image configuration
+images:
+  - name: slurm-exporter
+    newName: your-registry/slurm-exporter
+    newTag: v1.0.0
+
+# Patches for environment-specific changes
+patchesStrategicMerge: []
+  # - deployment-patch.yaml
+
+# Replicas for different environments
+replicas:
+  - name: slurm-exporter
+    count: 1
+
+# Variables that can be referenced in resources
+vars:
+  - name: CLUSTER_NAME
+    objref:
+      kind: ConfigMap
+      name: slurm-exporter-config
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.cluster_name

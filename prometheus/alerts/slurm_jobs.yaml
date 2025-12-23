@@ -1,0 +1,206 @@
+# SLURM Job Monitoring Alerts
+# These alerts monitor job health, queue issues, and resource utilization
+
+groups:
+  - name: slurm_job_health
+    interval: 1m
+    rules:
+      # Job failure rates
+      - alert: SLURMHighJobFailureRate
+        expr: |
+          (
+            sum by (cluster_name, partition) (rate(slurm_job_state{state=~"failed|timeout|cancelled"}[15m]))
+            /
+            sum by (cluster_name, partition) (rate(slurm_job_state[15m]))
+          ) > 0.25
+        for: 15m
+        labels:
+          severity: warning
+          component: jobs
+          team: hpc
+        annotations:
+          summary: "High job failure rate in partition {{ $labels.partition }}"
+          description: |
+            More than 25% of jobs are failing in partition {{ $labels.partition }} on cluster {{ $labels.cluster_name }}.
+            Failure rate: {{ $value | humanizePercentage }}
+            
+            Investigate common failure reasons and system health.
+          runbook_url: https://wiki.example.com/runbooks/slurm-job-failures
+          dashboard_url: https://grafana.example.com/d/slurm-jobs?var-partition={{ $labels.partition }}
+
+      # Critical job failures
+      - alert: SLURMCriticalJobFailures
+        expr: |
+          sum by (cluster_name, user) (
+            increase(slurm_job_state{state="failed", partition=~"gpu|highmem|priority"}[1h])
+          ) > 5
+        for: 5m
+        labels:
+          severity: warning
+          component: jobs
+          team: hpc
+        annotations:
+          summary: "Multiple critical job failures for user {{ $labels.user }}"
+          description: |
+            User {{ $labels.user }} has had {{ $value }} job failures in critical partitions in the last hour.
+            Cluster: {{ $labels.cluster_name }}
+            
+            This may indicate issues with user's workflow or system resources.
+          runbook_url: https://wiki.example.com/runbooks/slurm-critical-job-failures
+
+  - name: slurm_queue_health
+    interval: 1m
+    rules:
+      # Queue depth
+      - alert: SLURMQueueBacklogHigh
+        expr: |
+          sum by (cluster_name, partition) (slurm_job_state{state="pending"}) > 1000
+        for: 30m
+        labels:
+          severity: warning
+          component: queue
+          team: hpc
+        annotations:
+          summary: "Large job queue backlog in partition {{ $labels.partition }}"
+          description: |
+            Partition {{ $labels.partition }} has {{ $value }} pending jobs on cluster {{ $labels.cluster_name }}.
+            
+            This indicates insufficient resources or scheduling issues.
+            Consider adding nodes or reviewing job priorities.
+          runbook_url: https://wiki.example.com/runbooks/slurm-queue-backlog
+
+      # Queue wait times
+      - alert: SLURMExcessiveQueueWaitTime
+        expr: |
+          histogram_quantile(0.95, 
+            sum by (cluster_name, partition, le) (
+              rate(slurm_job_queue_time_seconds_bucket[1h])
+            )
+          ) > 86400  # 24 hours
+        for: 1h
+        labels:
+          severity: warning
+          component: queue
+          team: hpc
+        annotations:
+          summary: "Excessive queue wait times in partition {{ $labels.partition }}"
+          description: |
+            95% of jobs are waiting more than 24 hours in queue for partition {{ $labels.partition }}.
+            P95 wait time: {{ $value | humanizeDuration }}
+            Cluster: {{ $labels.cluster_name }}
+            
+            Review resource allocation and job priorities.
+          runbook_url: https://wiki.example.com/runbooks/slurm-queue-wait-time
+
+      # Stalled queue
+      - alert: SLURMQueueStalled
+        expr: |
+          (
+            sum by (cluster_name, partition) (slurm_job_state{state="pending"}) > 0
+            and
+            sum by (cluster_name, partition) (rate(slurm_job_state{state="running"}[30m])) == 0
+          )
+        for: 30m
+        labels:
+          severity: critical
+          component: queue
+          team: hpc
+        annotations:
+          summary: "Job queue is stalled in partition {{ $labels.partition }}"
+          description: |
+            No jobs have started in partition {{ $labels.partition }} for 30 minutes despite pending jobs.
+            Pending jobs: {{ $value }}
+            Cluster: {{ $labels.cluster_name }}
+            
+            This indicates a scheduling or resource availability problem.
+          runbook_url: https://wiki.example.com/runbooks/slurm-queue-stalled
+          pagerduty_key: slurm-queue-stalled
+
+      # Priority inversion
+      - alert: SLURMPriorityInversion
+        expr: |
+          avg by (cluster_name, partition) (
+            slurm_job_queue_time_seconds{qos="normal"} 
+            > 
+            slurm_job_queue_time_seconds{qos="high"}
+          ) > 0.8
+        for: 1h
+        labels:
+          severity: warning
+          component: scheduler
+          team: hpc
+        annotations:
+          summary: "Priority inversion detected in partition {{ $labels.partition }}"
+          description: |
+            Normal priority jobs are experiencing longer wait times than high priority jobs.
+            This suggests scheduler configuration issues.
+            
+            Cluster: {{ $labels.cluster_name }}
+            Partition: {{ $labels.partition }}
+          runbook_url: https://wiki.example.com/runbooks/slurm-priority-inversion
+
+  - name: slurm_job_resources
+    interval: 1m
+    rules:
+      # Resource hogging
+      - alert: SLURMJobResourceHogging
+        expr: |
+          topk(5,
+            sum by (cluster_name, user, job_name) (slurm_job_cpus) > 1000
+            or
+            sum by (cluster_name, user, job_name) (slurm_job_memory_bytes) > 1e12  # 1TB
+          )
+        for: 1h
+        labels:
+          severity: info
+          component: resources
+          team: hpc
+        annotations:
+          summary: "Large resource allocation by job {{ $labels.job_name }}"
+          description: |
+            Job {{ $labels.job_name }} by user {{ $labels.user }} is using significant resources.
+            
+            This is informational - verify the allocation is justified.
+            Cluster: {{ $labels.cluster_name }}
+          runbook_url: https://wiki.example.com/runbooks/slurm-resource-usage
+
+      # Inefficient resource usage
+      - alert: SLURMJobInefficient
+        expr: |
+          (
+            slurm_performance_job_efficiency_ratio < 0.5
+            and
+            slurm_job_cpus > 100
+          )
+        for: 2h
+        labels:
+          severity: warning
+          component: efficiency
+          team: hpc
+        annotations:
+          summary: "Inefficient resource usage by user {{ $labels.user }}"
+          description: |
+            Jobs by user {{ $labels.user }} in partition {{ $labels.partition }} show low efficiency.
+            Efficiency ratio: {{ $value | humanizePercentage }}
+            
+            Consider job optimization or resource reduction.
+          runbook_url: https://wiki.example.com/runbooks/slurm-job-efficiency
+
+      # Runaway jobs
+      - alert: SLURMRunawayJob
+        expr: |
+          slurm_job_run_time_seconds > 604800  # 7 days
+        for: 1h
+        labels:
+          severity: warning
+          component: jobs
+          team: hpc
+        annotations:
+          summary: "Long-running job detected"
+          description: |
+            Job {{ $labels.job_name }} (ID: {{ $labels.job_id }}) has been running for over 7 days.
+            Runtime: {{ $value | humanizeDuration }}
+            User: {{ $labels.user }}
+            
+            Verify this is expected behavior.
+          runbook_url: https://wiki.example.com/runbooks/slurm-runaway-jobs

@@ -1,0 +1,52 @@
+# Horizontal Pod Autoscaler for scaling based on metrics
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: slurm-exporter
+  namespace: slurm-monitoring
+  labels:
+    app.kubernetes.io/name: slurm-exporter
+    app.kubernetes.io/part-of: slurm-monitoring
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: slurm-exporter
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+  # Scale based on CPU usage
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+  # Scale based on memory usage
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  # Scale based on custom metrics (requires metrics-server or custom metrics API)
+  # - type: Pods
+  #   pods:
+  #     metric:
+  #       name: slurm_exporter_collector_duration_seconds
+  #     target:
+  #       type: AverageValue
+  #       averageValue: "10"  # Scale up if avg collection time > 10s
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300  # Wait 5 minutes before scaling down
+      policies:
+      - type: Percent
+        value: 50  # Scale down by max 50% at a time
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60  # Wait 1 minute before scaling up
+      policies:
+      - type: Percent
+        value: 100  # Double the pods if needed
+        periodSeconds: 60

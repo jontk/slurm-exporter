@@ -1,0 +1,41 @@
+# ServiceMonitor for Prometheus Operator
+# Only needed if using Prometheus Operator
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: slurm-exporter
+  namespace: slurm-monitoring
+  labels:
+    app.kubernetes.io/name: slurm-exporter
+    app.kubernetes.io/part-of: slurm-monitoring
+    app.kubernetes.io/component: exporter
+    # Add your Prometheus operator selector labels
+    prometheus: kube-prometheus
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: slurm-exporter
+      app.kubernetes.io/component: exporter
+  endpoints:
+  - port: metrics
+    interval: 30s
+    scrapeTimeout: 25s
+    path: /metrics
+    scheme: http
+    metricRelabelings:
+    # Drop high cardinality metrics if needed
+    - sourceLabels: [__name__]
+      regex: 'slurm_job_state'
+      targetLabel: __tmp_job_user
+      replacement: '${1}'
+    - sourceLabels: [__tmp_job_user, user]
+      regex: ';(user1|user2|user3)'  # Keep only specific users
+      action: keep
+    - regex: '__tmp_.*'
+      action: labeldrop
+    relabelings:
+    # Add custom labels from service
+    - sourceLabels: [__meta_kubernetes_service_label_cluster_name]
+      targetLabel: cluster_name
+    - sourceLabels: [__meta_kubernetes_service_label_environment]
+      targetLabel: environment

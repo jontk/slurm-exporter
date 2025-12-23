@@ -1,0 +1,260 @@
+# Default values for slurm-exporter
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: slurm-exporter
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+  prometheus.io/path: "/metrics"
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65534
+  fsGroup: 65534
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+    - ALL
+
+service:
+  type: ClusterIP
+  port: 8080
+  annotations: {}
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: slurm-exporter.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+  #  - secretName: slurm-exporter-tls
+  #    hosts:
+  #      - slurm-exporter.local
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Network Policy
+networkPolicy:
+  enabled: false
+  ingress:
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            name: monitoring
+      ports:
+      - protocol: TCP
+        port: 8080
+
+# ServiceMonitor for Prometheus Operator
+serviceMonitor:
+  enabled: false
+  interval: 30s
+  scrapeTimeout: 25s
+  labels: {}
+  honorLabels: true
+  metricRelabelings: []
+  relabelings: []
+
+# SLURM Configuration
+config:
+  # Server configuration
+  server:
+    address: ":8080"
+    metricsPath: "/metrics"
+    readTimeout: "30s"
+    writeTimeout: "30s"
+    maxRequestSize: 10485760
+  
+  # SLURM connection
+  slurm:
+    baseUrl: "http://slurm-api.example.com:6820"
+    timeout: "30s"
+    auth:
+      type: "jwt"  # jwt, basic, or token
+      jwtPath: "/var/run/secrets/slurm-jwt/token"
+  
+  # Logging
+  logging:
+    level: "info"
+    format: "json"
+    output: "stdout"
+  
+  # Collectors
+  collectors:
+    jobs:
+      enabled: true
+      filters:
+        metricFilter:
+          enableAll: true
+    nodes:
+      enabled: true
+      filters:
+        metricFilter:
+          enableAll: true
+    partitions:
+      enabled: true
+      filters:
+        metricFilter:
+          enableAll: true
+    accounts:
+      enabled: true
+      filters:
+        metricFilter:
+          enableAll: true
+    users:
+      enabled: true
+      filters:
+        metricFilter:
+          enableAll: true
+    qos:
+      enabled: true
+      filters:
+        metricFilter:
+          enableAll: true
+    reservations:
+      enabled: true
+      filters:
+        metricFilter:
+          enableAll: true
+    associations:
+      enabled: true
+      filters:
+        metricFilter:
+          enableAll: true
+    cluster:
+      enabled: true
+      filters:
+        metricFilter:
+          enableAll: true
+    performance:
+      enabled: true
+      filters:
+        metricFilter:
+          enableAll: true
+    system:
+      enabled: true
+      filters:
+        metricFilter:
+          enableAll: true
+    
+    # Cardinality limits
+    cardinalityLimits:
+      "slurm_job_*":
+        maxLabels: 1000
+        maxSeriesPerLabel: 100
+        action: "drop"
+      "slurm_node_*":
+        maxLabels: 500
+        maxSeriesPerLabel: 50
+        action: "sample"
+
+# Custom labels added to all metrics
+customLabels:
+  cluster_name: "production"
+  environment: "production"
+
+# Existing secret for authentication
+# Create this secret separately with appropriate auth credentials
+existingSecret: ""
+# Or provide auth directly (not recommended for production)
+auth:
+  # For JWT
+  jwt:
+    token: ""
+  # For basic auth
+  basic:
+    username: ""
+    password: ""
+  # For token auth
+  token:
+    value: ""
+
+# Extra environment variables
+extraEnvVars: []
+# - name: GOMAXPROCS
+#   value: "2"
+
+# Extra volumes
+extraVolumes: []
+# - name: custom-config
+#   configMap:
+#     name: custom-config
+
+# Extra volume mounts
+extraVolumeMounts: []
+# - name: custom-config
+#   mountPath: /custom
+#   readOnly: true
+
+# Liveness and readiness probes
+livenessProbe:
+  httpGet:
+    path: /live
+    port: metrics
+  initialDelaySeconds: 30
+  periodSeconds: 30
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: metrics
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3

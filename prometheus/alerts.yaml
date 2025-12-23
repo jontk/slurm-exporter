@@ -1,0 +1,30 @@
+# SLURM Exporter Alerting Rules
+# 
+# This file includes all SLURM monitoring alert rules.
+# Deploy this to your Prometheus server to enable comprehensive SLURM monitoring.
+#
+# Usage:
+#   1. Copy this file and the alerts/ directory to your Prometheus configuration
+#   2. Add to your prometheus.yml:
+#      rule_files:
+#        - "alerts.yaml"
+#   3. Configure Alertmanager to handle the alerts based on severity and team labels
+#
+# Alert Severity Levels:
+#   - critical: Immediate action required, potential service impact
+#   - warning: Investigation needed, degraded performance or approaching limits
+#   - info: Informational, for tracking and capacity planning
+#
+# Team Routing:
+#   - infrastructure: System and hardware issues
+#   - hpc: SLURM-specific and job scheduling issues
+#   - monitoring: Exporter and metrics collection issues
+#   - database: Database connectivity and performance
+#   - capacity_planning: Resource utilization and growth trends
+
+# Include all alert rule files
+rule_files:
+  - "alerts/slurm_health.yaml"      # Exporter and SLURM API health
+  - "alerts/slurm_jobs.yaml"        # Job monitoring and queue health
+  - "alerts/slurm_resources.yaml"   # Resource utilization and capacity
+  - "alerts/slurm_sla.yaml"         # SLA and performance monitoring

@@ -1,0 +1,16 @@
+# Pod Disruption Budget to ensure availability during updates
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: slurm-exporter
+  namespace: slurm-monitoring
+  labels:
+    app.kubernetes.io/name: slurm-exporter
+    app.kubernetes.io/part-of: slurm-monitoring
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: slurm-exporter
+      app.kubernetes.io/component: exporter
+  unhealthyPodEvictionPolicy: AlwaysAllow

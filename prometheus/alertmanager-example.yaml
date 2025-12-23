@@ -1,0 +1,213 @@
+# Example Alertmanager Configuration for SLURM Alerts
+# 
+# This configuration demonstrates how to route SLURM alerts to appropriate teams
+# and escalate based on severity.
+
+global:
+  # Global settings
+  resolve_timeout: 5m
+  
+  # SMTP configuration
+  smtp_smarthost: 'smtp.example.com:587'
+  smtp_from: 'alertmanager@example.com'
+  smtp_auth_username: 'alertmanager@example.com'
+  smtp_auth_password: 'changeme'
+  
+  # Slack webhook URL
+  slack_api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+  
+  # PagerDuty configuration
+  pagerduty_url: 'https://events.pagerduty.com/v2/enqueue'
+
+# Templates for notifications
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# The root route
+route:
+  # Default settings for all alerts
+  group_by: ['alertname', 'cluster_name', 'severity']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  receiver: 'default'
+  
+  # Child routes for specific routing
+  routes:
+    # Critical alerts - immediate notification
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      group_wait: 10s
+      repeat_interval: 1h
+      routes:
+        # Critical infrastructure issues go to on-call
+        - match:
+            team: infrastructure
+          receiver: 'infrastructure-oncall'
+        # Critical HPC issues
+        - match:
+            team: hpc
+          receiver: 'hpc-oncall'
+    
+    # Warning alerts - standard notification
+    - match:
+        severity: warning
+      receiver: 'warning-alerts'
+      group_wait: 5m
+      repeat_interval: 4h
+      routes:
+        # Team-specific routing
+        - match:
+            team: infrastructure
+          receiver: 'infrastructure-team'
+        - match:
+            team: hpc
+          receiver: 'hpc-team'
+        - match:
+            team: monitoring
+          receiver: 'monitoring-team'
+        - match:
+            team: database
+          receiver: 'database-team'
+    
+    # Info alerts - daily summary
+    - match:
+        severity: info
+      receiver: 'info-alerts'
+      group_wait: 30m
+      group_interval: 6h
+      repeat_interval: 24h
+    
+    # SLA breaches - special handling
+    - match:
+        sla_type: ~.+
+      receiver: 'sla-alerts'
+      group_by: ['sla_type', 'cluster_name']
+      repeat_interval: 2h
+    
+    # Capacity planning alerts
+    - match:
+        team: capacity_planning
+      receiver: 'capacity-planning'
+      group_interval: 1d
+      repeat_interval: 7d
+
+# Receivers configuration
+receivers:
+  - name: 'default'
+    # Default receiver - shouldn't normally receive alerts
+    
+  - name: 'critical-alerts'
+    pagerduty_configs:
+      - service_key: 'YOUR-PAGERDUTY-SERVICE-KEY'
+        severity: 'critical'
+        client: 'SLURM Alertmanager'
+        client_url: 'https://prometheus.example.com'
+        description: '{{ .GroupLabels.alertname }} on {{ .GroupLabels.cluster_name }}'
+        details:
+          firing: '{{ .Alerts.Firing | len }}'
+          cluster: '{{ .GroupLabels.cluster_name }}'
+          severity: '{{ .GroupLabels.severity }}'
+    slack_configs:
+      - channel: '#slurm-critical'
+        title: '🚨 CRITICAL: {{ .GroupLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+        send_resolved: true
+    
+  - name: 'infrastructure-oncall'
+    pagerduty_configs:
+      - routing_key: 'YOUR-INFRASTRUCTURE-ROUTING-KEY'
+        severity: 'critical'
+    email_configs:
+      - to: 'infrastructure-oncall@example.com'
+        headers:
+          Subject: 'CRITICAL Infrastructure Alert: {{ .GroupLabels.alertname }}'
+    
+  - name: 'hpc-oncall'
+    pagerduty_configs:
+      - routing_key: 'YOUR-HPC-ROUTING-KEY'
+        severity: 'critical'
+    email_configs:
+      - to: 'hpc-oncall@example.com'
+        headers:
+          Subject: 'CRITICAL HPC Alert: {{ .GroupLabels.alertname }}'
+    
+  - name: 'warning-alerts'
+    slack_configs:
+      - channel: '#slurm-alerts'
+        title: '⚠️ {{ .GroupLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+        send_resolved: true
+    
+  - name: 'infrastructure-team'
+    email_configs:
+      - to: 'infrastructure-team@example.com'
+        send_resolved: true
+    slack_configs:
+      - channel: '#infrastructure-alerts'
+    
+  - name: 'hpc-team'
+    email_configs:
+      - to: 'hpc-team@example.com'
+        send_resolved: true
+    slack_configs:
+      - channel: '#hpc-alerts'
+    
+  - name: 'monitoring-team'
+    email_configs:
+      - to: 'monitoring-team@example.com'
+    slack_configs:
+      - channel: '#monitoring-alerts'
+    
+  - name: 'database-team'
+    email_configs:
+      - to: 'database-team@example.com'
+    slack_configs:
+      - channel: '#database-alerts'
+    
+  - name: 'info-alerts'
+    # Info alerts go to a daily digest
+    email_configs:
+      - to: 'slurm-info@example.com'
+        send_resolved: false
+        headers:
+          Subject: 'SLURM Info Alert: {{ .GroupLabels.alertname }}'
+    
+  - name: 'sla-alerts'
+    email_configs:
+      - to: 'sla-reports@example.com'
+        headers:
+          Subject: 'SLA Breach: {{ .GroupLabels.sla_type }} on {{ .GroupLabels.cluster_name }}'
+    slack_configs:
+      - channel: '#sla-monitoring'
+        title: '📊 SLA Breach: {{ .GroupLabels.sla_type }}'
+    
+  - name: 'capacity-planning'
+    email_configs:
+      - to: 'capacity-planning@example.com'
+        headers:
+          Subject: 'Capacity Planning Alert: {{ .GroupLabels.cluster_name }}'
+
+# Inhibition rules to prevent alert storms
+inhibit_rules:
+  # If SLURM API is down, inhibit other SLURM alerts
+  - source_match:
+      alertname: 'SLURMAPIUnreachable'
+    target_match_re:
+      alertname: '^SLURM.*'
+    equal: ['cluster_name']
+    
+  # If exporter is down, inhibit all other alerts from that instance
+  - source_match:
+      alertname: 'SLURMExporterDown'
+    target_match_re:
+      alertname: '^SLURM.*'
+    equal: ['instance']
+    
+  # If all nodes are offline, inhibit individual node alerts
+  - source_match:
+      alertname: 'SLURMAllNodesOffline'
+    target_match:
+      alertname: 'SLURMNodesOffline'
+    equal: ['cluster_name', 'partition']

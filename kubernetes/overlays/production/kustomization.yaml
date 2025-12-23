@@ -1,0 +1,33 @@
+# Production overlay
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: slurm-monitoring
+
+bases:
+  - ../../
+
+namePrefix: prod-
+
+commonLabels:
+  environment: production
+
+configMapGenerator:
+  - name: slurm-exporter-config
+    behavior: merge
+    literals:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=info
+      - CLUSTER_NAME=production-hpc
+
+patchesStrategicMerge:
+  - deployment-patch.yaml
+
+replicas:
+  - name: slurm-exporter
+    count: 3
+
+images:
+  - name: slurm-exporter
+    newName: your-registry/slurm-exporter
+    newTag: v1.0.0-stable
