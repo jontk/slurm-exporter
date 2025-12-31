@@ -19,7 +19,7 @@ type ResourceTrendTracker struct {
 	config           *TrendConfig
 	metrics          *TrendMetrics
 	mu               sync.RWMutex
-	
+
 	// Trend data storage
 	trendData        map[string]*JobResourceTrends
 	historicalData   map[string][]*ResourceSnapshot
@@ -38,12 +38,12 @@ type TrendConfig struct {
 	PatternDetectionWindow time.Duration `yaml:"pattern_detection_window"`
 	EnablePredictiveAnalysis bool        `yaml:"enable_predictive_analysis"`
 	CacheTTL               time.Duration `yaml:"cache_ttl"`
-	
+
 	// Trend analysis parameters
 	ShortTermWindow        time.Duration `yaml:"short_term_window"`      // 5 minutes
-	MediumTermWindow       time.Duration `yaml:"medium_term_window"`     // 30 minutes  
+	MediumTermWindow       time.Duration `yaml:"medium_term_window"`     // 30 minutes
 	LongTermWindow         time.Duration `yaml:"long_term_window"`       // 2 hours
-	
+
 	// Pattern detection thresholds
 	PeriodicPatternThreshold    float64 `yaml:"periodic_pattern_threshold"`     // 0.7
 	SeasonalPatternThreshold    float64 `yaml:"seasonal_pattern_threshold"`     // 0.8
@@ -55,25 +55,25 @@ type TrendConfig struct {
 type JobResourceTrends struct {
 	JobID             string    `json:"job_id"`
 	LastUpdated       time.Time `json:"last_updated"`
-	
+
 	// Resource trend analysis
 	CPUTrend          *ResourceTrend `json:"cpu_trend"`
 	MemoryTrend       *ResourceTrend `json:"memory_trend"`
 	IOTrend           *ResourceTrend `json:"io_trend"`
 	NetworkTrend      *ResourceTrend `json:"network_trend"`
-	
+
 	// Overall trend indicators
 	OverallTrend      string    `json:"overall_trend"`      // "increasing", "decreasing", "stable", "volatile"
 	TrendStrength     float64   `json:"trend_strength"`     // 0.0 to 1.0
 	TrendConfidence   float64   `json:"trend_confidence"`   // 0.0 to 1.0
-	
+
 	// Pattern identification
 	IdentifiedPatterns []IdentifiedPattern `json:"identified_patterns"`
-	
+
 	// Predictive metrics
 	PredictedPeakUsage    *PeakUsagePrediction `json:"predicted_peak_usage,omitempty"`
 	ResourceExhaustionETA *time.Time           `json:"resource_exhaustion_eta,omitempty"`
-	
+
 	// Anomaly detection
 	DetectedAnomalies []ResourceAnomaly `json:"detected_anomalies"`
 }
@@ -145,24 +145,24 @@ type TrendMetrics struct {
 	TrendStrength             *prometheus.GaugeVec
 	TrendConfidence           *prometheus.GaugeVec
 	ResourceVolatility        *prometheus.GaugeVec
-	
+
 	// Pattern detection metrics
 	PatternsDetected          *prometheus.GaugeVec
 	PatternConfidence         *prometheus.GaugeVec
-	
+
 	// Predictive metrics
 	PredictedPeakUsage        *prometheus.GaugeVec
 	ResourceExhaustionTime    *prometheus.GaugeVec
-	
+
 	// Anomaly detection metrics
 	AnomaliesDetected         *prometheus.GaugeVec
 	AnomalySeverity          *prometheus.GaugeVec
-	
+
 	// Trend analysis metrics
 	ShortTermTrendIndicator   *prometheus.GaugeVec
 	MediumTermTrendIndicator  *prometheus.GaugeVec
 	LongTermTrendIndicator    *prometheus.GaugeVec
-	
+
 	// Collection performance metrics
 	TrendAnalysisDuration     prometheus.Histogram
 	TrendAnalysisErrors       *prometheus.CounterVec
@@ -412,19 +412,19 @@ func (t *ResourceTrendTracker) trackResourceTrends(ctx context.Context) error {
 	for _, job := range jobs.Jobs {
 		// Create current snapshot
 		snapshot := t.createResourceSnapshot(job)
-		
+
 		// Add to historical data
 		t.addHistoricalSnapshot(job.JobID, snapshot)
-		
+
 		// Analyze trends if we have enough data
 		if len(t.historicalData[job.JobID]) >= t.config.MinDataPointsForTrend {
 			trends := t.analyzeJobResourceTrends(job)
 			t.trendData[job.JobID] = trends
-			
+
 			// Update metrics
 			t.updateTrendMetrics(job, trends)
 		}
-		
+
 		t.metrics.JobsTrendTracked.Inc()
 		t.metrics.DataPointsCollected.Inc()
 	}
@@ -447,21 +447,21 @@ func (t *ResourceTrendTracker) createResourceSnapshot(job *slurm.Job) *ResourceS
 
 	// Create utilization data for calculation
 	utilizationData := CreateResourceUtilizationDataFromJob(job)
-	
+
 	// Calculate current utilization
 	if utilizationData.CPUAllocated > 0 {
 		snapshot.CPUUtilization = utilizationData.CPUUsed / utilizationData.CPUAllocated
 	}
-	
+
 	if utilizationData.MemoryAllocated > 0 {
 		snapshot.MemoryUtilization = float64(utilizationData.MemoryUsed) / float64(utilizationData.MemoryAllocated)
 	}
-	
+
 	// I/O and network utilization (simplified estimates)
 	if utilizationData.WallTime > 0 {
 		totalIOBytes := utilizationData.IOReadBytes + utilizationData.IOWriteBytes
 		snapshot.IOUtilization = float64(totalIOBytes) / utilizationData.WallTime / (100 * 1024 * 1024) // Normalize to 100MB/s baseline
-		
+
 		totalNetworkBytes := utilizationData.NetworkRxBytes + utilizationData.NetworkTxBytes
 		snapshot.NetworkUtilization = float64(totalNetworkBytes) / utilizationData.WallTime / (1024 * 1024 * 1024) // Normalize to 1GB/s baseline
 	}
@@ -474,9 +474,9 @@ func (t *ResourceTrendTracker) addHistoricalSnapshot(jobID string, snapshot *Res
 	if t.historicalData[jobID] == nil {
 		t.historicalData[jobID] = []*ResourceSnapshot{}
 	}
-	
+
 	t.historicalData[jobID] = append(t.historicalData[jobID], snapshot)
-	
+
 	// Limit historical data size
 	maxHistorySize := int(t.config.HistoryRetentionPeriod / t.config.TrackingInterval)
 	if len(t.historicalData[jobID]) > maxHistorySize {
@@ -535,7 +535,7 @@ func (t *ResourceTrendTracker) analyzeResourceTrend(resourceType string, snapsho
 	// Extract values for the specific resource
 	values := make([]float64, len(snapshots))
 	timestamps := make([]float64, len(snapshots))
-	
+
 	for i, snapshot := range snapshots {
 		timestamps[i] = float64(snapshot.Timestamp.Unix())
 		switch resourceType {
@@ -585,7 +585,7 @@ func (t *ResourceTrendTracker) calculateLinearRegression(x, y []float64) (slope,
 	}
 
 	n := float64(len(x))
-	
+
 	// Calculate means
 	var sumX, sumY float64
 	for i := range x {
@@ -610,7 +610,7 @@ func (t *ResourceTrendTracker) calculateLinearRegression(x, y []float64) (slope,
 	}
 
 	slope = numerator / denominatorX
-	
+
 	// Calculate R-squared
 	if denominatorY == 0 {
 		rSquared = 1.0 // Perfect fit if no variance in y
@@ -655,7 +655,7 @@ func (t *ResourceTrendTracker) analyzeWindowTrend(snapshots []*ResourceSnapshot,
 	// Get snapshots within the window
 	cutoff := time.Now().Add(-window)
 	var windowSnapshots []*ResourceSnapshot
-	
+
 	for _, snapshot := range snapshots {
 		if snapshot.Timestamp.After(cutoff) {
 			windowSnapshots = append(windowSnapshots, snapshot)
@@ -669,7 +669,7 @@ func (t *ResourceTrendTracker) analyzeWindowTrend(snapshots []*ResourceSnapshot,
 	// Extract values for analysis
 	values := make([]float64, len(windowSnapshots))
 	timestamps := make([]float64, len(windowSnapshots))
-	
+
 	for i, snapshot := range windowSnapshots {
 		timestamps[i] = float64(snapshot.Timestamp.Unix())
 		switch resourceType {
@@ -685,7 +685,7 @@ func (t *ResourceTrendTracker) analyzeWindowTrend(snapshots []*ResourceSnapshot,
 	}
 
 	slope, _ := t.calculateLinearRegression(timestamps, values)
-	
+
 	if math.Abs(slope) < t.config.TrendSensitivity {
 		return "stable"
 	} else if slope > 0 {
@@ -818,7 +818,7 @@ func (t *ResourceTrendTracker) detectBurstPattern(snapshots []*ResourceSnapshot)
 
 	mean := t.calculateMean(cpuValues)
 	stdDev := t.calculateVolatility(cpuValues)
-	
+
 	burstCount := 0
 	for _, value := range cpuValues {
 		if value > mean+2*stdDev { // Values more than 2 standard deviations above mean
@@ -849,14 +849,14 @@ func (t *ResourceTrendTracker) detectGradualIncreasePattern(snapshots []*Resourc
 
 	cpuValues := make([]float64, len(snapshots))
 	timestamps := make([]float64, len(snapshots))
-	
+
 	for i, snapshot := range snapshots {
 		cpuValues[i] = snapshot.CPUUtilization
 		timestamps[i] = float64(snapshot.Timestamp.Unix())
 	}
 
 	slope, rSquared := t.calculateLinearRegression(timestamps, cpuValues)
-	
+
 	if slope > t.config.TrendSensitivity && rSquared > 0.7 {
 		return &IdentifiedPattern{
 			Type:              "gradual_increase",
@@ -881,16 +881,16 @@ func (t *ResourceTrendTracker) hasPeriodicBehavior(values []float64) bool {
 	if len(values) < 6 {
 		return false
 	}
-	
+
 	// Check for repeating patterns by comparing segments
 	segmentSize := len(values) / 3
 	if segmentSize < 2 {
 		return false
 	}
-	
+
 	segment1 := values[:segmentSize]
 	segment2 := values[segmentSize : 2*segmentSize]
-	
+
 	correlation := t.calculateCorrelation(segment1, segment2)
 	return correlation > t.config.PeriodicPatternThreshold
 }
@@ -903,7 +903,7 @@ func (t *ResourceTrendTracker) calculateCorrelation(x, y []float64) float64 {
 
 	meanX := t.calculateMean(x)
 	meanY := t.calculateMean(y)
-	
+
 	var numerator, denomX, denomY float64
 	for i := range x {
 		dx := x[i] - meanX
@@ -912,11 +912,11 @@ func (t *ResourceTrendTracker) calculateCorrelation(x, y []float64) float64 {
 		denomX += dx * dx
 		denomY += dy * dy
 	}
-	
+
 	if denomX == 0 || denomY == 0 {
 		return 0
 	}
-	
+
 	return numerator / math.Sqrt(denomX*denomY)
 }
 
@@ -925,7 +925,7 @@ func (t *ResourceTrendTracker) calculateMean(values []float64) float64 {
 	if len(values) == 0 {
 		return 0
 	}
-	
+
 	var sum float64
 	for _, v := range values {
 		sum += v
@@ -941,7 +941,7 @@ func (t *ResourceTrendTracker) predictPeakUsage(snapshots []*ResourceSnapshot) *
 
 	// Simple prediction based on current trend
 	latest := snapshots[len(snapshots)-1]
-	
+
 	return &PeakUsagePrediction{
 		PredictedTime:    time.Now().Add(1 * time.Hour), // Simplified prediction
 		CPUPeakUsage:     math.Min(latest.CPUUtilization*1.2, 1.0),
@@ -961,19 +961,19 @@ func (t *ResourceTrendTracker) predictResourceExhaustion(snapshots []*ResourceSn
 	// Simple exhaustion prediction for memory
 	memValues := make([]float64, len(snapshots))
 	timestamps := make([]float64, len(snapshots))
-	
+
 	for i, snapshot := range snapshots {
 		memValues[i] = snapshot.MemoryUtilization
 		timestamps[i] = float64(snapshot.Timestamp.Unix())
 	}
 
 	slope, rSquared := t.calculateLinearRegression(timestamps, memValues)
-	
+
 	if slope > 0 && rSquared > 0.5 {
 		// Calculate when usage might reach 100%
 		currentUsage := memValues[len(memValues)-1]
 		remainingCapacity := 1.0 - currentUsage
-		
+
 		if slope > 0 {
 			timeToExhaustion := remainingCapacity / slope
 			exhaustionTime := time.Now().Add(time.Duration(timeToExhaustion) * time.Second)
@@ -1023,7 +1023,7 @@ func (t *ResourceTrendTracker) detectResourceAnomalies(resourceType string, snap
 
 	mean := t.calculateMean(values)
 	stdDev := t.calculateVolatility(values)
-	
+
 	// Detect spikes (values significantly above normal)
 	for i, value := range values {
 		if value > mean+3*stdDev && stdDev > 0.1 { // 3 sigma rule with minimum threshold
@@ -1049,9 +1049,9 @@ func (t *ResourceTrendTracker) calculateAnomalySeverity(value, mean, stdDev floa
 	if stdDev == 0 {
 		return "low"
 	}
-	
+
 	deviations := math.Abs(value-mean) / stdDev
-	
+
 	if deviations > 4 {
 		return "critical"
 	} else if deviations > 3 {
@@ -1118,7 +1118,7 @@ func (t *ResourceTrendTracker) updateTrendMetrics(job *slurm.Job, trends *JobRes
 		}
 
 		resourceLabels := append(labels, resourceType)
-		
+
 		// Trend direction
 		var direction float64
 		switch trend.Direction {
@@ -1130,12 +1130,12 @@ func (t *ResourceTrendTracker) updateTrendMetrics(job *slurm.Job, trends *JobRes
 			direction = 0.0
 		}
 		t.metrics.ResourceTrendDirection.WithLabelValues(resourceLabels...).Set(direction)
-		
+
 		// Trend strength and confidence
 		t.metrics.TrendStrength.WithLabelValues(resourceLabels...).Set(math.Abs(trend.Slope))
 		t.metrics.TrendConfidence.WithLabelValues(resourceLabels...).Set(trend.RSquared)
 		t.metrics.ResourceVolatility.WithLabelValues(resourceLabels...).Set(trend.Volatility)
-		
+
 		// Short, medium, long-term trends
 		t.metrics.ShortTermTrendIndicator.WithLabelValues(resourceLabels...).Set(t.trendToFloat(trend.ShortTermTrend))
 		t.metrics.MediumTermTrendIndicator.WithLabelValues(resourceLabels...).Set(t.trendToFloat(trend.MediumTermTrend))
@@ -1146,7 +1146,7 @@ func (t *ResourceTrendTracker) updateTrendMetrics(job *slurm.Job, trends *JobRes
 	patternCounts := make(map[string]int)
 	for _, pattern := range trends.IdentifiedPatterns {
 		patternCounts[pattern.Type]++
-		
+
 		patternLabels := append(labels, pattern.Type)
 		t.metrics.PatternsDetected.WithLabelValues(patternLabels...).Set(float64(patternCounts[pattern.Type]))
 		t.metrics.PatternConfidence.WithLabelValues(patternLabels...).Set(pattern.Confidence)
@@ -1177,10 +1177,10 @@ func (t *ResourceTrendTracker) updateTrendMetrics(job *slurm.Job, trends *JobRes
 			anomalyCounts[anomaly.ResourceType] = make(map[string]int)
 		}
 		anomalyCounts[anomaly.ResourceType][anomaly.Type]++
-		
+
 		anomalyLabels := append(labels, anomaly.ResourceType, anomaly.Type)
 		t.metrics.AnomaliesDetected.WithLabelValues(anomalyLabels...).Set(float64(anomalyCounts[anomaly.ResourceType][anomaly.Type]))
-		
+
 		severityValue := t.severityToFloat(anomaly.Severity)
 		t.metrics.AnomalySeverity.WithLabelValues(anomalyLabels...).Set(severityValue)
 	}
@@ -1217,7 +1217,7 @@ func (t *ResourceTrendTracker) severityToFloat(severity string) float64 {
 // cleanOldHistoricalData removes old historical data beyond retention period
 func (t *ResourceTrendTracker) cleanOldHistoricalData() {
 	cutoff := time.Now().Add(-t.config.HistoryRetentionPeriod)
-	
+
 	for jobID, snapshots := range t.historicalData {
 		var filteredSnapshots []*ResourceSnapshot
 		for _, snapshot := range snapshots {
@@ -1225,7 +1225,7 @@ func (t *ResourceTrendTracker) cleanOldHistoricalData() {
 				filteredSnapshots = append(filteredSnapshots, snapshot)
 			}
 		}
-		
+
 		if len(filteredSnapshots) == 0 {
 			delete(t.historicalData, jobID)
 		} else {

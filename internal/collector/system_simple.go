@@ -34,20 +34,20 @@ type SystemSimpleCollector struct {
 	slurmDaemonUp       *prometheus.Desc
 	slurmAPILatency     *prometheus.Desc
 	slurmAPIErrors      *prometheus.Desc
-	
+
 	// Database connectivity
 	slurmDBConnections  *prometheus.Desc
 	slurmDBLatency      *prometheus.Desc
-	
+
 	// System resource metrics
 	systemLoadAvg       *prometheus.Desc
 	systemMemoryUsage   *prometheus.Desc
 	systemDiskUsage     *prometheus.Desc
-	
+
 	// SLURM configuration metrics
 	configLastModified  *prometheus.Desc
 	activeControllers   *prometheus.Desc
-	
+
 	// Performance counters
 	lastCollectionTime  time.Time
 	apiCallCount        *prometheus.CounterVec
@@ -242,10 +242,10 @@ func (c *SystemSimpleCollector) collect(ch chan<- prometheus.Metric) error {
 
 	// Check SLURM daemon health
 	c.checkSlurmHealth(ch, ctx, clusterName)
-	
+
 	// Collect system metrics
 	c.collectSystemMetrics(ch)
-	
+
 	// Collect SLURM-specific system info
 	c.collectSlurmSystemInfo(ch, ctx, clusterName)
 

@@ -270,7 +270,7 @@ func TestReservationCollector_isReservationActive(t *testing.T) {
 
 func TestReservationCollector_TimeCalculations(t *testing.T) {
 	now := time.Now()
-	
+
 	// Create mock client and reservations manager
 	mockClient := &MockClient{}
 	mockReservationsManager := &MockReservationsManager{}
@@ -327,14 +327,14 @@ func TestReservationCollector_TimeCalculations(t *testing.T) {
 	// Check remaining time calculations
 	remainingTimes := make(map[string]float64)
 	durations := make(map[string]float64)
-	
+
 	for metric := range ch {
 		dto := &prometheus.Metric{}
 		metric.Write(dto)
 
 		if dto.Gauge != nil && len(dto.Label) >= 1 {
 			resName := *dto.Label[0].Value
-			
+
 			if strings.Contains(metric.Desc().String(), "remaining_seconds") {
 				remainingTimes[resName] = *dto.Gauge.Value
 			}
@@ -351,7 +351,7 @@ func TestReservationCollector_TimeCalculations(t *testing.T) {
 
 	// Past reservation should have 0 remaining time
 	assert.Equal(t, float64(0), remainingTimes["past_res"])
-	
+
 	// Current reservation should have positive remaining time (less than 1 hour)
 	assert.Greater(t, remainingTimes["current_res"], float64(0))
 	assert.Less(t, remainingTimes["current_res"], float64(3600))

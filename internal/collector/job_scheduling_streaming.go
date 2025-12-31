@@ -35,7 +35,7 @@ type JobSchedulingEvent struct {
 	SequenceNumber   int64
 	CorrelationID    string
 	ProcessingID     string
-	
+
 	// Scheduling decision data
 	SchedulingDecision    string
 	SchedulingReason      string
@@ -44,7 +44,7 @@ type JobSchedulingEvent struct {
 	SchedulingScore       float64
 	DecisionTimestamp     time.Time
 	DecisionLatency       time.Duration
-	
+
 	// Resource allocation
 	AllocatedNodes        []string
 	AllocatedCPUs         int
@@ -53,7 +53,7 @@ type JobSchedulingEvent struct {
 	AllocatedStorage      int64
 	ResourceEfficiency    float64
 	AllocationScore       float64
-	
+
 	// Queue information
 	SourceQueue           string
 	TargetQueue           string
@@ -62,7 +62,7 @@ type JobSchedulingEvent struct {
 	EstimatedWaitTime     time.Duration
 	ActualWaitTime        time.Duration
 	QueueEfficiency       float64
-	
+
 	// Priority factors
 	UserPriority          int
 	GroupPriority         int
@@ -72,7 +72,7 @@ type JobSchedulingEvent struct {
 	FairShareFactor       float64
 	AgeFactor             float64
 	SizeFactor            float64
-	
+
 	// Constraints and requirements
 	Constraints           map[string]string
 	Features              []string
@@ -81,7 +81,7 @@ type JobSchedulingEvent struct {
 	Reservations          []string
 	ExclusiveAccess       bool
 	PreemptionEligible    bool
-	
+
 	// Backfill information
 	BackfillEligible      bool
 	BackfillWindow        time.Duration
@@ -89,7 +89,7 @@ type JobSchedulingEvent struct {
 	BackfillPriority      int
 	BackfillOpportunities int
 	BackfillSuccess       bool
-	
+
 	// Preemption data
 	PreemptionRequired    bool
 	PreemptedJobs         []string
@@ -97,7 +97,7 @@ type JobSchedulingEvent struct {
 	PreemptionBenefit     float64
 	PreemptionScore       float64
 	PreemptionJustified   bool
-	
+
 	// Performance metrics
 	SchedulingOverhead    time.Duration
 	OptimizationCycles    int
@@ -105,7 +105,7 @@ type JobSchedulingEvent struct {
 	ConstraintChecks      int
 	ScoringsPerformed     int
 	DecisionConfidence    float64
-	
+
 	// Impact assessment
 	ClusterImpact         float64
 	QueueImpact           float64
@@ -113,7 +113,7 @@ type JobSchedulingEvent struct {
 	SystemEfficiency      float64
 	ResourceFragmentation float64
 	SchedulingEfficiency  float64
-	
+
 	// Business metrics
 	EstimatedCost         float64
 	BusinessPriority      int
@@ -121,7 +121,7 @@ type JobSchedulingEvent struct {
 	DeadlineRisk          float64
 	ValueScore            float64
 	ROIEstimate           float64
-	
+
 	// Optimization data
 	OptimizationAttempts  int
 	OptimizationSuccess   bool
@@ -129,7 +129,7 @@ type JobSchedulingEvent struct {
 	AlternativeOptions    int
 	BestAlternativeScore  float64
 	OptimizationTime      time.Duration
-	
+
 	// Prediction data
 	PredictedRuntime      time.Duration
 	PredictedSuccess      float64
@@ -137,7 +137,7 @@ type JobSchedulingEvent struct {
 	PredictedCost         float64
 	PredictionConfidence  float64
 	PredictionAccuracy    float64
-	
+
 	// Anomaly detection
 	AnomalyDetected       bool
 	AnomalyType           string
@@ -145,7 +145,7 @@ type JobSchedulingEvent struct {
 	AnomalyDescription    string
 	AnomalyMitigation     string
 	AnomalyImpact         float64
-	
+
 	// Compliance and audit
 	PolicyCompliant       bool
 	PolicyViolations      []string
@@ -153,7 +153,7 @@ type JobSchedulingEvent struct {
 	ComplianceScore       float64
 	RegulatoryFlags       []string
 	SecurityClearance     string
-	
+
 	// Stream metadata
 	StreamID              string
 	ConsumerID            string
@@ -161,7 +161,7 @@ type JobSchedulingEvent struct {
 	ProcessingTime        time.Duration
 	AcknowledgedAt        *time.Time
 	RetryCount            int
-	
+
 	// Error handling
 	ErrorOccurred         bool
 	ErrorMessage          string
@@ -169,7 +169,7 @@ type JobSchedulingEvent struct {
 	RecoveryAttempted     bool
 	RecoverySuccess       bool
 	FallbackUsed          bool
-	
+
 	// Event enrichment
 	EnrichmentApplied     bool
 	EnrichmentSources     []string
@@ -188,7 +188,7 @@ type SchedulingStreamingConfiguration struct {
 	EventBatchTimeout       time.Duration
 	MaxConcurrentStreams    int
 	StreamTimeout           time.Duration
-	
+
 	// Performance settings
 	CompressionEnabled      bool
 	CompressionLevel        int
@@ -196,7 +196,7 @@ type SchedulingStreamingConfiguration struct {
 	EncryptionAlgorithm     string
 	BatchProcessing         bool
 	ParallelProcessing      bool
-	
+
 	// Filtering and routing
 	EventFiltering          bool
 	FilterRules             []string
@@ -204,7 +204,7 @@ type SchedulingStreamingConfiguration struct {
 	RoutingRules            map[string]string
 	PriorityQueuing         bool
 	DeadLetterQueue         bool
-	
+
 	// Reliability settings
 	GuaranteedDelivery      bool
 	OrderingGuaranteed      bool
@@ -212,7 +212,7 @@ type SchedulingStreamingConfiguration struct {
 	RetryPolicy             string
 	MaxRetries              int
 	BackoffMultiplier       float64
-	
+
 	// Monitoring settings
 	MetricsEnabled          bool
 	TracingEnabled          bool
@@ -220,7 +220,7 @@ type SchedulingStreamingConfiguration struct {
 	DebugMode               bool
 	LogLevel                string
 	SamplingRate            float64
-	
+
 	// Resource limits
 	MaxMemoryUsage          int64
 	MaxCPUUsage             float64
@@ -228,7 +228,7 @@ type SchedulingStreamingConfiguration struct {
 	MaxEventsPerSecond      int
 	BackpressureThreshold   int
 	CircuitBreakerThreshold float64
-	
+
 	// Security settings
 	AuthenticationRequired  bool
 	AuthorizationRequired   bool
@@ -236,7 +236,7 @@ type SchedulingStreamingConfiguration struct {
 	DataMaskingEnabled      bool
 	PIIRedactionEnabled     bool
 	ComplianceMode          string
-	
+
 	// Advanced features
 	EventEnrichment         bool
 	CorrelationEnabled      bool
@@ -244,7 +244,7 @@ type SchedulingStreamingConfiguration struct {
 	WindowingEnabled        bool
 	StatefulProcessing      bool
 	CheckpointingEnabled    bool
-	
+
 	// Integration settings
 	WebhookEnabled          bool
 	WebhookEndpoints        []string
@@ -252,7 +252,7 @@ type SchedulingStreamingConfiguration struct {
 	KafkaTopics             []string
 	SQSEnabled              bool
 	SQSQueues               []string
-	
+
 	// Optimization settings
 	AdaptiveStreaming       bool
 	LoadBalancing           bool
@@ -260,7 +260,7 @@ type SchedulingStreamingConfiguration struct {
 	ResourceOptimization    bool
 	CostOptimization        bool
 	PerformanceTuning       bool
-	
+
 	// Business logic
 	SLAEnforcement          bool
 	BusinessRules           []string
@@ -268,7 +268,7 @@ type SchedulingStreamingConfiguration struct {
 	ValueTracking           bool
 	ROICalculation          bool
 	ImpactAssessment        bool
-	
+
 	// Machine learning
 	MLPrediction            bool
 	AnomalyDetection        bool
@@ -276,7 +276,7 @@ type SchedulingStreamingConfiguration struct {
 	TrendAnalysis           bool
 	ForecastingEnabled      bool
 	RecommendationEngine    bool
-	
+
 	// Compliance settings
 	DataRetention           time.Duration
 	DataArchiving           bool
@@ -295,7 +295,7 @@ type ActiveSchedulingStream struct {
 	CreatedAt            time.Time
 	LastActivityAt       time.Time
 	Status               string
-	
+
 	// Consumer information
 	ConsumerID           string
 	ConsumerName         string
@@ -303,7 +303,7 @@ type ActiveSchedulingStream struct {
 	ConsumerEndpoint     string
 	ConsumerHealth       string
 	LastHeartbeat        time.Time
-	
+
 	// Stream statistics
 	EventsDelivered      int64
 	EventsPending        int64
@@ -311,7 +311,7 @@ type ActiveSchedulingStream struct {
 	EventsFiltered       int64
 	BytesTransferred     int64
 	AverageLatency       time.Duration
-	
+
 	// Performance metrics
 	Throughput           float64
 	ErrorRate            float64
@@ -319,7 +319,7 @@ type ActiveSchedulingStream struct {
 	ProcessingRate       float64
 	BackpressureActive   bool
 	ResourceUtilization  float64
-	
+
 	// Quality metrics
 	DeliveryGuarantee    string
 	OrderingGuarantee    string
@@ -327,7 +327,7 @@ type ActiveSchedulingStream struct {
 	DataQuality          float64
 	EnrichmentQuality    float64
 	CorrelationAccuracy  float64
-	
+
 	// Business metrics
 	BusinessValue        float64
 	CostPerEvent         float64
@@ -335,7 +335,7 @@ type ActiveSchedulingStream struct {
 	SLACompliance        float64
 	CustomerSatisfaction float64
 	ImpactScore          float64
-	
+
 	// Optimization metrics
 	OptimizationEnabled  bool
 	OptimizationGains    float64
@@ -362,7 +362,7 @@ type SchedulingStreamingMetrics struct {
 	DegradedStreams           int
 	FailedStreams             int
 	StreamCreationRate        float64
-	
+
 	// Event metrics
 	TotalEventsProcessed      int64
 	EventsPerSecond           float64
@@ -370,7 +370,7 @@ type SchedulingStreamingMetrics struct {
 	PeakEventRate             float64
 	EventBacklog              int64
 	EventProcessingLatency    time.Duration
-	
+
 	// Performance metrics
 	CPUUtilization            float64
 	MemoryUtilization         float64
@@ -378,7 +378,7 @@ type SchedulingStreamingMetrics struct {
 	DiskUtilization           float64
 	SystemLoad                float64
 	ResourceEfficiency        float64
-	
+
 	// Reliability metrics
 	Uptime                    time.Duration
 	Availability              float64
@@ -386,7 +386,7 @@ type SchedulingStreamingMetrics struct {
 	MTTR                      time.Duration
 	ErrorRate                 float64
 	RecoveryRate              float64
-	
+
 	// Quality metrics
 	DataAccuracy              float64
 	DataCompleteness          float64
@@ -394,7 +394,7 @@ type SchedulingStreamingMetrics struct {
 	EnrichmentSuccess         float64
 	CorrelationSuccess        float64
 	DeduplicationRate         float64
-	
+
 	// Business metrics
 	TotalBusinessValue        float64
 	AverageCostPerEvent       float64
@@ -402,7 +402,7 @@ type SchedulingStreamingMetrics struct {
 	CustomerSatisfaction      float64
 	SLACompliance             float64
 	BusinessImpact            float64
-	
+
 	// Optimization metrics
 	OptimizationOpportunities int
 	PotentialSavings          float64
@@ -410,7 +410,7 @@ type SchedulingStreamingMetrics struct {
 	PerformanceScore          float64
 	QualityScore              float64
 	ValueScore                float64
-	
+
 	// Capacity metrics
 	CapacityUtilization       float64
 	ScalingEvents             int
@@ -418,7 +418,7 @@ type SchedulingStreamingMetrics struct {
 	ProjectedCapacityNeeds    float64
 	CapacityPlanningScore     float64
 	GrowthRate                float64
-	
+
 	// Cost metrics
 	TotalCost                 float64
 	InfrastructureCost        float64
@@ -426,7 +426,7 @@ type SchedulingStreamingMetrics struct {
 	DataTransferCost          float64
 	StorageCost               float64
 	CostTrend                 float64
-	
+
 	// Compliance metrics
 	ComplianceScore           float64
 	PolicyViolations          int
@@ -443,7 +443,7 @@ type SchedulingEventFilter struct {
 	FilterType        string
 	Priority          int
 	Enabled           bool
-	
+
 	// Filter criteria
 	JobPatterns       []string
 	UserPatterns      []string
@@ -451,7 +451,7 @@ type SchedulingEventFilter struct {
 	EventTypes        []string
 	MinPriority       int
 	MaxPriority       int
-	
+
 	// Performance criteria
 	MinEfficiency     float64
 	MaxLatency        time.Duration
@@ -459,7 +459,7 @@ type SchedulingEventFilter struct {
 	AnomalyOnly       bool
 	ViolationsOnly    bool
 	OptimizationOnly  bool
-	
+
 	// Business criteria
 	MinBusinessValue  float64
 	MaxCost           float64
@@ -467,7 +467,7 @@ type SchedulingEventFilter struct {
 	CriticalOnly      bool
 	ComplianceOnly    bool
 	SecurityOnly      bool
-	
+
 	// Statistics
 	MatchCount        int64
 	RejectCount       int64
@@ -486,7 +486,7 @@ type SchedulingStreamingHealthStatus struct {
 	HealthTrend           string
 	NextHealthCheck       time.Time
 	HealthHistory         []float64
-	
+
 	// Component health
 	StreamHealth          float64
 	ProcessingHealth      float64
@@ -494,7 +494,7 @@ type SchedulingStreamingHealthStatus struct {
 	NetworkHealth         float64
 	SecurityHealth        float64
 	ComplianceHealth      float64
-	
+
 	// Performance health
 	LatencyHealth         float64
 	ThroughputHealth      float64
@@ -502,7 +502,7 @@ type SchedulingStreamingHealthStatus struct {
 	ResourceHealth        float64
 	ScalabilityHealth     float64
 	EfficiencyHealth      float64
-	
+
 	// Business health
 	SLAHealth             float64
 	CostHealth            float64
@@ -510,7 +510,7 @@ type SchedulingStreamingHealthStatus struct {
 	CustomerHealth        float64
 	ROIHealth             float64
 	ImpactHealth          float64
-	
+
 	// Risk indicators
 	RiskScore             float64
 	SecurityRisk          float64
@@ -518,7 +518,7 @@ type SchedulingStreamingHealthStatus struct {
 	ComplianceRisk        float64
 	FinancialRisk         float64
 	ReputationalRisk      float64
-	
+
 	// Recommendations
 	IssuesDetected        int
 	CriticalIssues        int
@@ -526,7 +526,7 @@ type SchedulingStreamingHealthStatus struct {
 	AutomatedActions      []string
 	RequiredActions       []string
 	PreventiveActions     []string
-	
+
 	// Predictive health
 	PredictedHealth       float64
 	HealthForecast        []float64
@@ -545,7 +545,7 @@ type SchedulingEventSubscription struct {
 	CreatedAt             time.Time
 	ExpiresAt             *time.Time
 	Status                string
-	
+
 	// Delivery configuration
 	DeliveryMethod        string
 	Endpoint              string
@@ -553,7 +553,7 @@ type SchedulingEventSubscription struct {
 	Format                string
 	Compression           bool
 	Encryption            bool
-	
+
 	// Filter configuration
 	EventFilters          []string
 	QueueFilters          []string
@@ -561,7 +561,7 @@ type SchedulingEventSubscription struct {
 	PriorityThreshold     int
 	EfficiencyThreshold   float64
 	BusinessValueMin      float64
-	
+
 	// Quality of service
 	GuaranteedDelivery    bool
 	OrderingRequired      bool
@@ -569,7 +569,7 @@ type SchedulingEventSubscription struct {
 	RetryBackoff          time.Duration
 	DeadLetterQueue       string
 	TimeoutDuration       time.Duration
-	
+
 	// Rate limiting
 	RateLimitEnabled      bool
 	EventsPerSecond       int
@@ -577,7 +577,7 @@ type SchedulingEventSubscription struct {
 	QuotaLimit            int64
 	QuotaUsed             int64
 	QuotaResetTime        time.Time
-	
+
 	// Security
 	AuthRequired          bool
 	AuthMethod            string
@@ -585,7 +585,7 @@ type SchedulingEventSubscription struct {
 	CertificateThumbprint string
 	IPWhitelist           []string
 	EncryptionKey         string
-	
+
 	// Monitoring
 	MetricsEnabled        bool
 	TracingEnabled        bool
@@ -593,7 +593,7 @@ type SchedulingEventSubscription struct {
 	AlertingEnabled       bool
 	HealthCheckEnabled    bool
 	HealthCheckInterval   time.Duration
-	
+
 	// Statistics
 	EventsDelivered       int64
 	EventsFailed          int64
@@ -601,7 +601,7 @@ type SchedulingEventSubscription struct {
 	AverageLatency        time.Duration
 	SuccessRate           float64
 	ErrorRate             float64
-	
+
 	// Cost and billing
 	BillingEnabled        bool
 	CostPerEvent          float64
@@ -609,7 +609,7 @@ type SchedulingEventSubscription struct {
 	BillingCycle          string
 	PaymentMethod         string
 	CreditLimit           float64
-	
+
 	// Compliance
 	DataRetention         time.Duration
 	PIIHandling           string
@@ -628,7 +628,7 @@ type SchedulingEventProcessingStats struct {
 	PartialProcessing        int64
 	SkippedProcessing        int64
 	RetryProcessing          int64
-	
+
 	// Performance metrics
 	AverageProcessingTime    time.Duration
 	MinProcessingTime        time.Duration
@@ -636,7 +636,7 @@ type SchedulingEventProcessingStats struct {
 	P50ProcessingTime        time.Duration
 	P95ProcessingTime        time.Duration
 	P99ProcessingTime        time.Duration
-	
+
 	// Throughput metrics
 	CurrentThroughput        float64
 	PeakThroughput           float64
@@ -644,7 +644,7 @@ type SchedulingEventProcessingStats struct {
 	ThroughputTrend          float64
 	ThroughputVariance       float64
 	ThroughputEfficiency     float64
-	
+
 	// Resource metrics
 	CPUTimeConsumed          time.Duration
 	MemoryAllocated          int64
@@ -652,7 +652,7 @@ type SchedulingEventProcessingStats struct {
 	DiskIOOperations         int64
 	ResourceEfficiency       float64
 	ResourceCost             float64
-	
+
 	// Queue metrics
 	QueueDepth               int64
 	QueueLatency             time.Duration
@@ -660,7 +660,7 @@ type SchedulingEventProcessingStats struct {
 	BackpressureEvents       int64
 	DroppedEvents            int64
 	QueueEfficiency          float64
-	
+
 	// Error metrics
 	ErrorsByType             map[string]int64
 	ErrorRate                float64
@@ -668,7 +668,7 @@ type SchedulingEventProcessingStats struct {
 	RecoveryRate             float64
 	MeanTimeBetweenErrors    time.Duration
 	MeanTimeToRecover        time.Duration
-	
+
 	// Business impact
 	BusinessEventsProcessed  int64
 	CriticalEventsProcessed  int64
@@ -676,7 +676,7 @@ type SchedulingEventProcessingStats struct {
 	CostIncurred             float64
 	ROI                      float64
 	CustomerImpact           float64
-	
+
 	// Optimization metrics
 	OptimizationApplied      int64
 	OptimizationGains        float64
@@ -684,7 +684,7 @@ type SchedulingEventProcessingStats struct {
 	CostReduction            float64
 	PerformanceImprovement   float64
 	QualityImprovement       float64
-	
+
 	// Compliance metrics
 	ComplianceChecks         int64
 	ComplianceViolations     int64
@@ -703,7 +703,7 @@ type SchedulingStreamingPerformanceMetrics struct {
 	NetworkLatency           time.Duration
 	StorageLatency           time.Duration
 	TotalLatency             time.Duration
-	
+
 	// Latency percentiles
 	P50Latency               time.Duration
 	P90Latency               time.Duration
@@ -711,7 +711,7 @@ type SchedulingStreamingPerformanceMetrics struct {
 	P99Latency               time.Duration
 	P999Latency              time.Duration
 	MaxLatency               time.Duration
-	
+
 	// Throughput metrics
 	EventsPerSecond          float64
 	BytesPerSecond           float64
@@ -719,7 +719,7 @@ type SchedulingStreamingPerformanceMetrics struct {
 	TransactionsPerSecond    float64
 	OperationsPerSecond      float64
 	PeakThroughput           float64
-	
+
 	// Efficiency metrics
 	ProcessingEfficiency     float64
 	ResourceEfficiency       float64
@@ -727,7 +727,7 @@ type SchedulingStreamingPerformanceMetrics struct {
 	EnergyEfficiency         float64
 	SpaceEfficiency          float64
 	TimeEfficiency           float64
-	
+
 	// Scalability metrics
 	ScalabilityIndex         float64
 	ElasticityScore          float64
@@ -735,7 +735,7 @@ type SchedulingStreamingPerformanceMetrics struct {
 	PartitioningEfficiency   float64
 	ShardingEfficiency       float64
 	ReplicationEfficiency    float64
-	
+
 	// Quality metrics
 	DataQualityScore         float64
 	ProcessingAccuracy       float64
@@ -743,7 +743,7 @@ type SchedulingStreamingPerformanceMetrics struct {
 	ConsistencyScore         float64
 	CompletenessScore        float64
 	TimelinessScore          float64
-	
+
 	// Optimization metrics
 	OptimizationScore        float64
 	AutomationLevel          float64
@@ -751,7 +751,7 @@ type SchedulingStreamingPerformanceMetrics struct {
 	AdaptabilityScore        float64
 	LearningRate             float64
 	ImprovementRate          float64
-	
+
 	// Business metrics
 	BusinessValueDelivered   float64
 	CustomerSatisfaction     float64
@@ -759,7 +759,7 @@ type SchedulingStreamingPerformanceMetrics struct {
 	CostPerformanceRatio     float64
 	ROIScore                 float64
 	CompetitiveAdvantage     float64
-	
+
 	// Capacity metrics
 	CapacityUtilization      float64
 	HeadroomAvailable        float64
@@ -767,7 +767,7 @@ type SchedulingStreamingPerformanceMetrics struct {
 	GrowthCapability         float64
 	BurstCapacity            float64
 	SustainedCapacity        float64
-	
+
 	// Reliability metrics
 	Availability             float64
 	Reliability              float64
@@ -953,7 +953,7 @@ func (c *JobSchedulingStreamingCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.anomalyDetectionRate
 	ch <- c.predictionAccuracy
 	ch <- c.systemUtilization
-	
+
 	// Dynamic metrics
 	for _, desc := range c.streamConfigMetrics {
 		ch <- desc
@@ -975,28 +975,28 @@ func (c *JobSchedulingStreamingCollector) Describe(ch chan<- *prometheus.Desc) {
 // Collect implements prometheus.Collector
 func (c *JobSchedulingStreamingCollector) Collect(ch chan<- prometheus.Metric) {
 	ctx := context.Background()
-	
+
 	// Collect streaming configuration metrics
 	c.collectStreamingConfiguration(ctx, ch)
-	
+
 	// Collect active streams metrics
 	c.collectActiveStreams(ctx, ch)
-	
+
 	// Collect streaming metrics
 	c.collectStreamingMetrics(ctx, ch)
-	
+
 	// Collect health status metrics
 	c.collectHealthStatus(ctx, ch)
-	
+
 	// Collect event subscription metrics
 	c.collectEventSubscriptions(ctx, ch)
-	
+
 	// Collect event filter metrics
 	c.collectEventFilters(ctx, ch)
-	
+
 	// Collect processing statistics
 	c.collectProcessingStats(ctx, ch)
-	
+
 	// Collect performance metrics
 	c.collectPerformanceMetrics(ctx, ch)
 }
@@ -1006,7 +1006,7 @@ func (c *JobSchedulingStreamingCollector) collectStreamingConfiguration(ctx cont
 	if err != nil {
 		return
 	}
-	
+
 	// Configuration enabled/disabled metrics
 	configurations := map[string]bool{
 		"streaming_enabled":        config.StreamingEnabled,
@@ -1032,13 +1032,13 @@ func (c *JobSchedulingStreamingCollector) collectStreamingConfiguration(ctx cont
 		"ml_prediction":            config.MLPrediction,
 		"anomaly_detection":        config.AnomalyDetection,
 	}
-	
+
 	for name, enabled := range configurations {
 		value := 0.0
 		if enabled {
 			value = 1.0
 		}
-		
+
 		if _, exists := c.streamConfigMetrics[name]; !exists {
 			c.streamConfigMetrics[name] = prometheus.NewDesc(
 				"slurm_scheduling_stream_config_"+name,
@@ -1047,14 +1047,14 @@ func (c *JobSchedulingStreamingCollector) collectStreamingConfiguration(ctx cont
 				nil,
 			)
 		}
-		
+
 		ch <- prometheus.MustNewConstMetric(
 			c.streamConfigMetrics[name],
 			prometheus.GaugeValue,
 			value,
 		)
 	}
-	
+
 	// Numeric configuration metrics
 	numericConfigs := map[string]float64{
 		"event_buffer_size":      float64(config.EventBufferSize),
@@ -1071,7 +1071,7 @@ func (c *JobSchedulingStreamingCollector) collectStreamingConfiguration(ctx cont
 		"backpressure_threshold": float64(config.BackpressureThreshold),
 		"circuit_breaker_threshold": config.CircuitBreakerThreshold,
 	}
-	
+
 	for name, value := range numericConfigs {
 		if _, exists := c.streamConfigMetrics[name]; !exists {
 			c.streamConfigMetrics[name] = prometheus.NewDesc(
@@ -1081,7 +1081,7 @@ func (c *JobSchedulingStreamingCollector) collectStreamingConfiguration(ctx cont
 				nil,
 			)
 		}
-		
+
 		ch <- prometheus.MustNewConstMetric(
 			c.streamConfigMetrics[name],
 			prometheus.GaugeValue,
@@ -1095,13 +1095,13 @@ func (c *JobSchedulingStreamingCollector) collectActiveStreams(ctx context.Conte
 	if err != nil {
 		return
 	}
-	
+
 	// Count streams by type and status
 	streamCounts := make(map[string]int)
 	for _, stream := range streams {
 		key := stream.StreamType + "_" + stream.Status + "_" + stream.ConsumerType
 		streamCounts[key]++
-		
+
 		// Individual stream metrics
 		ch <- prometheus.MustNewConstMetric(
 			c.schedulingThroughput,
@@ -1109,28 +1109,28 @@ func (c *JobSchedulingStreamingCollector) collectActiveStreams(ctx context.Conte
 			stream.Throughput,
 			stream.StreamType, "active",
 		)
-		
+
 		ch <- prometheus.MustNewConstMetric(
 			c.businessValueDelivered,
 			prometheus.GaugeValue,
 			stream.BusinessValue,
 			stream.StreamType, "stream_value",
 		)
-		
+
 		ch <- prometheus.MustNewConstMetric(
 			c.costEfficiency,
 			prometheus.GaugeValue,
 			stream.CostPerEvent,
 			stream.StreamType, "per_event",
 		)
-		
+
 		ch <- prometheus.MustNewConstMetric(
 			c.slaCompliance,
 			prometheus.GaugeValue,
 			stream.SLACompliance,
 			stream.StreamType, "stream",
 		)
-		
+
 		ch <- prometheus.MustNewConstMetric(
 			c.optimizationGains,
 			prometheus.GaugeValue,
@@ -1138,7 +1138,7 @@ func (c *JobSchedulingStreamingCollector) collectActiveStreams(ctx context.Conte
 			"stream", stream.StreamID,
 		)
 	}
-	
+
 	// Aggregate stream counts
 	for key, count := range streamCounts {
 		parts := strings.Split(key, "_")
@@ -1158,7 +1158,7 @@ func (c *JobSchedulingStreamingCollector) collectStreamingMetrics(ctx context.Co
 	if err != nil {
 		return
 	}
-	
+
 	// Core streaming metrics
 	ch <- prometheus.MustNewConstMetric(
 		c.schedulingEvents,
@@ -1166,21 +1166,21 @@ func (c *JobSchedulingStreamingCollector) collectStreamingMetrics(ctx context.Co
 		float64(metrics.TotalEventsProcessed),
 		"all", "all", "all", "all",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.schedulingThroughput,
 		prometheus.GaugeValue,
 		metrics.EventsPerSecond,
 		"system", "overall",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.schedulingLatency,
 		prometheus.GaugeValue,
 		metrics.EventProcessingLatency.Seconds(),
 		"system", "overall", "average",
 	)
-	
+
 	// System utilization metrics
 	ch <- prometheus.MustNewConstMetric(
 		c.systemUtilization,
@@ -1188,28 +1188,28 @@ func (c *JobSchedulingStreamingCollector) collectStreamingMetrics(ctx context.Co
 		metrics.CPUUtilization,
 		"cpu",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.systemUtilization,
 		prometheus.GaugeValue,
 		metrics.MemoryUtilization,
 		"memory",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.systemUtilization,
 		prometheus.GaugeValue,
 		metrics.NetworkUtilization,
 		"network",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.systemUtilization,
 		prometheus.GaugeValue,
 		metrics.DiskUtilization,
 		"disk",
 	)
-	
+
 	// Quality and efficiency metrics
 	ch <- prometheus.MustNewConstMetric(
 		c.schedulingEfficiency,
@@ -1217,21 +1217,21 @@ func (c *JobSchedulingStreamingCollector) collectStreamingMetrics(ctx context.Co
 		metrics.ResourceEfficiency,
 		"system", "resource",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.schedulingEfficiency,
 		prometheus.GaugeValue,
 		metrics.EfficiencyScore,
 		"system", "overall",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.schedulingEfficiency,
 		prometheus.GaugeValue,
 		metrics.PerformanceScore,
 		"system", "performance",
 	)
-	
+
 	// Business metrics
 	ch <- prometheus.MustNewConstMetric(
 		c.businessValueDelivered,
@@ -1239,21 +1239,21 @@ func (c *JobSchedulingStreamingCollector) collectStreamingMetrics(ctx context.Co
 		metrics.TotalBusinessValue,
 		"system", "total",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.costEfficiency,
 		prometheus.GaugeValue,
 		metrics.AverageCostPerEvent,
 		"system", "average",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.slaCompliance,
 		prometheus.GaugeValue,
 		metrics.SLACompliance,
 		"system", "overall",
 	)
-	
+
 	// Optimization metrics
 	ch <- prometheus.MustNewConstMetric(
 		c.optimizationGains,
@@ -1261,7 +1261,7 @@ func (c *JobSchedulingStreamingCollector) collectStreamingMetrics(ctx context.Co
 		metrics.PotentialSavings,
 		"potential", "cost",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.optimizationGains,
 		prometheus.GaugeValue,
@@ -1275,7 +1275,7 @@ func (c *JobSchedulingStreamingCollector) collectHealthStatus(ctx context.Contex
 	if err != nil {
 		return
 	}
-	
+
 	// Overall health score
 	ch <- prometheus.MustNewConstMetric(
 		c.streamingHealthScore,
@@ -1283,7 +1283,7 @@ func (c *JobSchedulingStreamingCollector) collectHealthStatus(ctx context.Contex
 		health.HealthScore,
 		"overall", health.HealthStatus,
 	)
-	
+
 	// Component health scores
 	componentHealth := map[string]float64{
 		"stream":      health.StreamHealth,
@@ -1293,7 +1293,7 @@ func (c *JobSchedulingStreamingCollector) collectHealthStatus(ctx context.Contex
 		"security":    health.SecurityHealth,
 		"compliance":  health.ComplianceHealth,
 	}
-	
+
 	for component, score := range componentHealth {
 		ch <- prometheus.MustNewConstMetric(
 			c.streamingHealthScore,
@@ -1302,7 +1302,7 @@ func (c *JobSchedulingStreamingCollector) collectHealthStatus(ctx context.Contex
 			component, "active",
 		)
 	}
-	
+
 	// Performance health metrics
 	performanceHealth := map[string]float64{
 		"latency":     health.LatencyHealth,
@@ -1312,7 +1312,7 @@ func (c *JobSchedulingStreamingCollector) collectHealthStatus(ctx context.Contex
 		"scalability": health.ScalabilityHealth,
 		"efficiency":  health.EfficiencyHealth,
 	}
-	
+
 	for metric, score := range performanceHealth {
 		ch <- prometheus.MustNewConstMetric(
 			c.streamingHealthScore,
@@ -1321,7 +1321,7 @@ func (c *JobSchedulingStreamingCollector) collectHealthStatus(ctx context.Contex
 			"performance_"+metric, "active",
 		)
 	}
-	
+
 	// Business health metrics
 	businessHealth := map[string]float64{
 		"sla":      health.SLAHealth,
@@ -1331,7 +1331,7 @@ func (c *JobSchedulingStreamingCollector) collectHealthStatus(ctx context.Contex
 		"roi":      health.ROIHealth,
 		"impact":   health.ImpactHealth,
 	}
-	
+
 	for metric, score := range businessHealth {
 		ch <- prometheus.MustNewConstMetric(
 			c.streamingHealthScore,
@@ -1340,7 +1340,7 @@ func (c *JobSchedulingStreamingCollector) collectHealthStatus(ctx context.Contex
 			"business_"+metric, "active",
 		)
 	}
-	
+
 	// Risk indicators
 	riskMetrics := map[string]float64{
 		"overall":       health.RiskScore,
@@ -1350,7 +1350,7 @@ func (c *JobSchedulingStreamingCollector) collectHealthStatus(ctx context.Contex
 		"financial":     health.FinancialRisk,
 		"reputational":  health.ReputationalRisk,
 	}
-	
+
 	for risk, score := range riskMetrics {
 		ch <- prometheus.MustNewConstMetric(
 			c.streamingHealthScore,
@@ -1366,26 +1366,26 @@ func (c *JobSchedulingStreamingCollector) collectEventSubscriptions(ctx context.
 	if err != nil {
 		return
 	}
-	
+
 	for _, sub := range subscriptions {
 		// Subscription metrics
 		// TODO: Remove unused variable
 		// labels := []string{sub.SubscriptionType, sub.Status, sub.DeliveryMethod}
-		
+
 		ch <- prometheus.MustNewConstMetric(
 			c.schedulingEvents,
 			prometheus.CounterValue,
 			float64(sub.EventsDelivered),
 			"subscription", "delivered", sub.SubscriptionID, sub.SubscriptionType,
 		)
-		
+
 		ch <- prometheus.MustNewConstMetric(
 			c.schedulingEvents,
 			prometheus.CounterValue,
 			float64(sub.EventsFailed),
 			"subscription", "failed", sub.SubscriptionID, sub.SubscriptionType,
 		)
-		
+
 		if sub.RateLimitEnabled {
 			ch <- prometheus.MustNewConstMetric(
 				c.schedulingThroughput,
@@ -1394,14 +1394,14 @@ func (c *JobSchedulingStreamingCollector) collectEventSubscriptions(ctx context.
 				"subscription_limit", sub.SubscriptionID,
 			)
 		}
-		
+
 		ch <- prometheus.MustNewConstMetric(
 			c.schedulingEfficiency,
 			prometheus.GaugeValue,
 			sub.SuccessRate,
 			"subscription", sub.SubscriptionID,
 		)
-		
+
 		if sub.BillingEnabled {
 			ch <- prometheus.MustNewConstMetric(
 				c.costEfficiency,
@@ -1418,26 +1418,26 @@ func (c *JobSchedulingStreamingCollector) collectEventFilters(ctx context.Contex
 	if err != nil {
 		return
 	}
-	
+
 	for _, filter := range filters {
 		if !filter.Enabled {
 			continue
 		}
-		
+
 		ch <- prometheus.MustNewConstMetric(
 			c.schedulingEvents,
 			prometheus.CounterValue,
 			float64(filter.MatchCount),
 			"filter", "matched", filter.FilterID, filter.FilterType,
 		)
-		
+
 		ch <- prometheus.MustNewConstMetric(
 			c.schedulingEvents,
 			prometheus.CounterValue,
 			float64(filter.RejectCount),
 			"filter", "rejected", filter.FilterID, filter.FilterType,
 		)
-		
+
 		ch <- prometheus.MustNewConstMetric(
 			c.schedulingEfficiency,
 			prometheus.GaugeValue,
@@ -1452,7 +1452,7 @@ func (c *JobSchedulingStreamingCollector) collectProcessingStats(ctx context.Con
 	if err != nil {
 		return
 	}
-	
+
 	// Processing metrics
 	ch <- prometheus.MustNewConstMetric(
 		c.schedulingEvents,
@@ -1460,21 +1460,21 @@ func (c *JobSchedulingStreamingCollector) collectProcessingStats(ctx context.Con
 		float64(stats.TotalEventsProcessed),
 		"processing", "total", "all", "all",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.schedulingEvents,
 		prometheus.CounterValue,
 		float64(stats.SuccessfulProcessing),
 		"processing", "successful", "all", "all",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.schedulingEvents,
 		prometheus.CounterValue,
 		float64(stats.FailedProcessing),
 		"processing", "failed", "all", "all",
 	)
-	
+
 	// Performance metrics
 	ch <- prometheus.MustNewConstMetric(
 		c.schedulingLatency,
@@ -1482,21 +1482,21 @@ func (c *JobSchedulingStreamingCollector) collectProcessingStats(ctx context.Con
 		stats.AverageProcessingTime.Seconds(),
 		"processing", "overall", "average",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.schedulingLatency,
 		prometheus.GaugeValue,
 		stats.P95ProcessingTime.Seconds(),
 		"processing", "overall", "p95",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.schedulingLatency,
 		prometheus.GaugeValue,
 		stats.P99ProcessingTime.Seconds(),
 		"processing", "overall", "p99",
 	)
-	
+
 	// Throughput metrics
 	ch <- prometheus.MustNewConstMetric(
 		c.schedulingThroughput,
@@ -1504,14 +1504,14 @@ func (c *JobSchedulingStreamingCollector) collectProcessingStats(ctx context.Con
 		stats.CurrentThroughput,
 		"processing", "current",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.schedulingThroughput,
 		prometheus.GaugeValue,
 		stats.PeakThroughput,
 		"processing", "peak",
 	)
-	
+
 	// Efficiency metrics
 	ch <- prometheus.MustNewConstMetric(
 		c.schedulingEfficiency,
@@ -1519,14 +1519,14 @@ func (c *JobSchedulingStreamingCollector) collectProcessingStats(ctx context.Con
 		stats.ResourceEfficiency,
 		"processing", "resource",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.schedulingEfficiency,
 		prometheus.GaugeValue,
 		stats.QueueEfficiency,
 		"processing", "queue",
 	)
-	
+
 	// Business impact
 	ch <- prometheus.MustNewConstMetric(
 		c.businessValueDelivered,
@@ -1534,14 +1534,14 @@ func (c *JobSchedulingStreamingCollector) collectProcessingStats(ctx context.Con
 		stats.ValueGenerated,
 		"processing", "generated",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.costEfficiency,
 		prometheus.GaugeValue,
 		stats.CostIncurred,
 		"processing", "incurred",
 	)
-	
+
 	// Optimization metrics
 	ch <- prometheus.MustNewConstMetric(
 		c.optimizationGains,
@@ -1549,14 +1549,14 @@ func (c *JobSchedulingStreamingCollector) collectProcessingStats(ctx context.Con
 		stats.OptimizationGains,
 		"processing", "gains",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.optimizationGains,
 		prometheus.GaugeValue,
 		stats.EfficiencyImprovement,
 		"processing", "efficiency",
 	)
-	
+
 	// Compliance metrics
 	ch <- prometheus.MustNewConstMetric(
 		c.schedulingEfficiency,
@@ -1571,7 +1571,7 @@ func (c *JobSchedulingStreamingCollector) collectPerformanceMetrics(ctx context.
 	if err != nil {
 		return
 	}
-	
+
 	// Latency metrics
 	latencyMetrics := map[string]time.Duration{
 		"end_to_end":  perf.EndToEndLatency,
@@ -1585,7 +1585,7 @@ func (c *JobSchedulingStreamingCollector) collectPerformanceMetrics(ctx context.
 		"p99":         perf.P99Latency,
 		"p999":        perf.P999Latency,
 	}
-	
+
 	for name, latency := range latencyMetrics {
 		ch <- prometheus.MustNewConstMetric(
 			c.schedulingLatency,
@@ -1594,7 +1594,7 @@ func (c *JobSchedulingStreamingCollector) collectPerformanceMetrics(ctx context.
 			"performance", name, "measured",
 		)
 	}
-	
+
 	// Throughput metrics
 	ch <- prometheus.MustNewConstMetric(
 		c.schedulingThroughput,
@@ -1602,14 +1602,14 @@ func (c *JobSchedulingStreamingCollector) collectPerformanceMetrics(ctx context.
 		perf.EventsPerSecond,
 		"performance", "events",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.schedulingThroughput,
 		prometheus.GaugeValue,
 		perf.TransactionsPerSecond,
 		"performance", "transactions",
 	)
-	
+
 	// Efficiency metrics
 	efficiencyMetrics := map[string]float64{
 		"processing":    perf.ProcessingEfficiency,
@@ -1619,7 +1619,7 @@ func (c *JobSchedulingStreamingCollector) collectPerformanceMetrics(ctx context.
 		"space":         perf.SpaceEfficiency,
 		"time":          perf.TimeEfficiency,
 	}
-	
+
 	for name, efficiency := range efficiencyMetrics {
 		ch <- prometheus.MustNewConstMetric(
 			c.schedulingEfficiency,
@@ -1628,7 +1628,7 @@ func (c *JobSchedulingStreamingCollector) collectPerformanceMetrics(ctx context.
 			"performance", name,
 		)
 	}
-	
+
 	// Quality metrics
 	ch <- prometheus.MustNewConstMetric(
 		c.decisionConfidence,
@@ -1636,14 +1636,14 @@ func (c *JobSchedulingStreamingCollector) collectPerformanceMetrics(ctx context.
 		perf.ProcessingAccuracy,
 		"performance", "accuracy",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.resourceAllocationScore,
 		prometheus.GaugeValue,
 		perf.DataQualityScore,
 		"performance", "overall",
 	)
-	
+
 	// Business metrics
 	ch <- prometheus.MustNewConstMetric(
 		c.businessValueDelivered,
@@ -1651,14 +1651,14 @@ func (c *JobSchedulingStreamingCollector) collectPerformanceMetrics(ctx context.
 		perf.BusinessValueDelivered,
 		"performance", "delivered",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.slaCompliance,
 		prometheus.GaugeValue,
 		perf.SLAAttainment,
 		"performance", "attainment",
 	)
-	
+
 	// Optimization metrics
 	ch <- prometheus.MustNewConstMetric(
 		c.optimizationGains,
@@ -1666,14 +1666,14 @@ func (c *JobSchedulingStreamingCollector) collectPerformanceMetrics(ctx context.
 		perf.OptimizationScore,
 		"performance", "score",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.predictionAccuracy,
 		prometheus.GaugeValue,
 		perf.LearningRate,
 		"performance", "learning",
 	)
-	
+
 	// Reliability metrics
 	ch <- prometheus.MustNewConstMetric(
 		c.streamingHealthScore,
@@ -1681,7 +1681,7 @@ func (c *JobSchedulingStreamingCollector) collectPerformanceMetrics(ctx context.
 		perf.Availability,
 		"reliability", "availability",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.streamingHealthScore,
 		prometheus.GaugeValue,

@@ -23,7 +23,7 @@ groups:
           description: |
             CPU utilization is above 95% in partition {{ $labels.partition }} on cluster {{ $labels.cluster_name }}.
             Utilization: {{ $value | humanizePercentage }}
-            
+
             Consider adding compute nodes or optimizing job scheduling.
           runbook_url: https://wiki.example.com/runbooks/slurm-cpu-exhaustion
           dashboard_url: https://grafana.example.com/d/slurm-resources?var-partition={{ $labels.partition }}
@@ -46,7 +46,7 @@ groups:
           description: |
             Memory utilization is above 90% in partition {{ $labels.partition }} on cluster {{ $labels.cluster_name }}.
             Utilization: {{ $value | humanizePercentage }}
-            
+
             Memory exhaustion can lead to job failures and OOM kills.
           runbook_url: https://wiki.example.com/runbooks/slurm-memory-exhaustion
 
@@ -66,7 +66,7 @@ groups:
           description: |
             All nodes are allocated in partition {{ $labels.partition }} with jobs still pending.
             Cluster: {{ $labels.cluster_name }}
-            
+
             This indicates full capacity utilization with unmet demand.
           runbook_url: https://wiki.example.com/runbooks/slurm-no-free-nodes
 
@@ -87,9 +87,9 @@ groups:
         annotations:
           summary: "Low cluster efficiency despite pending jobs"
           description: |
-            Cluster {{ $labels.cluster_name }} shows low CPU utilization ({{ $value | humanizePercentage }}) 
+            Cluster {{ $labels.cluster_name }} shows low CPU utilization ({{ $value | humanizePercentage }})
             while having a significant job queue.
-            
+
             This suggests inefficient job packing or resource fragmentation.
           runbook_url: https://wiki.example.com/runbooks/slurm-cluster-efficiency
 
@@ -113,7 +113,7 @@ groups:
           description: |
             Significant variance in utilization across partitions indicates uneven load distribution.
             Standard deviation: {{ $value }}
-            
+
             Consider job routing policies or partition rebalancing.
           runbook_url: https://wiki.example.com/runbooks/slurm-partition-imbalance
 
@@ -135,10 +135,10 @@ groups:
         annotations:
           summary: "High resource fragmentation in partition {{ $labels.partition }}"
           description: |
-            Most nodes in partition {{ $labels.partition }} are partially allocated, 
+            Most nodes in partition {{ $labels.partition }} are partially allocated,
             indicating resource fragmentation.
             Mixed nodes: {{ $value | humanizePercentage }}
-            
+
             This reduces scheduling efficiency for large jobs.
           runbook_url: https://wiki.example.com/runbooks/slurm-fragmentation
 
@@ -163,7 +163,7 @@ groups:
           description: |
             Cluster {{ $labels.cluster_name }} has maintained >85% CPU utilization for 7 days.
             Average utilization: {{ $value | humanizePercentage }}
-            
+
             Consider capacity expansion planning.
           runbook_url: https://wiki.example.com/runbooks/slurm-capacity-planning
 
@@ -171,7 +171,7 @@ groups:
       - alert: SLURMUsageGrowthTrend
         expr: |
           predict_linear(
-            sum by (cluster_name) (slurm_job_state{state="running"})[7d], 
+            sum by (cluster_name) (slurm_job_state{state="running"})[7d],
             86400 * 30  # 30 days
           ) > 1.5 * sum by (cluster_name) (slurm_job_state{state="running"})
         for: 1d
@@ -184,7 +184,7 @@ groups:
           description: |
             Job count is projected to increase by 50% in the next 30 days based on current trends.
             Current jobs: {{ $value }}
-            
+
             Review capacity planning and budget allocation.
           runbook_url: https://wiki.example.com/runbooks/slurm-growth-planning
 
@@ -206,6 +206,6 @@ groups:
           description: |
             More than 50% of cluster {{ $labels.cluster_name }} capacity is reserved.
             Reserved percentage: {{ $value | humanizePercentage }}
-            
+
             This significantly limits general job scheduling capacity.
           runbook_url: https://wiki.example.com/runbooks/slurm-reservation-policy

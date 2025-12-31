@@ -13,24 +13,24 @@ type AccountHierarchy struct {
 	MaxDepth         int
 	BalanceScore     float64 // 0-1, how well balanced the tree is
 	UtilizationScore float64 // 0-1, how well utilized the accounts are
-	
+
 	// Resource distribution
 	TotalShares      int64
 	TotalRawUsage    int64
 	EffectiveUsage   int64
 	NormalizedShares float64
-	
+
 	// Structural analysis
 	LeafAccounts     int
 	BranchAccounts   int
 	OrphanAccounts   int
 	CircularRefs     int
-	
+
 	// Share distribution metrics
 	ShareGini        float64 // Gini coefficient for share distribution
 	ShareEntropy     float64 // Shannon entropy of share distribution
 	ShareSkewness    float64 // Statistical skewness
-	
+
 	// Quality metrics
 	ValidationErrors []string
 	Warnings         []string
@@ -39,7 +39,7 @@ type AccountHierarchy struct {
 	CoverageScore    float64
 	DataCompleteness float64
 	DataConsistency  float64
-	
+
 	// Additional fields
 	HierarchyType    string  // Type of hierarchy (e.g., "account", "user", etc.)
 	TotalUsers       int     // Total number of users in the hierarchy
@@ -60,13 +60,13 @@ type AccountNode struct {
 	Path        string // Full path from root
 	Status      string // Account status (active, inactive, etc.)
 	ActiveUsers int    // Number of active users
-	
+
 	// Resource limits and quotas
 	CPULimit     int64
 	MemoryLimit  int64
 	GPULimit     int64
 	WallTimeLimit int64
-	
+
 	// Usage and quotas
 	RawUsage       int64
 	EffectiveUsage int64
@@ -74,14 +74,14 @@ type AccountNode struct {
 	QuotaAllocated float64
 	QuotaUsed      float64
 	QuotaRemaining float64
-	
+
 	// Fair-share related
 	RawShares       int64
 	NormalizedShares float64
 	EffectiveShares float64
 	FairShareValue  float64
 	Priority        int
-	
+
 	// Metrics
 	JobCount        int
 	UserCount       int
@@ -91,12 +91,12 @@ type AccountNode struct {
 	TotalGPUHours   float64
 	AvgJobSize      float64
 	AvgWaitTime     time.Duration
-	
+
 	// Efficiency metrics
 	CPUEfficiency    float64
 	MemoryEfficiency float64
 	OverallEfficiency float64
-	
+
 	// Status and validation
 	IsActive    bool
 	IsDefault   bool
@@ -106,7 +106,7 @@ type AccountNode struct {
 	HasDeficit  bool
 	ValidationStatus string
 	ValidationErrors []string
-	
+
 	// Additional fields for account collector
 	ActiveUserCount int
 	CurrentUsage    *AccountUsageInfo
@@ -137,19 +137,19 @@ type QuotaViolation struct {
 	Current      float64                `json:"current"`
 	Message      string                 `json:"message"`
 	Impact       string                 `json:"impact,omitempty"`
-	
+
 	// Additional tracking
 	ResourceType string                 `json:"resource_type"`
 	QuotaType    string                 `json:"quota_type"`  // user, account, qos
 	Duration     time.Duration          `json:"duration,omitempty"`
-	
+
 	// Resolution tracking
 	ResolutionRequired bool               `json:"resolution_required"`
 	ResolutionActions  []string           `json:"resolution_actions,omitempty"`
 	AutoResolved      bool                `json:"auto_resolved"`
 	ResolvedAt        *time.Time          `json:"resolved_at,omitempty"`
 	ResolvedBy        string              `json:"resolved_by,omitempty"`
-	
+
 	// Recurrence tracking
 	RecurrenceCount   int                 `json:"recurrence_count"`
 	FirstOccurrence   time.Time           `json:"first_occurrence"`
@@ -167,12 +167,12 @@ type QuotaRecommendation struct {
 	Reason            string                 `json:"reason"`
 	PotentialSavings  float64                `json:"potential_savings,omitempty"`
 	EstimatedImpact   string                 `json:"estimated_impact,omitempty"`
-	
+
 	// Implementation details
 	ImplementationSteps []string             `json:"implementation_steps,omitempty"`
 	Prerequisites       []string             `json:"prerequisites,omitempty"`
 	RiskAssessment     string               `json:"risk_assessment,omitempty"`
-	
+
 	// Metrics
 	Confidence        float64                `json:"confidence"`        // 0-1
 	HistoricalSuccess float64                `json:"historical_success,omitempty"` // Success rate of similar recommendations
@@ -188,11 +188,11 @@ type OptimizationOpportunity struct {
 	Implementation   string                 `json:"implementation"`
 	Priority         int                    `json:"priority"`         // 1-5, 5 being highest
 	Effort           string                 `json:"effort,omitempty"` // Low, Medium, High
-	
+
 	// Detailed actions and impact
 	Actions          []string               `json:"actions,omitempty"`
 	ResourceImpact   map[string]float64     `json:"resource_impact,omitempty"`
-	
+
 	// Confidence and validation
 	Confidence       float64                `json:"confidence"`       // 0-1
 	DataPoints       int                    `json:"data_points,omitempty"`
@@ -208,11 +208,11 @@ type ResourceUsagePattern struct {
 	Variability      float64
 	Predictability   float64
 	SeasonalTrends   []string
-	
+
 	// Efficiency metrics
 	EfficiencyScore  float64
 	WastePercentage  float64
-	
+
 	// Optimization potential
 	OptimizationPotential float64
 	RecommendedActions    []string
@@ -228,25 +228,25 @@ type EfficiencyMetrics struct {
 	IOEfficiency        float64              `json:"io_efficiency,omitempty"`
 	NetworkEfficiency   float64              `json:"network_efficiency,omitempty"`
 	QueueEfficiency     float64              `json:"queue_efficiency,omitempty"`
-	
+
 	// Composite scores
 	ResourceEfficiency  float64              `json:"resource_efficiency"`   // CPU + Memory
 	ThroughputEfficiency float64             `json:"throughput_efficiency"` // I/O + Network
-	
+
 	// Waste and optimization
 	ResourceWaste       *ResourceWaste       `json:"resource_waste,omitempty"`
 	WasteRatio          float64              `json:"waste_ratio"`
 	OptimizationScore   float64              `json:"optimization_score"`
 	OptimalityScore     float64              `json:"optimality_score"`
 	ImprovementPotential float64             `json:"improvement_potential"`
-	
+
 	// Performance metrics
 	PerformanceMetrics  *PerformanceMetrics  `json:"performance_metrics,omitempty"`
-	
+
 	// Grading and categorization
 	EfficiencyGrade     string               `json:"efficiency_grade"`     // A, B, C, D, F
 	EfficiencyCategory  string               `json:"efficiency_category"`  // Excellent, Good, Fair, Poor, Critical
-	
+
 	// Recommendations
 	Recommendations     []string             `json:"recommendations,omitempty"`
 }

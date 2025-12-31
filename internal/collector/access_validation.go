@@ -370,14 +370,14 @@ type AccessValidationCollector struct {
 	authenticationLevel       *prometheus.GaugeVec
 	permissionLevel           *prometheus.GaugeVec
 	riskScore                 *prometheus.GaugeVec
-	
+
 	// Access rights metrics
 	userAccessRights          *prometheus.GaugeVec
 	effectivePermissions      *prometheus.GaugeVec
 	accountPermissions        *prometheus.GaugeVec
 	permissionExpiry          *prometheus.GaugeVec
 	complianceFlags           *prometheus.GaugeVec
-	
+
 	// Policy metrics
 	policyVersion             *prometheus.GaugeVec
 	minAuthLevel              *prometheus.GaugeVec
@@ -385,35 +385,35 @@ type AccessValidationCollector struct {
 	sessionTimeout            *prometheus.GaugeVec
 	maxConcurrentSessions     *prometheus.GaugeVec
 	policyViolations          *prometheus.CounterVec
-	
+
 	// Audit metrics
 	auditEvents               *prometheus.CounterVec
 	successfulLogins          *prometheus.CounterVec
 	failedLogins              *prometheus.CounterVec
 	securityEvents            *prometheus.CounterVec
 	auditComplianceScore      *prometheus.GaugeVec
-	
+
 	// Violation metrics
 	accessViolations          *prometheus.CounterVec
 	violationSeverity         *prometheus.GaugeVec
 	unresolvedViolations      *prometheus.GaugeVec
 	autoBlockedAttempts       *prometheus.CounterVec
 	violationRiskScore        *prometheus.GaugeVec
-	
+
 	// Pattern metrics
 	accessFrequency           *prometheus.GaugeVec
 	sessionLength             *prometheus.HistogramVec
 	behaviorScore             *prometheus.GaugeVec
 	anomalyDetected           *prometheus.GaugeVec
 	peakUsageHours            *prometheus.GaugeVec
-	
+
 	// Session metrics
 	activeSessions            *prometheus.GaugeVec
 	sessionValidity           *prometheus.GaugeVec
 	sessionActivity           *prometheus.GaugeVec
 	sessionRiskScore          *prometheus.GaugeVec
 	mfaCompletionRate         *prometheus.GaugeVec
-	
+
 	// Compliance metrics
 	complianceScore           *prometheus.GaugeVec
 	policyAdherence           *prometheus.GaugeVec
@@ -421,27 +421,27 @@ type AccessValidationCollector struct {
 	controlsInPlace           *prometheus.GaugeVec
 	controlsFailing           *prometheus.GaugeVec
 	requiredActions           *prometheus.GaugeVec
-	
+
 	// Security alert metrics
 	securityAlerts            *prometheus.CounterVec
 	alertSeverity             *prometheus.GaugeVec
 	activeAlerts              *prometheus.GaugeVec
 	meanTimeToResolve         *prometheus.HistogramVec
 	falsePositiveRate         *prometheus.GaugeVec
-	
+
 	// Risk assessment metrics
 	overallRisk               *prometheus.GaugeVec
 	riskFactors               *prometheus.GaugeVec
 	vulnerabilities           *prometheus.GaugeVec
 	threats                   *prometheus.GaugeVec
 	mitigations               *prometheus.GaugeVec
-	
+
 	// Trend metrics
 	loginTrend                *prometheus.GaugeVec
 	failureTrend              *prometheus.GaugeVec
 	violationTrend            *prometheus.GaugeVec
 	riskTrend                 *prometheus.GaugeVec
-	
+
 	// Collection metrics
 	collectionDuration        *prometheus.HistogramVec
 	collectionErrors          *prometheus.CounterVec
@@ -1383,7 +1383,7 @@ func (c *AccessValidationCollector) collectSessionMetrics() {
 
 	// Sample session IDs (in practice, these would come from active session list)
 	sampleSessions := []string{"session1", "session2", "session3"}
-	
+
 	activeSessionsByAccount := make(map[string]int)
 	mfaCompletedSessions := make(map[string]int)
 	totalSessionsByAccount := make(map[string]int)
@@ -1494,7 +1494,7 @@ func (c *AccessValidationCollector) collectSecurityAlertMetrics() {
 			c.securityAlerts.WithLabelValues(alert.AlertType, alert.Severity).Inc()
 
 			severityCount[alert.Severity]++
-			
+
 			if alert.Status == "active" {
 				activeCount[alert.Severity]++
 			}

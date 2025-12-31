@@ -62,10 +62,10 @@ OPTIONS:
 EXAMPLES:
     # Upgrade to new image tag
     $0 -e production -t "v1.2.0"
-    
+
     # Upgrade with custom values
     $0 -f custom-values.yaml -t "latest"
-    
+
     # Dry run upgrade
     $0 -e staging --dry-run -t "v1.1.0"
 
@@ -128,19 +128,19 @@ parse_args() {
 # Check prerequisites
 check_prerequisites() {
     print_info "Checking prerequisites..."
-    
+
     # Check if kubectl is installed
     if ! command -v kubectl &> /dev/null; then
         print_error "kubectl is not installed or not in PATH"
         exit 1
     fi
-    
+
     # Check if helm is installed
     if ! command -v helm &> /dev/null; then
         print_error "helm is not installed or not in PATH"
         exit 1
     fi
-    
+
     print_success "Prerequisites check passed"
 }
 
@@ -168,10 +168,10 @@ get_current_info() {
         print_info "Run the deploy script first to create the initial deployment"
         exit 1
     fi
-    
+
     print_info "Current deployment information:"
     helm list -n "$NAMESPACE" | grep "^$HELM_RELEASE_NAME" || true
-    
+
     # Get current image
     local current_image
     current_image=$(kubectl get deployment -n "$NAMESPACE" "$HELM_RELEASE_NAME" -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null || echo "unknown")
@@ -193,31 +193,31 @@ set_values_file() {
                 ;;
         esac
     fi
-    
+
     if [[ ! -f "$VALUES_FILE" ]]; then
         print_error "Values file not found: $VALUES_FILE"
         exit 1
     fi
-    
+
     print_info "Using values file: $VALUES_FILE"
 }
 
 # Build helm upgrade command
 build_helm_command() {
     local helm_cmd="helm upgrade"
-    
+
     if [[ "$DRY_RUN" == "true" ]]; then
         helm_cmd="$helm_cmd --dry-run"
     fi
-    
+
     helm_cmd="$helm_cmd $HELM_RELEASE_NAME $HELM_CHART_PATH"
     helm_cmd="$helm_cmd --namespace $NAMESPACE"
     helm_cmd="$helm_cmd --values $VALUES_FILE"
-    
+
     if [[ -n "$IMAGE_TAG" ]]; then
         helm_cmd="$helm_cmd --set image.tag=$IMAGE_TAG"
     fi
-    
+
     # Environment-specific settings
     case $ENVIRONMENT in
         production)
@@ -230,7 +230,7 @@ build_helm_command() {
             helm_cmd="$helm_cmd --timeout 300s"
             ;;
     esac
-    
+
     echo "$helm_cmd"
 }
 
@@ -238,10 +238,10 @@ build_helm_command() {
 upgrade() {
     local helm_cmd
     helm_cmd=$(build_helm_command)
-    
+
     print_info "Upgrading SLURM Exporter..."
     print_info "Command: $helm_cmd"
-    
+
     if eval "$helm_cmd"; then
         if [[ "$DRY_RUN" == "false" ]]; then
             print_success "Upgrade completed successfully!"
@@ -259,9 +259,9 @@ wait_for_rollout() {
     if [[ "$DRY_RUN" == "true" || "$WAIT_FOR_ROLLOUT" == "false" ]]; then
         return 0
     fi
-    
+
     print_info "Waiting for rollout to complete..."
-    
+
     if kubectl rollout status deployment -n "$NAMESPACE" "$HELM_RELEASE_NAME" --timeout=300s; then
         print_success "Rollout completed successfully"
     else
@@ -277,18 +277,18 @@ show_post_upgrade_info() {
     if [[ "$DRY_RUN" == "true" ]]; then
         return
     fi
-    
+
     print_info "Post-upgrade information:"
-    
+
     # Show updated deployment info
     print_info "Updated deployment:"
     helm list -n "$NAMESPACE" | grep "^$HELM_RELEASE_NAME" || true
-    
+
     # Get new image
     local new_image
     new_image=$(kubectl get deployment -n "$NAMESPACE" "$HELM_RELEASE_NAME" -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null || echo "unknown")
     print_info "New image: $new_image"
-    
+
     # Check pod status
     print_info "Pod status:"
     kubectl get pods -n "$NAMESPACE" -l "app.kubernetes.io/instance=$HELM_RELEASE_NAME" || true

@@ -291,7 +291,7 @@ func TestAccountCollector_Collect_Success(t *testing.T) {
 	foundHierarchyMetric := false
 	foundQuotaMetric := false
 	foundUsageMetric := false
-	
+
 	for name := range metricNames {
 		if strings.Contains(name, "account_hierarchy") {
 			foundHierarchyMetric = true
@@ -407,7 +407,7 @@ func TestAccountCollector_Integration(t *testing.T) {
 		slurm_account_hierarchy_balance_score 85
 	`
 
-	err := testutil.CollectAndCompare(collector, strings.NewReader(expected), 
+	err := testutil.CollectAndCompare(collector, strings.NewReader(expected),
 		"slurm_account_hierarchy_balance_score")
 	assert.NoError(t, err)
 }

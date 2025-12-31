@@ -56,7 +56,7 @@ func TestNewResourceTrendTracker(t *testing.T) {
 			assert.NotNil(t, tracker.trendData)
 			assert.NotNil(t, tracker.historicalData)
 			assert.NotNil(t, tracker.patternCache)
-			
+
 			if tt.config == nil {
 				assert.Equal(t, 30*time.Second, tracker.config.TrackingInterval)
 				assert.Equal(t, 100, tracker.config.MaxJobsPerCollection)
@@ -107,7 +107,7 @@ func TestResourceTrendTracker_CreateResourceSnapshot(t *testing.T) {
 
 	now := time.Now()
 	startTime := now.Add(-30 * time.Minute)
-	
+
 	testJob := &slurm.Job{
 		JobID:      "test-123",
 		Name:       "trend-job",
@@ -122,7 +122,7 @@ func TestResourceTrendTracker_CreateResourceSnapshot(t *testing.T) {
 	}
 
 	snapshot := tracker.createResourceSnapshot(testJob)
-	
+
 	assert.NotNil(t, snapshot)
 	assert.WithinDuration(t, time.Now(), snapshot.Timestamp, 1*time.Second)
 	assert.Equal(t, 4.0, snapshot.CPUAllocated)
@@ -152,7 +152,7 @@ func TestResourceTrendTracker_TrackResourceTrends(t *testing.T) {
 	// Setup mock expectations
 	now := time.Now()
 	startTime := now.Add(-1 * time.Hour)
-	
+
 	testJob := &slurm.Job{
 		JobID:      "trend-123",
 		Name:       "trend-test-job",
@@ -265,7 +265,7 @@ func TestResourceTrendTracker_CalculateLinearRegression(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			slope, rSquared := tracker.calculateLinearRegression(tt.x, tt.y)
-			
+
 			assert.InDelta(t, tt.expectedSlope, slope, tt.tolerance, "Slope should match expected value")
 			assert.InDelta(t, tt.expectedRSquared, rSquared, tt.tolerance, "R-squared should match expected value")
 			assert.GreaterOrEqual(t, rSquared, 0.0, "R-squared should be non-negative")
@@ -300,7 +300,7 @@ func TestResourceTrendTracker_AnalyzeResourceTrend(t *testing.T) {
 	}
 
 	trend := tracker.analyzeResourceTrend("cpu", snapshots)
-	
+
 	assert.NotNil(t, trend)
 	assert.Equal(t, "cpu", trend.ResourceType)
 	assert.Equal(t, "increasing", trend.Direction)
@@ -389,10 +389,10 @@ func TestResourceTrendTracker_DetectUsagePatterns(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			patterns := tracker.detectUsagePatterns(tt.snapshots)
-			
+
 			if tt.expectPattern {
 				assert.NotEmpty(t, patterns, "Should detect at least one pattern")
-				
+
 				// Check if expected pattern type is found
 				found := false
 				for _, pattern := range patterns {
@@ -439,10 +439,10 @@ func TestResourceTrendTracker_DetectAnomalies(t *testing.T) {
 	}
 
 	anomalies := tracker.detectAnomalies(snapshots)
-	
+
 	// Should detect the spike anomaly
 	assert.NotEmpty(t, anomalies, "Should detect at least one anomaly")
-	
+
 	// Find CPU spike anomaly
 	found := false
 	for _, anomaly := range anomalies {
@@ -494,7 +494,7 @@ func TestResourceTrendTracker_PredictiveAnalysis(t *testing.T) {
 		JobID:      "test-pred",
 		TimeLimit:  120, // 2 hours
 	}
-	
+
 	exhaustionTime := tracker.predictResourceExhaustion(snapshots, testJob)
 	// May or may not predict exhaustion depending on trend - both outcomes are valid
 	if exhaustionTime != nil {
@@ -633,7 +633,7 @@ func TestResourceTrendTracker_CleanOldHistoricalData(t *testing.T) {
 	require.NoError(t, err)
 
 	now := time.Now()
-	
+
 	// Add old data (should be cleaned)
 	oldSnapshot := &ResourceSnapshot{
 		Timestamp:      now.Add(-2 * time.Hour), // 2 hours ago

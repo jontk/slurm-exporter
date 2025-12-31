@@ -56,10 +56,10 @@ OPTIONS:
 EXAMPLES:
     # Check status in development
     $0 -e development
-    
+
     # Check status with logs
     $0 -e production --logs
-    
+
     # Check specific release
     $0 -r my-slurm-exporter -n monitoring
 
@@ -114,7 +114,7 @@ check_prerequisites() {
         print_error "kubectl is not installed or not in PATH"
         exit 1
     fi
-    
+
     # Check if helm is installed
     if ! command -v helm &> /dev/null; then
         print_error "helm is not installed or not in PATH"
@@ -142,15 +142,15 @@ check_namespace() {
 # Check Helm release status
 check_helm_status() {
     print_info "=== Helm Release Status ==="
-    
+
     if helm list -n "$NAMESPACE" | grep -q "^$HELM_RELEASE_NAME"; then
         helm list -n "$NAMESPACE" | grep "^$HELM_RELEASE_NAME"
         print_success "Helm release is deployed"
-        
+
         # Show release history
         print_info "\nRelease history (last 5):"
         helm history -n "$NAMESPACE" "$HELM_RELEASE_NAME" --max 5 || true
-        
+
         return 0
     else
         print_error "Helm release '$HELM_RELEASE_NAME' not found in namespace '$NAMESPACE'"
@@ -161,20 +161,20 @@ check_helm_status() {
 # Check deployment status
 check_deployment_status() {
     print_info "\n=== Deployment Status ==="
-    
+
     if kubectl get deployment -n "$NAMESPACE" "$HELM_RELEASE_NAME" &> /dev/null; then
         kubectl get deployment -n "$NAMESPACE" "$HELM_RELEASE_NAME"
-        
+
         # Check rollout status
         local rollout_status
         rollout_status=$(kubectl rollout status deployment -n "$NAMESPACE" "$HELM_RELEASE_NAME" --timeout=1s 2>/dev/null || echo "not ready")
-        
+
         if [[ "$rollout_status" == *"successfully rolled out"* ]]; then
             print_success "Deployment is ready"
         else
             print_warning "Deployment rollout is not complete"
         fi
-        
+
         return 0
     else
         print_error "Deployment '$HELM_RELEASE_NAME' not found"
@@ -185,31 +185,31 @@ check_deployment_status() {
 # Check pod status
 check_pod_status() {
     print_info "\n=== Pod Status ==="
-    
+
     local pods
     pods=$(kubectl get pods -n "$NAMESPACE" -l "app.kubernetes.io/instance=$HELM_RELEASE_NAME" 2>/dev/null | grep -v "^NAME" || echo "")
-    
+
     if [[ -n "$pods" ]]; then
         kubectl get pods -n "$NAMESPACE" -l "app.kubernetes.io/instance=$HELM_RELEASE_NAME"
-        
+
         # Check if any pods are running
         local running_pods
         running_pods=$(echo "$pods" | grep -c "Running" || echo "0")
-        
+
         if [[ "$running_pods" -gt 0 ]]; then
             print_success "$running_pods pod(s) running"
         else
             print_warning "No pods are in Running state"
         fi
-        
+
         # Check for any failed pods
         local failed_pods
         failed_pods=$(echo "$pods" | grep -E "(Failed|Error|CrashLoopBackOff)" | wc -l || echo "0")
-        
+
         if [[ "$failed_pods" -gt 0 ]]; then
             print_error "$failed_pods pod(s) in failed state"
         fi
-        
+
         return 0
     else
         print_error "No pods found for release '$HELM_RELEASE_NAME'"
@@ -220,21 +220,21 @@ check_pod_status() {
 # Check service status
 check_service_status() {
     print_info "\n=== Service Status ==="
-    
+
     if kubectl get service -n "$NAMESPACE" "$HELM_RELEASE_NAME" &> /dev/null; then
         kubectl get service -n "$NAMESPACE" "$HELM_RELEASE_NAME"
-        
+
         # Get service endpoints
         local endpoints
         endpoints=$(kubectl get endpoints -n "$NAMESPACE" "$HELM_RELEASE_NAME" 2>/dev/null | grep -v "^NAME" || echo "")
-        
+
         if [[ -n "$endpoints" && "$endpoints" != *"<none>"* ]]; then
             print_success "Service has endpoints"
             kubectl get endpoints -n "$NAMESPACE" "$HELM_RELEASE_NAME"
         else
             print_warning "Service has no endpoints"
         fi
-        
+
         return 0
     else
         print_error "Service '$HELM_RELEASE_NAME' not found"
@@ -245,14 +245,14 @@ check_service_status() {
 # Check configuration
 check_configuration() {
     print_info "\n=== Configuration ==="
-    
+
     # Check ConfigMap
     local configmap_name
     configmap_name=$(kubectl get configmap -n "$NAMESPACE" | grep "$HELM_RELEASE_NAME" | awk '{print $1}' | head -1 || echo "")
-    
+
     if [[ -n "$configmap_name" ]]; then
         print_success "ConfigMap found: $configmap_name"
-        
+
         # Show config summary
         local slurm_url
         slurm_url=$(kubectl get configmap -n "$NAMESPACE" "$configmap_name" -o yaml | grep -E "baseURL|base_url" | head -1 | awk '{print $2}' || echo "not configured")
@@ -260,11 +260,11 @@ check_configuration() {
     else
         print_warning "No ConfigMap found"
     fi
-    
+
     # Check Secrets
     local secrets
     secrets=$(kubectl get secrets -n "$NAMESPACE" | grep "$HELM_RELEASE_NAME" | wc -l || echo "0")
-    
+
     if [[ "$secrets" -gt 0 ]]; then
         print_info "Found $secrets secret(s)"
         kubectl get secrets -n "$NAMESPACE" | grep "$HELM_RELEASE_NAME" || true
@@ -274,26 +274,26 @@ check_configuration() {
 # Test health endpoint
 test_health_endpoint() {
     print_info "\n=== Health Check ==="
-    
+
     # Get a running pod
     local pod_name
     pod_name=$(kubectl get pods -n "$NAMESPACE" -l "app.kubernetes.io/instance=$HELM_RELEASE_NAME" -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
-    
+
     if [[ -n "$pod_name" ]]; then
         print_info "Testing health endpoint on pod: $pod_name"
-        
+
         # Test health endpoint
         if kubectl exec -n "$NAMESPACE" "$pod_name" -- wget -q -O - http://localhost:8080/health 2>/dev/null; then
             print_success "Health endpoint is responding"
         else
             print_warning "Health endpoint is not responding"
         fi
-        
+
         # Test metrics endpoint
         print_info "Testing metrics endpoint..."
         local metrics_count
         metrics_count=$(kubectl exec -n "$NAMESPACE" "$pod_name" -- wget -q -O - http://localhost:8080/metrics 2>/dev/null | grep -c "^slurm_" || echo "0")
-        
+
         if [[ "$metrics_count" -gt 0 ]]; then
             print_success "Metrics endpoint is working ($metrics_count SLURM metrics found)"
         else
@@ -309,12 +309,12 @@ show_logs() {
     if [[ "$SHOW_LOGS" != "true" ]]; then
         return 0
     fi
-    
+
     print_info "\n=== Recent Logs (last $TAIL_LINES lines) ==="
-    
+
     local pod_name
     pod_name=$(kubectl get pods -n "$NAMESPACE" -l "app.kubernetes.io/instance=$HELM_RELEASE_NAME" -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
-    
+
     if [[ -n "$pod_name" ]]; then
         kubectl logs -n "$NAMESPACE" "$pod_name" --tail="$TAIL_LINES" || print_warning "Could not retrieve logs"
     else
@@ -325,10 +325,10 @@ show_logs() {
 # Show access information
 show_access_info() {
     print_info "\n=== Access Information ==="
-    
+
     local service_type
     service_type=$(kubectl get service -n "$NAMESPACE" "$HELM_RELEASE_NAME" -o jsonpath='{.spec.type}' 2>/dev/null || echo "unknown")
-    
+
     case $service_type in
         ClusterIP|"")
             print_info "Service type: ClusterIP"
@@ -357,15 +357,15 @@ show_access_info() {
 # Generate summary
 generate_summary() {
     print_info "\n=== Summary ==="
-    
+
     # Overall status
     local overall_status="Unknown"
-    
+
     # Check if helm release exists and deployment is ready
     if helm list -n "$NAMESPACE" | grep -q "^$HELM_RELEASE_NAME"; then
         local rollout_status
         rollout_status=$(kubectl rollout status deployment -n "$NAMESPACE" "$HELM_RELEASE_NAME" --timeout=1s 2>/dev/null || echo "not ready")
-        
+
         if [[ "$rollout_status" == *"successfully rolled out"* ]]; then
             overall_status="Healthy"
         else
@@ -374,7 +374,7 @@ generate_summary() {
     else
         overall_status="Not Deployed"
     fi
-    
+
     case $overall_status in
         Healthy)
             print_success "Overall Status: $overall_status"
@@ -386,7 +386,7 @@ generate_summary() {
             print_error "Overall Status: $overall_status"
             ;;
     esac
-    
+
     echo "  Environment: $ENVIRONMENT"
     echo "  Namespace: $NAMESPACE"
     echo "  Release: $HELM_RELEASE_NAME"
@@ -397,14 +397,14 @@ main() {
     parse_args "$@"
     check_prerequisites
     set_kubectl_context
-    
+
     print_info "Checking SLURM Exporter status in environment: $ENVIRONMENT"
-    
+
     # Only continue if namespace exists
     if ! check_namespace; then
         exit 1
     fi
-    
+
     # Run all status checks
     check_helm_status
     check_deployment_status

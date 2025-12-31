@@ -35,7 +35,7 @@ type AnomalyEvent struct {
 	DetectionTime      time.Time
 	SequenceNumber     int64
 	CorrelationID      string
-	
+
 	// Anomaly characteristics
 	AnomalyCategory    string
 	AnomalySubtype     string
@@ -45,7 +45,7 @@ type AnomalyEvent struct {
 	StatisticalScore   float64
 	DeviationScore     float64
 	ImpactScore        float64
-	
+
 	// Detection details
 	DetectionMethod    string
 	DetectionAlgorithm string
@@ -55,7 +55,7 @@ type AnomalyEvent struct {
 	BaselineValue      float64
 	ObservedValue      float64
 	DeviationPercent   float64
-	
+
 	// Context information
 	ComponentType      string
 	ComponentID        string
@@ -65,7 +65,7 @@ type AnomalyEvent struct {
 	UserID             string
 	AccountID          string
 	PartitionID        string
-	
+
 	// Temporal context
 	StartTime          time.Time
 	EndTime            time.Time
@@ -75,7 +75,7 @@ type AnomalyEvent struct {
 	FrequencyPattern   string
 	TimeOfDayPattern   string
 	SeasonalPattern    string
-	
+
 	// Resource anomalies
 	CPUAnomaly         bool
 	CPUExpected        float64
@@ -89,7 +89,7 @@ type AnomalyEvent struct {
 	IOAnomaly          bool
 	IOExpected         float64
 	IOActual           float64
-	
+
 	// Performance anomalies
 	LatencyAnomaly     bool
 	LatencyExpected    time.Duration
@@ -100,7 +100,7 @@ type AnomalyEvent struct {
 	ErrorRateAnomaly   bool
 	ErrorRateExpected  float64
 	ErrorRateActual    float64
-	
+
 	// Job anomalies
 	JobCountAnomaly    bool
 	JobCountExpected   int
@@ -111,7 +111,7 @@ type AnomalyEvent struct {
 	JobFailureAnomaly  bool
 	JobFailureExpected float64
 	JobFailureActual   float64
-	
+
 	// User behavior anomalies
 	UserActivityAnomaly bool
 	UserPatternAnomaly  bool
@@ -121,7 +121,7 @@ type AnomalyEvent struct {
 	BehaviorPattern     string
 	NormalBehavior      string
 	AnomalousBehavior   string
-	
+
 	// System anomalies
 	SystemLoadAnomaly   bool
 	SystemLoadExpected  float64
@@ -132,7 +132,7 @@ type AnomalyEvent struct {
 	StorageAnomaly      bool
 	StorageExpected     float64
 	StorageActual       float64
-	
+
 	// Statistical analysis
 	MeanDeviation       float64
 	StandardDeviation   float64
@@ -143,7 +143,7 @@ type AnomalyEvent struct {
 	DistributionType    string
 	SkewnessScore       float64
 	KurtosisScore       float64
-	
+
 	// Correlation analysis
 	CorrelatedAnomalies []string
 	CorrelationScore    float64
@@ -153,7 +153,7 @@ type AnomalyEvent struct {
 	CausalChain         []string
 	ImpactedComponents  []string
 	DependencyChain     []string
-	
+
 	// Prediction and trends
 	PredictedDuration   time.Duration
 	PredictedImpact     float64
@@ -163,7 +163,7 @@ type AnomalyEvent struct {
 	EscalationRisk      float64
 	ResolutionProbability float64
 	ExpectedRecoveryTime time.Duration
-	
+
 	// Business impact
 	BusinessImpact      float64
 	ServiceImpact       float64
@@ -173,7 +173,7 @@ type AnomalyEvent struct {
 	ProductivityImpact  float64
 	ReputationImpact    float64
 	ComplianceImpact    float64
-	
+
 	// Risk assessment
 	RiskLevel           string
 	RiskScore           float64
@@ -183,7 +183,7 @@ type AnomalyEvent struct {
 	DataRisk            float64
 	ComplianceRisk      float64
 	MitigationUrgency   string
-	
+
 	// Response and mitigation
 	ResponseRequired    bool
 	ResponsePriority    int
@@ -193,7 +193,7 @@ type AnomalyEvent struct {
 	ManualIntervention  bool
 	EscalationRequired  bool
 	NotificationSent    bool
-	
+
 	// Historical context
 	PreviousOccurrences int
 	LastMitigation      time.Time
@@ -203,7 +203,7 @@ type AnomalyEvent struct {
 	MTTR                time.Duration
 	HistoricalImpact    float64
 	LearningApplied     bool
-	
+
 	// Machine learning context
 	ModelConfidence     float64
 	FeatureImportance   map[string]float64
@@ -213,7 +213,7 @@ type AnomalyEvent struct {
 	RetrainingRequired  bool
 	FeedbackIncorporated bool
 	AdaptationApplied   bool
-	
+
 	// Metadata
 	DataQuality         float64
 	DataCompleteness    float64
@@ -236,7 +236,7 @@ type AnomalyStreamingConfiguration struct {
 	EventBufferSize         int
 	MaxConcurrentAnalysis   int
 	StreamTimeout           time.Duration
-	
+
 	// Detection settings
 	DetectionMethods        []string
 	StatisticalMethods      []string
@@ -246,7 +246,7 @@ type AnomalyStreamingConfiguration struct {
 	RealTimeDetection       bool
 	BatchDetection          bool
 	StreamingDetection      bool
-	
+
 	// Anomaly types
 	ResourceAnomalies       bool
 	PerformanceAnomalies    bool
@@ -256,7 +256,7 @@ type AnomalyStreamingConfiguration struct {
 	CostAnomalies           bool
 	ComplianceAnomalies     bool
 	PatternAnomalies        bool
-	
+
 	// Thresholds
 	MinAnomalyScore         float64
 	MinConfidenceLevel      float64
@@ -266,7 +266,7 @@ type AnomalyStreamingConfiguration struct {
 	MLThreshold             float64
 	CompositeThreshold      float64
 	AdaptiveThresholds      bool
-	
+
 	// Statistical settings
 	UseZScore               bool
 	UseMAD                  bool
@@ -276,7 +276,7 @@ type AnomalyStreamingConfiguration struct {
 	UseChauvenets           bool
 	MovingWindowSize        int
 	SeasonalDecomposition   bool
-	
+
 	// ML settings
 	Models                  []string
 	AutoMLEnabled           bool
@@ -286,7 +286,7 @@ type AnomalyStreamingConfiguration struct {
 	ModelUpdateFrequency    time.Duration
 	FeatureEngineering      bool
 	DimensionalityReduction bool
-	
+
 	// Correlation settings
 	CorrelationAnalysis     bool
 	CausalityAnalysis       bool
@@ -296,7 +296,7 @@ type AnomalyStreamingConfiguration struct {
 	ChainAnalysis           bool
 	GraphAnalysis           bool
 	TemporalCorrelation     bool
-	
+
 	// Response settings
 	AutomatedResponse       bool
 	ResponseThresholds      map[string]float64
@@ -306,7 +306,7 @@ type AnomalyStreamingConfiguration struct {
 	RollbackEnabled         bool
 	IsolationEnabled        bool
 	MitigationPlaybooks     []string
-	
+
 	// Performance settings
 	ParallelProcessing      bool
 	GPUAcceleration         bool
@@ -316,7 +316,7 @@ type AnomalyStreamingConfiguration struct {
 	SamplingRate            float64
 	StreamProcessing        bool
 	MicroBatchSize          int
-	
+
 	// Integration settings
 	AlertingIntegration     bool
 	TicketingIntegration    bool
@@ -326,7 +326,7 @@ type AnomalyStreamingConfiguration struct {
 	SOARIntegration         bool
 	DataLakeIntegration     bool
 	VisualizationIntegration bool
-	
+
 	// Quality settings
 	ValidationEnabled       bool
 	VerificationEnabled     bool
@@ -336,7 +336,7 @@ type AnomalyStreamingConfiguration struct {
 	LearningEnabled         bool
 	AdaptationEnabled       bool
 	DriftDetection          bool
-	
+
 	// Data management
 	DataRetentionPeriod     time.Duration
 	AnomalyArchiving        bool
@@ -357,7 +357,7 @@ type ActiveAnomalyStream struct {
 	CreatedAt              time.Time
 	LastActivityAt         time.Time
 	Status                 string
-	
+
 	// Detection state
 	DetectionWindowStart   time.Time
 	DetectionWindowEnd     time.Time
@@ -366,7 +366,7 @@ type ActiveAnomalyStream struct {
 	ActiveAnomalies        int
 	ResolvedAnomalies      int
 	RecurringAnomalies     int
-	
+
 	// Performance metrics
 	DetectionRate          float64
 	DetectionLatency       time.Duration
@@ -374,7 +374,7 @@ type ActiveAnomalyStream struct {
 	ResourceUtilization    float64
 	MemoryUsage            int64
 	CPUUsage               float64
-	
+
 	// Quality metrics
 	TruePositiveRate       float64
 	FalsePositiveRate      float64
@@ -384,7 +384,7 @@ type ActiveAnomalyStream struct {
 	Recall                 float64
 	F1Score                float64
 	AUCScore               float64
-	
+
 	// Model performance
 	ModelAccuracy          float64
 	ModelPrecision         float64
@@ -394,7 +394,7 @@ type ActiveAnomalyStream struct {
 	ModelVersion           string
 	ModelLastUpdated       time.Time
 	ModelDriftScore        float64
-	
+
 	// Anomaly statistics
 	MostFrequentAnomaly    string
 	MostSevereAnomaly      string
@@ -404,7 +404,7 @@ type ActiveAnomalyStream struct {
 	CriticalAnomalies      int
 	WarningAnomalies       int
 	InfoAnomalies          int
-	
+
 	// Business metrics
 	TotalBusinessImpact    float64
 	PreventedIncidents     int
@@ -433,7 +433,7 @@ type AnomalyStreamingMetrics struct {
 	DegradedStreams        int
 	StreamEfficiency       float64
 	StreamReliability      float64
-	
+
 	// Detection metrics
 	TotalAnomaliesDetected int64
 	CriticalAnomalies      int64
@@ -441,7 +441,7 @@ type AnomalyStreamingMetrics struct {
 	InfoAnomalies          int64
 	DetectionRate          float64
 	DetectionLatency       time.Duration
-	
+
 	// Quality metrics
 	OverallAccuracy        float64
 	OverallPrecision       float64
@@ -449,7 +449,7 @@ type AnomalyStreamingMetrics struct {
 	OverallF1Score         float64
 	FalsePositiveRate      float64
 	FalseNegativeRate      float64
-	
+
 	// Type distribution
 	ResourceAnomalies      int64
 	PerformanceAnomalies   int64
@@ -457,7 +457,7 @@ type AnomalyStreamingMetrics struct {
 	SystemAnomalies        int64
 	SecurityAnomalies      int64
 	CostAnomalies          int64
-	
+
 	// Impact metrics
 	TotalBusinessImpact    float64
 	TotalCostImpact        float64
@@ -465,7 +465,7 @@ type AnomalyStreamingMetrics struct {
 	TotalSLAImpact         float64
 	IncidentsPrevented     int64
 	DowntimeAverted        time.Duration
-	
+
 	// Response metrics
 	AutomatedResponses     int64
 	ManualInterventions    int64
@@ -473,7 +473,7 @@ type AnomalyStreamingMetrics struct {
 	FailedMitigations      int64
 	AverageResponseTime    time.Duration
 	AverageMTTR            time.Duration
-	
+
 	// Model metrics
 	ActiveModels           int
 	ModelAccuracy          float64
@@ -481,7 +481,7 @@ type AnomalyStreamingMetrics struct {
 	RetrainingEvents       int64
 	PredictionAccuracy     float64
 	ExplainabilityScore    float64
-	
+
 	// Resource metrics
 	CPUUtilization         float64
 	MemoryUtilization      float64
@@ -489,7 +489,7 @@ type AnomalyStreamingMetrics struct {
 	NetworkUtilization     float64
 	GPUUtilization         float64
 	ResourceEfficiency     float64
-	
+
 	// Business value
 	ValueGenerated         float64
 	CostsSaved             float64
@@ -506,7 +506,7 @@ type AnomalyEventFilter struct {
 	FilterType             string
 	Enabled                bool
 	Priority               int
-	
+
 	// Anomaly filters
 	AnomalyTypes           []string
 	AnomalyCategories      []string
@@ -514,7 +514,7 @@ type AnomalyEventFilter struct {
 	MinAnomalyScore        float64
 	MinConfidenceLevel     float64
 	MinImpactScore         float64
-	
+
 	// Component filters
 	ComponentTypes         []string
 	ComponentIDs           []string
@@ -522,7 +522,7 @@ type AnomalyEventFilter struct {
 	UserGroups             []string
 	Accounts               []string
 	Partitions             []string
-	
+
 	// Time filters
 	TimeWindows            []string
 	RecurrenceRequired     bool
@@ -530,7 +530,7 @@ type AnomalyEventFilter struct {
 	RecentOnly             bool
 	HistoricalOnly         bool
 	PeakHoursOnly          bool
-	
+
 	// Impact filters
 	MinBusinessImpact      float64
 	MinCostImpact          float64
@@ -538,7 +538,7 @@ type AnomalyEventFilter struct {
 	RequireSLAImpact       bool
 	RequireSecurityImpact  bool
 	RequireCompliance      bool
-	
+
 	// Response filters
 	RequireAutoResponse    bool
 	RequireManualReview    bool
@@ -546,7 +546,7 @@ type AnomalyEventFilter struct {
 	RequireMitigation      bool
 	ResponsePriority       int
 	NotificationRequired   bool
-	
+
 	// Statistics
 	EventsMatched          int64
 	EventsRejected         int64
@@ -565,7 +565,7 @@ type AnomalyStreamingStatus struct {
 	UptimePercentage       float64
 	PerformanceScore       float64
 	ReliabilityScore       float64
-	
+
 	// Detection status
 	DetectionCoverage      float64
 	DetectionAccuracy      float64
@@ -573,7 +573,7 @@ type AnomalyStreamingStatus struct {
 	ActiveDetectors        int
 	FailedDetectors        int
 	DetectorEfficiency     float64
-	
+
 	// Model status
 	ActiveModels           int
 	ModelHealth            float64
@@ -581,7 +581,7 @@ type AnomalyStreamingStatus struct {
 	ModelDrift             float64
 	RetrainingNeeded       bool
 	LastModelUpdate        time.Time
-	
+
 	// Anomaly status
 	ActiveAnomalies        int
 	CriticalAnomalies      int
@@ -589,7 +589,7 @@ type AnomalyStreamingStatus struct {
 	RecurringAnomalies     int
 	EmergingThreats        int
 	MitigatedAnomalies     int
-	
+
 	// Response status
 	ResponseCapability     float64
 	AutomationLevel        float64
@@ -597,7 +597,7 @@ type AnomalyStreamingStatus struct {
 	EscalationRate         float64
 	ResolutionRate         float64
 	ResponseBacklog        int
-	
+
 	// Resource status
 	ResourceUtilization    float64
 	ProcessingCapacity     float64
@@ -605,7 +605,7 @@ type AnomalyStreamingStatus struct {
 	NetworkBandwidth       float64
 	ScalingRequired        bool
 	ResourcePressure       float64
-	
+
 	// Business status
 	BusinessProtection     float64
 	SLACompliance          float64
@@ -613,7 +613,7 @@ type AnomalyStreamingStatus struct {
 	ComplianceScore        float64
 	RiskLevel              float64
 	ValueDelivered         float64
-	
+
 	// Recommendations
 	ImmediateActions       []string
 	OptimizationOptions    []string
@@ -633,7 +633,7 @@ type AnomalyEventSubscription struct {
 	CreatedAt              time.Time
 	UpdatedAt              time.Time
 	Status                 string
-	
+
 	// Anomaly interests
 	AnomalyTypes           []string
 	SeverityLevels         []string
@@ -641,7 +641,7 @@ type AnomalyEventSubscription struct {
 	MinImpactScore         float64
 	ComponentFilter        []string
 	UserFilter             []string
-	
+
 	// Delivery settings
 	DeliveryMethod         string
 	Endpoint               string
@@ -650,7 +650,7 @@ type AnomalyEventSubscription struct {
 	BatchDelivery          bool
 	BatchSize              int
 	BatchInterval          time.Duration
-	
+
 	// Notification settings
 	NotificationChannels   []string
 	EscalationPath         []string
@@ -658,7 +658,7 @@ type AnomalyEventSubscription struct {
 	QuietPeriods           []string
 	MaintenanceWindows     []string
 	DeDuplication          bool
-	
+
 	// Quality settings
 	DeliveryGuarantee      string
 	MaxRetries             int
@@ -666,7 +666,7 @@ type AnomalyEventSubscription struct {
 	TimeoutDuration        time.Duration
 	ErrorHandling          string
 	FallbackEndpoint       string
-	
+
 	// Security settings
 	Authentication         string
 	Authorization          string
@@ -674,7 +674,7 @@ type AnomalyEventSubscription struct {
 	SigningRequired        bool
 	AuditingEnabled        bool
 	ComplianceMode         string
-	
+
 	// Business settings
 	SLALevel               string
 	Priority               int
@@ -682,7 +682,7 @@ type AnomalyEventSubscription struct {
 	NotificationQuota      int64
 	BillingEnabled         bool
 	UsageTracking          bool
-	
+
 	// Statistics
 	EventsDelivered        int64
 	EventsFailed           int64
@@ -703,7 +703,7 @@ type AnomalyEventProcessingStats struct {
 	AnomaliesRejected      int64
 	ProcessingErrors       int64
 	ProcessingTimeouts     int64
-	
+
 	// Detection performance
 	AverageDetectionTime   time.Duration
 	MinDetectionTime       time.Duration
@@ -711,7 +711,7 @@ type AnomalyEventProcessingStats struct {
 	DetectionTimeP50       time.Duration
 	DetectionTimeP95       time.Duration
 	DetectionTimeP99       time.Duration
-	
+
 	// Accuracy metrics
 	TruePositives          int64
 	FalsePositives         int64
@@ -721,7 +721,7 @@ type AnomalyEventProcessingStats struct {
 	Precision              float64
 	Recall                 float64
 	F1Score                float64
-	
+
 	// Type distribution
 	TypeDistribution       map[string]int64
 	SeverityDistribution   map[string]int64
@@ -729,7 +729,7 @@ type AnomalyEventProcessingStats struct {
 	TimeDistribution       map[string]int64
 	ImpactDistribution     map[string]int64
 	ResponseDistribution   map[string]int64
-	
+
 	// Model performance
 	ModelInferences        int64
 	ModelLatency           time.Duration
@@ -737,7 +737,7 @@ type AnomalyEventProcessingStats struct {
 	FeatureExtraction      time.Duration
 	PredictionAccuracy     float64
 	ExplainabilityTime     time.Duration
-	
+
 	// Response metrics
 	AutomatedResponses     int64
 	ManualResponses        int64
@@ -745,7 +745,7 @@ type AnomalyEventProcessingStats struct {
 	FailedMitigations      int64
 	EscalationsTriggered   int64
 	NotificationsSent      int64
-	
+
 	// Resource metrics
 	CPUTimeConsumed        time.Duration
 	MemoryAllocated        int64
@@ -753,7 +753,7 @@ type AnomalyEventProcessingStats struct {
 	NetworkBandwidth       int64
 	GPUTimeConsumed        time.Duration
 	CostIncurred           float64
-	
+
 	// Business impact
 	IncidentsPrevented     int64
 	DowntimeAverted        time.Duration
@@ -772,7 +772,7 @@ type AnomalyStreamingPerformanceMetrics struct {
 	ResponseLatency        time.Duration
 	NotificationLatency    time.Duration
 	TotalProcessingLatency time.Duration
-	
+
 	// Throughput metrics
 	EventThroughput        float64
 	DetectionThroughput    float64
@@ -780,7 +780,7 @@ type AnomalyStreamingPerformanceMetrics struct {
 	ResponseThroughput     float64
 	OverallThroughput      float64
 	PeakThroughput         float64
-	
+
 	// Accuracy metrics
 	DetectionAccuracy      float64
 	ClassificationAccuracy float64
@@ -788,7 +788,7 @@ type AnomalyStreamingPerformanceMetrics struct {
 	ResponseAccuracy       float64
 	OverallAccuracy        float64
 	ModelAccuracy          float64
-	
+
 	// Efficiency metrics
 	ProcessingEfficiency   float64
 	DetectionEfficiency    float64
@@ -796,7 +796,7 @@ type AnomalyStreamingPerformanceMetrics struct {
 	ResourceEfficiency     float64
 	CostEfficiency         float64
 	TimeEfficiency         float64
-	
+
 	// Quality metrics
 	DataQuality            float64
 	DetectionQuality       float64
@@ -804,7 +804,7 @@ type AnomalyStreamingPerformanceMetrics struct {
 	ResponseQuality        float64
 	ServiceQuality         float64
 	OverallQuality         float64
-	
+
 	// Coverage metrics
 	EventCoverage          float64
 	ComponentCoverage      float64
@@ -812,7 +812,7 @@ type AnomalyStreamingPerformanceMetrics struct {
 	ResponseCoverage       float64
 	MonitoringCoverage     float64
 	OverallCoverage        float64
-	
+
 	// Reliability metrics
 	Availability           float64
 	Reliability            float64
@@ -820,7 +820,7 @@ type AnomalyStreamingPerformanceMetrics struct {
 	FaultTolerance         float64
 	RecoveryCapability     float64
 	ResilienceScore        float64
-	
+
 	// Business metrics
 	ValueGeneration        float64
 	IncidentPrevention     float64
@@ -1006,7 +1006,7 @@ func (c *AnomalyDetectionStreamingCollector) Describe(ch chan<- *prometheus.Desc
 	ch <- c.riskAssessment
 	ch <- c.complianceMetrics
 	ch <- c.costImpact
-	
+
 	// Dynamic metrics
 	for _, desc := range c.streamConfigMetrics {
 		ch <- desc
@@ -1028,28 +1028,28 @@ func (c *AnomalyDetectionStreamingCollector) Describe(ch chan<- *prometheus.Desc
 // Collect implements prometheus.Collector
 func (c *AnomalyDetectionStreamingCollector) Collect(ch chan<- prometheus.Metric) {
 	ctx := context.Background()
-	
+
 	// Collect streaming configuration metrics
 	c.collectStreamingConfiguration(ctx, ch)
-	
+
 	// Collect active streams metrics
 	c.collectActiveStreams(ctx, ch)
-	
+
 	// Collect streaming metrics
 	c.collectStreamingMetrics(ctx, ch)
-	
+
 	// Collect anomaly status metrics
 	c.collectAnomalyStatus(ctx, ch)
-	
+
 	// Collect event subscription metrics
 	c.collectEventSubscriptions(ctx, ch)
-	
+
 	// Collect event filter metrics
 	c.collectEventFilters(ctx, ch)
-	
+
 	// Collect processing statistics
 	c.collectProcessingStats(ctx, ch)
-	
+
 	// Collect performance metrics
 	c.collectPerformanceMetrics(ctx, ch)
 }
@@ -1059,7 +1059,7 @@ func (c *AnomalyDetectionStreamingCollector) collectStreamingConfiguration(ctx c
 	if err != nil {
 		return
 	}
-	
+
 	// Configuration enabled/disabled metrics
 	configurations := map[string]bool{
 		"streaming_enabled":        config.StreamingEnabled,
@@ -1084,13 +1084,13 @@ func (c *AnomalyDetectionStreamingCollector) collectStreamingConfiguration(ctx c
 		"learning_enabled":         config.LearningEnabled,
 		"drift_detection":          config.DriftDetection,
 	}
-	
+
 	for name, enabled := range configurations {
 		value := 0.0
 		if enabled {
 			value = 1.0
 		}
-		
+
 		if _, exists := c.streamConfigMetrics[name]; !exists {
 			c.streamConfigMetrics[name] = prometheus.NewDesc(
 				"slurm_anomaly_stream_config_"+name,
@@ -1099,14 +1099,14 @@ func (c *AnomalyDetectionStreamingCollector) collectStreamingConfiguration(ctx c
 				nil,
 			)
 		}
-		
+
 		ch <- prometheus.MustNewConstMetric(
 			c.streamConfigMetrics[name],
 			prometheus.GaugeValue,
 			value,
 		)
 	}
-	
+
 	// Threshold metrics
 	thresholds := map[string]float64{
 		"min_anomaly_score":      config.MinAnomalyScore,
@@ -1118,7 +1118,7 @@ func (c *AnomalyDetectionStreamingCollector) collectStreamingConfiguration(ctx c
 		"composite_threshold":    config.CompositeThreshold,
 		"sampling_rate":          config.SamplingRate,
 	}
-	
+
 	for name, value := range thresholds {
 		if _, exists := c.streamConfigMetrics[name]; !exists {
 			c.streamConfigMetrics[name] = prometheus.NewDesc(
@@ -1128,7 +1128,7 @@ func (c *AnomalyDetectionStreamingCollector) collectStreamingConfiguration(ctx c
 				nil,
 			)
 		}
-		
+
 		ch <- prometheus.MustNewConstMetric(
 			c.streamConfigMetrics[name],
 			prometheus.GaugeValue,
@@ -1142,13 +1142,13 @@ func (c *AnomalyDetectionStreamingCollector) collectActiveStreams(ctx context.Co
 	if err != nil {
 		return
 	}
-	
+
 	// Count streams by type and status
 	streamCounts := make(map[string]int)
 	for _, stream := range streams {
 		key := stream.StreamType + "_" + stream.Status + "_anomaly"
 		streamCounts[key]++
-		
+
 		// Individual stream metrics
 		ch <- prometheus.MustNewConstMetric(
 			c.anomalyDetectionRate,
@@ -1156,49 +1156,49 @@ func (c *AnomalyDetectionStreamingCollector) collectActiveStreams(ctx context.Co
 			stream.DetectionRate,
 			stream.StreamType, "all",
 		)
-		
+
 		ch <- prometheus.MustNewConstMetric(
 			c.detectionAccuracy,
 			prometheus.GaugeValue,
 			stream.Precision,
 			"precision", stream.StreamName,
 		)
-		
+
 		ch <- prometheus.MustNewConstMetric(
 			c.detectionAccuracy,
 			prometheus.GaugeValue,
 			stream.Recall,
 			"recall", stream.StreamName,
 		)
-		
+
 		ch <- prometheus.MustNewConstMetric(
 			c.detectionAccuracy,
 			prometheus.GaugeValue,
 			stream.F1Score,
 			"f1_score", stream.StreamName,
 		)
-		
+
 		ch <- prometheus.MustNewConstMetric(
 			c.falsePositiveRate,
 			prometheus.GaugeValue,
 			stream.FalsePositiveRate,
 			"all", stream.StreamName,
 		)
-		
+
 		ch <- prometheus.MustNewConstMetric(
 			c.modelPerformance,
 			prometheus.GaugeValue,
 			stream.ModelAccuracy,
 			stream.ModelVersion, "accuracy", stream.ModelVersion,
 		)
-		
+
 		ch <- prometheus.MustNewConstMetric(
 			c.businessImpact,
 			prometheus.GaugeValue,
 			stream.TotalBusinessImpact,
 			"total", "all",
 		)
-		
+
 		ch <- prometheus.MustNewConstMetric(
 			c.costImpact,
 			prometheus.GaugeValue,
@@ -1206,7 +1206,7 @@ func (c *AnomalyDetectionStreamingCollector) collectActiveStreams(ctx context.Co
 			"savings", "all",
 		)
 	}
-	
+
 	// Aggregate stream counts
 	for key, count := range streamCounts {
 		parts := strings.Split(key, "_")
@@ -1226,7 +1226,7 @@ func (c *AnomalyDetectionStreamingCollector) collectStreamingMetrics(ctx context
 	if err != nil {
 		return
 	}
-	
+
 	// Detection metrics
 	ch <- prometheus.MustNewConstMetric(
 		c.anomalyEvents,
@@ -1234,21 +1234,21 @@ func (c *AnomalyDetectionStreamingCollector) collectStreamingMetrics(ctx context
 		float64(metrics.TotalAnomaliesDetected),
 		"all", "all", "all", "all",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.anomalyEvents,
 		prometheus.CounterValue,
 		float64(metrics.CriticalAnomalies),
 		"all", "critical", "all", "all",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.anomalyEvents,
 		prometheus.CounterValue,
 		float64(metrics.WarningAnomalies),
 		"all", "warning", "all", "all",
 	)
-	
+
 	// Type distribution
 	ch <- prometheus.MustNewConstMetric(
 		c.resourceAnomalies,
@@ -1256,21 +1256,21 @@ func (c *AnomalyDetectionStreamingCollector) collectStreamingMetrics(ctx context
 		float64(metrics.ResourceAnomalies),
 		"all", "all", "detected",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.behaviorAnomalies,
 		prometheus.CounterValue,
 		float64(metrics.BehaviorAnomalies),
 		"all", "all", "detected",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.systemAnomalies,
 		prometheus.CounterValue,
 		float64(metrics.SystemAnomalies),
 		"all", "all", "detected",
 	)
-	
+
 	// Quality metrics
 	ch <- prometheus.MustNewConstMetric(
 		c.detectionAccuracy,
@@ -1278,28 +1278,28 @@ func (c *AnomalyDetectionStreamingCollector) collectStreamingMetrics(ctx context
 		metrics.OverallAccuracy,
 		"overall", "system",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.detectionAccuracy,
 		prometheus.GaugeValue,
 		metrics.OverallPrecision,
 		"precision", "system",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.detectionAccuracy,
 		prometheus.GaugeValue,
 		metrics.OverallRecall,
 		"recall", "system",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.falsePositiveRate,
 		prometheus.GaugeValue,
 		metrics.FalsePositiveRate,
 		"overall", "system",
 	)
-	
+
 	// Impact metrics
 	ch <- prometheus.MustNewConstMetric(
 		c.businessImpact,
@@ -1307,21 +1307,21 @@ func (c *AnomalyDetectionStreamingCollector) collectStreamingMetrics(ctx context
 		metrics.TotalBusinessImpact,
 		"total_impact", "all",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.costImpact,
 		prometheus.GaugeValue,
 		metrics.TotalCostImpact,
 		"total_impact", "all",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.businessImpact,
 		prometheus.GaugeValue,
 		metrics.DowntimeAverted.Hours(),
 		"downtime_averted", "hours",
 	)
-	
+
 	// Response metrics
 	ch <- prometheus.MustNewConstMetric(
 		c.responseMetrics,
@@ -1329,21 +1329,21 @@ func (c *AnomalyDetectionStreamingCollector) collectStreamingMetrics(ctx context
 		float64(metrics.AutomatedResponses),
 		"automated", "executed",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.responseMetrics,
 		prometheus.CounterValue,
 		float64(metrics.SuccessfulMitigations),
 		"mitigation", "successful",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.mitigationSuccess,
 		prometheus.GaugeValue,
 		float64(metrics.SuccessfulMitigations)/float64(metrics.SuccessfulMitigations+metrics.FailedMitigations),
 		"overall", "true",
 	)
-	
+
 	// Model metrics
 	ch <- prometheus.MustNewConstMetric(
 		c.modelPerformance,
@@ -1351,14 +1351,14 @@ func (c *AnomalyDetectionStreamingCollector) collectStreamingMetrics(ctx context
 		metrics.ModelAccuracy,
 		"overall", "accuracy", "current",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.modelPerformance,
 		prometheus.GaugeValue,
 		metrics.ModelDrift,
 		"overall", "drift", "current",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.predictionAccuracy,
 		prometheus.GaugeValue,
@@ -1372,7 +1372,7 @@ func (c *AnomalyDetectionStreamingCollector) collectAnomalyStatus(ctx context.Co
 	if err != nil {
 		return
 	}
-	
+
 	// System status
 	ch <- prometheus.MustNewConstMetric(
 		c.detectionAccuracy,
@@ -1380,7 +1380,7 @@ func (c *AnomalyDetectionStreamingCollector) collectAnomalyStatus(ctx context.Co
 		status.OverallHealth,
 		"system_health", "overall",
 	)
-	
+
 	// Detection status
 	ch <- prometheus.MustNewConstMetric(
 		c.detectionAccuracy,
@@ -1388,14 +1388,14 @@ func (c *AnomalyDetectionStreamingCollector) collectAnomalyStatus(ctx context.Co
 		status.DetectionCoverage,
 		"coverage", "detection",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.detectionAccuracy,
 		prometheus.GaugeValue,
 		status.DetectionAccuracy,
 		"status", "detection",
 	)
-	
+
 	// Anomaly status
 	ch <- prometheus.MustNewConstMetric(
 		c.anomalyEvents,
@@ -1403,21 +1403,21 @@ func (c *AnomalyDetectionStreamingCollector) collectAnomalyStatus(ctx context.Co
 		float64(status.ActiveAnomalies),
 		"active", "all", "all", "current",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.anomalyEvents,
 		prometheus.GaugeValue,
 		float64(status.CriticalAnomalies),
 		"active", "critical", "all", "current",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.anomalyEvents,
 		prometheus.GaugeValue,
 		float64(status.UnresolvedAnomalies),
 		"unresolved", "all", "all", "current",
 	)
-	
+
 	// Response status
 	ch <- prometheus.MustNewConstMetric(
 		c.responseMetrics,
@@ -1425,14 +1425,14 @@ func (c *AnomalyDetectionStreamingCollector) collectAnomalyStatus(ctx context.Co
 		status.ResponseCapability,
 		"capability", "active",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.responseMetrics,
 		prometheus.GaugeValue,
 		status.MitigationSuccess,
 		"mitigation_rate", "current",
 	)
-	
+
 	// Business status
 	ch <- prometheus.MustNewConstMetric(
 		c.businessImpact,
@@ -1440,14 +1440,14 @@ func (c *AnomalyDetectionStreamingCollector) collectAnomalyStatus(ctx context.Co
 		status.BusinessProtection,
 		"protection_level", "current",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.complianceMetrics,
 		prometheus.GaugeValue,
 		status.ComplianceScore,
 		"overall", "score",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.riskAssessment,
 		prometheus.GaugeValue,
@@ -1461,7 +1461,7 @@ func (c *AnomalyDetectionStreamingCollector) collectEventSubscriptions(ctx conte
 	if err != nil {
 		return
 	}
-	
+
 	for _, sub := range subscriptions {
 		// Subscription metrics
 		ch <- prometheus.MustNewConstMetric(
@@ -1470,14 +1470,14 @@ func (c *AnomalyDetectionStreamingCollector) collectEventSubscriptions(ctx conte
 			float64(sub.EventsDelivered),
 			"subscription", "delivered", sub.SubscriptionType, sub.Status,
 		)
-		
+
 		ch <- prometheus.MustNewConstMetric(
 			c.anomalyEvents,
 			prometheus.CounterValue,
 			float64(sub.EventsFailed),
 			"subscription", "failed", sub.SubscriptionType, sub.Status,
 		)
-		
+
 		ch <- prometheus.MustNewConstMetric(
 			c.businessImpact,
 			prometheus.GaugeValue,
@@ -1492,19 +1492,19 @@ func (c *AnomalyDetectionStreamingCollector) collectEventFilters(ctx context.Con
 	if err != nil {
 		return
 	}
-	
+
 	for _, filter := range filters {
 		if !filter.Enabled {
 			continue
 		}
-		
+
 		ch <- prometheus.MustNewConstMetric(
 			c.anomalyEvents,
 			prometheus.CounterValue,
 			float64(filter.EventsMatched),
 			"filter", "matched", filter.FilterType, "active",
 		)
-		
+
 		ch <- prometheus.MustNewConstMetric(
 			c.detectionAccuracy,
 			prometheus.GaugeValue,
@@ -1519,7 +1519,7 @@ func (c *AnomalyDetectionStreamingCollector) collectProcessingStats(ctx context.
 	if err != nil {
 		return
 	}
-	
+
 	// Processing metrics
 	ch <- prometheus.MustNewConstMetric(
 		c.anomalyEvents,
@@ -1527,14 +1527,14 @@ func (c *AnomalyDetectionStreamingCollector) collectProcessingStats(ctx context.
 		float64(stats.TotalEventsProcessed),
 		"processing", "all", "all", "total",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.anomalyEvents,
 		prometheus.CounterValue,
 		float64(stats.AnomaliesDetected),
 		"processing", "all", "all", "detected",
 	)
-	
+
 	// Performance metrics
 	ch <- prometheus.MustNewConstMetric(
 		c.anomalyDetectionRate,
@@ -1542,7 +1542,7 @@ func (c *AnomalyDetectionStreamingCollector) collectProcessingStats(ctx context.
 		stats.AverageDetectionTime.Seconds(),
 		"processing", "average_time",
 	)
-	
+
 	// Accuracy metrics
 	ch <- prometheus.MustNewConstMetric(
 		c.detectionAccuracy,
@@ -1550,28 +1550,28 @@ func (c *AnomalyDetectionStreamingCollector) collectProcessingStats(ctx context.
 		stats.Accuracy,
 		"processing", "accuracy",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.detectionAccuracy,
 		prometheus.GaugeValue,
 		stats.Precision,
 		"processing", "precision",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.detectionAccuracy,
 		prometheus.GaugeValue,
 		stats.Recall,
 		"processing", "recall",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.detectionAccuracy,
 		prometheus.GaugeValue,
 		stats.F1Score,
 		"processing", "f1_score",
 	)
-	
+
 	// Response metrics
 	ch <- prometheus.MustNewConstMetric(
 		c.responseMetrics,
@@ -1579,14 +1579,14 @@ func (c *AnomalyDetectionStreamingCollector) collectProcessingStats(ctx context.
 		float64(stats.AutomatedResponses),
 		"processing", "automated",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.responseMetrics,
 		prometheus.CounterValue,
 		float64(stats.SuccessfulMitigations),
 		"processing", "successful",
 	)
-	
+
 	// Business impact
 	ch <- prometheus.MustNewConstMetric(
 		c.businessImpact,
@@ -1594,7 +1594,7 @@ func (c *AnomalyDetectionStreamingCollector) collectProcessingStats(ctx context.
 		float64(stats.IncidentsPrevented),
 		"incidents_prevented", "processing",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.costImpact,
 		prometheus.GaugeValue,
@@ -1608,7 +1608,7 @@ func (c *AnomalyDetectionStreamingCollector) collectPerformanceMetrics(ctx conte
 	if err != nil {
 		return
 	}
-	
+
 	// Latency metrics
 	ch <- prometheus.MustNewConstMetric(
 		c.anomalyDetectionRate,
@@ -1616,14 +1616,14 @@ func (c *AnomalyDetectionStreamingCollector) collectPerformanceMetrics(ctx conte
 		perf.EndToEndLatency.Seconds(),
 		"latency", "end_to_end",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.anomalyDetectionRate,
 		prometheus.GaugeValue,
 		perf.DetectionLatency.Seconds(),
 		"latency", "detection",
 	)
-	
+
 	// Throughput metrics
 	ch <- prometheus.MustNewConstMetric(
 		c.anomalyDetectionRate,
@@ -1631,14 +1631,14 @@ func (c *AnomalyDetectionStreamingCollector) collectPerformanceMetrics(ctx conte
 		perf.EventThroughput,
 		"throughput", "events",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.anomalyDetectionRate,
 		prometheus.GaugeValue,
 		perf.DetectionThroughput,
 		"throughput", "detection",
 	)
-	
+
 	// Accuracy metrics
 	ch <- prometheus.MustNewConstMetric(
 		c.detectionAccuracy,
@@ -1646,14 +1646,14 @@ func (c *AnomalyDetectionStreamingCollector) collectPerformanceMetrics(ctx conte
 		perf.DetectionAccuracy,
 		"performance", "detection",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.predictionAccuracy,
 		prometheus.GaugeValue,
 		perf.PredictionAccuracy,
 		"performance", "all",
 	)
-	
+
 	// Efficiency metrics
 	ch <- prometheus.MustNewConstMetric(
 		c.detectionAccuracy,
@@ -1661,14 +1661,14 @@ func (c *AnomalyDetectionStreamingCollector) collectPerformanceMetrics(ctx conte
 		perf.ProcessingEfficiency,
 		"efficiency", "processing",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.detectionAccuracy,
 		prometheus.GaugeValue,
 		perf.ResourceEfficiency,
 		"efficiency", "resource",
 	)
-	
+
 	// Coverage metrics
 	ch <- prometheus.MustNewConstMetric(
 		c.detectionAccuracy,
@@ -1676,14 +1676,14 @@ func (c *AnomalyDetectionStreamingCollector) collectPerformanceMetrics(ctx conte
 		perf.EventCoverage,
 		"coverage", "events",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.detectionAccuracy,
 		prometheus.GaugeValue,
 		perf.AnomalyCoverage,
 		"coverage", "anomalies",
 	)
-	
+
 	// Business metrics
 	ch <- prometheus.MustNewConstMetric(
 		c.businessImpact,
@@ -1691,14 +1691,14 @@ func (c *AnomalyDetectionStreamingCollector) collectPerformanceMetrics(ctx conte
 		perf.ValueGeneration,
 		"performance", "value_generation",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.costImpact,
 		prometheus.GaugeValue,
 		perf.CostAvoidance,
 		"performance", "avoidance",
 	)
-	
+
 	ch <- prometheus.MustNewConstMetric(
 		c.riskAssessment,
 		prometheus.GaugeValue,
@@ -1715,7 +1715,7 @@ func (c *AnomalyDetectionStreamingCollector) collectAnomalyEvent(event AnomalyEv
 		event.AnomalyScore,
 		event.AnomalyType, event.ComponentType, event.AnomalyID,
 	)
-	
+
 	// Severity distribution
 	ch <- prometheus.MustNewConstMetric(
 		c.anomalySeverity,
@@ -1723,7 +1723,7 @@ func (c *AnomalyDetectionStreamingCollector) collectAnomalyEvent(event AnomalyEv
 		1.0,
 		event.AnomalySeverity, event.AnomalyCategory,
 	)
-	
+
 	// Business impact
 	ch <- prometheus.MustNewConstMetric(
 		c.businessImpact,
@@ -1731,7 +1731,7 @@ func (c *AnomalyDetectionStreamingCollector) collectAnomalyEvent(event AnomalyEv
 		event.BusinessImpact,
 		"event", event.AnomalySeverity,
 	)
-	
+
 	// Risk assessment
 	ch <- prometheus.MustNewConstMetric(
 		c.riskAssessment,
@@ -1739,7 +1739,7 @@ func (c *AnomalyDetectionStreamingCollector) collectAnomalyEvent(event AnomalyEv
 		event.RiskScore,
 		event.RiskLevel, event.AnomalySeverity,
 	)
-	
+
 	// Correlation score
 	if event.CorrelationScore > 0 {
 		ch <- prometheus.MustNewConstMetric(

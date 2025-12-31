@@ -19,7 +19,7 @@ type JobStepPerformanceCollector struct {
 	metrics          *JobStepMetrics
 	lastCollection   time.Time
 	mu               sync.RWMutex
-	
+
 	// Cache for step data
 	stepCache        map[string]*JobStepDetails
 	bottleneckCache  map[string]*BottleneckAnalysis
@@ -70,21 +70,21 @@ type JobStepMetrics struct {
 	StepIOUtilization        *prometheus.GaugeVec
 	StepNetworkUtilization   *prometheus.GaugeVec
 	StepLoadAverage          *prometheus.GaugeVec
-	
+
 	// Step timing and performance
 	StepDuration             *prometheus.GaugeVec
 	StepExecutionEfficiency  *prometheus.GaugeVec
 	StepResourceEfficiency   *prometheus.GaugeVec
-	
+
 	// Bottleneck detection
 	StepBottleneckDetected   *prometheus.GaugeVec
 	StepBottleneckSeverity   *prometheus.GaugeVec
 	StepBottleneckType       *prometheus.GaugeVec
-	
+
 	// Step state and progress
 	StepsByState             *prometheus.GaugeVec
 	StepProgressRatio        *prometheus.GaugeVec
-	
+
 	// Collection performance
 	CollectionDuration       prometheus.Histogram
 	CollectionErrors         *prometheus.CounterVec
@@ -348,7 +348,7 @@ func (c *JobStepPerformanceCollector) collectJobStepMetrics(ctx context.Context)
 		// For now, create simplified step analysis since GetJobStepDetails doesn't exist yet
 		// This would use jobManager.GetJobStepDetails(ctx, job.JobID) when available
 		stepDetails := c.createSimplifiedStepDetails(job)
-		
+
 		// Cache the step details
 		stepKey := fmt.Sprintf("%s:0", job.JobID) // Step 0 for main job step
 		c.stepCache[stepKey] = stepDetails
@@ -521,7 +521,7 @@ func (c *JobStepPerformanceCollector) updateBottleneckMetrics(job *slurm.Job, st
 	if analysis.Detected {
 		severityLabels := append(labels, analysis.BottleneckType)
 		c.metrics.StepBottleneckSeverity.WithLabelValues(severityLabels...).Set(analysis.Severity)
-		
+
 		typeLabels := append(labels, analysis.BottleneckType)
 		c.metrics.StepBottleneckType.WithLabelValues(typeLabels...).Set(1.0)
 	}
@@ -549,14 +549,14 @@ func (c *JobStepPerformanceCollector) updateStepAggregationMetrics(stateCounts m
 // cleanExpiredCache removes expired entries from caches
 func (c *JobStepPerformanceCollector) cleanExpiredCache() {
 	now := time.Now()
-	
+
 	// Clean step cache
 	for key, step := range c.stepCache {
 		if step.StartTime != nil && now.Sub(*step.StartTime) > c.cacheTTL {
 			delete(c.stepCache, key)
 		}
 	}
-	
+
 	// Clean bottleneck cache
 	for key, analysis := range c.bottleneckCache {
 		if now.Sub(analysis.LastAnalyzed) > c.cacheTTL {

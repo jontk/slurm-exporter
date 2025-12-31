@@ -235,7 +235,7 @@ func TestJobPriorityCollector_Collect_Success(t *testing.T) {
 	foundQueueMetric := false
 	foundPredictionMetric := false
 	foundSystemMetric := false
-	
+
 	for name := range metricNames {
 		if strings.Contains(name, "job_priority_score") {
 			foundPriorityMetric = true
@@ -349,7 +349,7 @@ func TestJobPriorityCollector_MetricValues(t *testing.T) {
 	foundSystemJobs := false
 	foundJobPriority := false
 	foundWaitTime := false
-	
+
 	for _, mf := range metricFamilies {
 		switch *mf.Name {
 		case "slurm_system_priority_statistics":
@@ -394,7 +394,7 @@ func TestJobPriorityCollector_Integration(t *testing.T) {
 		slurm_system_priority_statistics{algorithm_version="v1.0",statistic="total_jobs"} 150
 	`
 
-	err := testutil.CollectAndCompare(collector, strings.NewReader(expected), 
+	err := testutil.CollectAndCompare(collector, strings.NewReader(expected),
 		"slurm_system_priority_statistics")
 	assert.NoError(t, err)
 }

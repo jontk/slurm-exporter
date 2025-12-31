@@ -16,19 +16,19 @@ type UserBehaviorAnalysisSLURMClient interface {
 	GetUserJobSubmissionPatterns(ctx context.Context, userName string, period string) (*JobSubmissionPatterns, error)
 	GetUserResourceUsagePatterns(ctx context.Context, userName string, period string) (*ResourceUsagePatterns, error)
 	GetUserSchedulingBehavior(ctx context.Context, userName string) (*SchedulingBehavior, error)
-	
+
 	// Fair-Share Optimization
 	AnalyzeUserFairShareOptimization(ctx context.Context, userName string) (*FairShareOptimization, error)
 	GetUserAdaptationMetrics(ctx context.Context, userName string) (*UserAdaptationMetrics, error)
 	GetUserComplianceAnalysis(ctx context.Context, userName string) (*UserComplianceAnalysis, error)
 	GetUserEfficiencyTrends(ctx context.Context, userName string, period string) (*UserEfficiencyTrends, error)
-	
+
 	// Behavioral Prediction and Modeling
 	PredictUserBehavior(ctx context.Context, userName string, timeframe string) (*UserBehaviorPrediction, error)
 	GetUserClusteringAnalysis(ctx context.Context) (*UserClusteringAnalysis, error)
 	GetBehavioralAnomalies(ctx context.Context, userName string) (*BehavioralAnomalies, error)
 	GetUserLearningProgress(ctx context.Context, userName string) (*UserLearningProgress, error)
-	
+
 	// Optimization Recommendations
 	GetPersonalizedRecommendations(ctx context.Context, userName string) (*PersonalizedRecommendations, error)
 	GetBehaviorOptimizationSuggestions(ctx context.Context, userName string) (*BehaviorOptimizationSuggestions, error)
@@ -41,49 +41,49 @@ type UserBehaviorAnalysisProfile struct {
 	AccountName        string                 `json:"account_name"`
 	ProfileVersion     string                 `json:"profile_version"`
 	AnalysisPeriod     string                 `json:"analysis_period"`
-	
+
 	// Submission Behavior
 	SubmissionFrequency   float64            `json:"submission_frequency"`
 	SubmissionConsistency float64            `json:"submission_consistency"`
 	SubmissionTiming      map[string]float64 `json:"submission_timing"`
 	PeakSubmissionHours   []int              `json:"peak_submission_hours"`
 	SubmissionBurstiness  float64            `json:"submission_burstiness"`
-	
+
 	// Resource Usage Behavior
 	ResourceEfficiency    float64            `json:"resource_efficiency"`
 	ResourcePredictability float64          `json:"resource_predictability"`
 	ResourceOverRequest   float64            `json:"resource_over_request"`
 	ResourceUnderUsage    float64            `json:"resource_under_usage"`
 	ResourceOptimization  float64            `json:"resource_optimization"`
-	
+
 	// Scheduling Behavior
 	QueuePatience         float64            `json:"queue_patience"`
 	PriorityUsage         float64            `json:"priority_usage"`
 	PartitionPreference   map[string]float64 `json:"partition_preference"`
 	TimeSlotPreference    map[string]float64 `json:"time_slot_preference"`
 	JobSizeDistribution   map[string]float64 `json:"job_size_distribution"`
-	
+
 	// Adaptation and Learning
 	BehaviorStability     float64            `json:"behavior_stability"`
 	AdaptationRate        float64            `json:"adaptation_rate"`
 	LearningCurve         float64            `json:"learning_curve"`
 	PolicyCompliance      float64            `json:"policy_compliance"`
 	ResponseToFeedback    float64            `json:"response_to_feedback"`
-	
+
 	// Collaboration and Social Behavior
 	CollaborationLevel    float64            `json:"collaboration_level"`
 	ResourceSharing       float64            `json:"resource_sharing"`
 	HelpSeeking          float64            `json:"help_seeking"`
 	CommunityEngagement  float64            `json:"community_engagement"`
 	MentorshipParticipation float64         `json:"mentorship_participation"`
-	
+
 	// Risk and Compliance
 	RiskProfile          string             `json:"risk_profile"`
 	ComplianceScore      float64            `json:"compliance_score"`
 	ViolationProneness   float64            `json:"violation_proneness"`
 	PolicyAwareness      float64            `json:"policy_awareness"`
 	SafetyMindedness     float64            `json:"safety_mindedness"`
-	
+
 	// Metadata
 	ProfileConfidence    float64            `json:"profile_confidence"`
 	DataCompleteness     float64            `json:"data_completeness"`
@@ -236,34 +236,34 @@ type Course struct {
 type JobSubmissionPatterns struct {
 	UserName            string                 `json:"user_name"`
 	AnalysisPeriod      string                 `json:"analysis_period"`
-	
+
 	// Temporal Patterns
 	HourlyDistribution  map[int]float64       `json:"hourly_distribution"`
 	DailyDistribution   map[string]float64    `json:"daily_distribution"`
 	WeeklyDistribution  map[int]float64       `json:"weekly_distribution"`
 	MonthlyDistribution map[int]float64       `json:"monthly_distribution"`
 	SeasonalPatterns    map[string]float64    `json:"seasonal_patterns"`
-	
+
 	// Submission Characteristics
 	AverageJobsPerDay   float64               `json:"average_jobs_per_day"`
 	MaxJobsPerDay       int                   `json:"max_jobs_per_day"`
 	SubmissionVariability float64             `json:"submission_variability"`
 	BurstSubmissions    int                   `json:"burst_submissions"`
 	BurstFrequency      float64               `json:"burst_frequency"`
-	
+
 	// Timing Patterns
 	PreferredSubmissionTime string            `json:"preferred_submission_time"`
 	SubmissionPredictability float64          `json:"submission_predictability"`
 	PlanningHorizon     float64               `json:"planning_horizon"`
 	UrgencyPattern      map[string]float64    `json:"urgency_pattern"`
 	DeadlineAwareness   float64               `json:"deadline_awareness"`
-	
+
 	// Adaptation Patterns
 	PatternStability    float64               `json:"pattern_stability"`
 	SeasonalAdaptation  float64               `json:"seasonal_adaptation"`
 	WorkloadAdaptation  float64               `json:"workload_adaptation"`
 	PolicyAdaptation    float64               `json:"policy_adaptation"`
-	
+
 	LastAnalyzed        time.Time             `json:"last_analyzed"`
 }
 
@@ -271,78 +271,78 @@ type JobSubmissionPatterns struct {
 type ResourceUsagePatterns struct {
 	UserName           string                 `json:"user_name"`
 	AnalysisPeriod     string                 `json:"analysis_period"`
-	
+
 	// Resource Request Patterns
 	CPURequestPattern    map[string]float64   `json:"cpu_request_pattern"`
 	MemoryRequestPattern map[string]float64   `json:"memory_request_pattern"`
 	GPURequestPattern    map[string]float64   `json:"gpu_request_pattern"`
 	StorageRequestPattern map[string]float64  `json:"storage_request_pattern"`
 	RuntimeRequestPattern map[string]float64  `json:"runtime_request_pattern"`
-	
+
 	// Utilization Efficiency
 	CPUEfficiency        float64              `json:"cpu_efficiency"`
 	MemoryEfficiency     float64              `json:"memory_efficiency"`
 	GPUEfficiency        float64              `json:"gpu_efficiency"`
 	IOEfficiency         float64              `json:"io_efficiency"`
 	OverallEfficiency    float64              `json:"overall_efficiency"`
-	
+
 	// Request Accuracy
 	RequestAccuracy      float64              `json:"request_accuracy"`
 	OverestimationRate   float64              `json:"overestimation_rate"`
 	UnderestimationRate  float64              `json:"underestimation_rate"`
 	WasteRate           float64              `json:"waste_rate"`
 	UtilizationVariability float64           `json:"utilization_variability"`
-	
+
 	// Optimization Behavior
 	ResourceLearning     float64              `json:"resource_learning"`
 	OptimizationTrend    string               `json:"optimization_trend"`
 	BestPracticeAdoption float64              `json:"best_practice_adoption"`
 	EfficiencyImprovement float64             `json:"efficiency_improvement"`
-	
+
 	// Resource Competition
 	ResourceContention   float64              `json:"resource_contention"`
 	PeakUsageImpact     float64              `json:"peak_usage_impact"`
 	ResourceSharing     float64              `json:"resource_sharing"`
 	CollaborativeUsage  float64              `json:"collaborative_usage"`
-	
+
 	LastAnalyzed        time.Time             `json:"last_analyzed"`
 }
 
 // SchedulingBehavior represents user interaction with the scheduling system
 type SchedulingBehavior struct {
 	UserName            string                 `json:"user_name"`
-	
+
 	// Queue Behavior
 	QueuePatience       float64               `json:"queue_patience"`
 	QueueJumping       float64               `json:"queue_jumping"`
 	CancellationRate   float64               `json:"cancellation_rate"`
 	ResubmissionRate   float64               `json:"resubmission_rate"`
 	QueueOptimization  float64               `json:"queue_optimization"`
-	
+
 	// Priority Usage
 	PriorityStrategy   string                `json:"priority_strategy"`
 	PriorityEfficiency float64               `json:"priority_efficiency"`
 	PriorityAbuse      float64               `json:"priority_abuse"`
 	PrioritySharing    float64               `json:"priority_sharing"`
-	
+
 	// Partition and Resource Selection
 	PartitionWisdom    float64               `json:"partition_wisdom"`
 	ResourceMatching   float64               `json:"resource_matching"`
 	LoadAwareness      float64               `json:"load_awareness"`
 	OptimalSelection   float64               `json:"optimal_selection"`
-	
+
 	// Scheduling Optimization
 	BackfillUtilization float64              `json:"backfill_utilization"`
 	OffPeakUsage       float64               `json:"off_peak_usage"`
 	FlexibilityScore   float64               `json:"flexibility_score"`
 	AdaptiveScheduling float64               `json:"adaptive_scheduling"`
-	
+
 	// Interaction Quality
 	SystemRespect      float64               `json:"system_respect"`
 	PolicyAdherence    float64               `json:"policy_adherence"`
 	FairPlayScore      float64               `json:"fair_play_score"`
 	CommunityImpact    float64               `json:"community_impact"`
-	
+
 	LastAnalyzed       time.Time             `json:"last_analyzed"`
 }
 
@@ -997,7 +997,7 @@ func (c *UserBehaviorAnalysisCollector) collectUserBehaviorProfile(ctx context.C
 	c.userLearningCurve.WithLabelValues(profile.UserName, profile.AccountName).Set(profile.LearningCurve)
 	c.userCollaborationLevel.WithLabelValues(profile.UserName, profile.AccountName).Set(profile.CollaborationLevel)
 	c.userComplianceScore.WithLabelValues(profile.UserName, profile.AccountName).Set(profile.ComplianceScore)
-	
+
 	c.userResourceEfficiency.WithLabelValues(profile.UserName, profile.AccountName, "overall").Set(profile.ResourceEfficiency)
 	c.userPolicyCompliance.WithLabelValues(profile.UserName, profile.AccountName, "overall").Set(profile.PolicyCompliance)
 	c.userRiskProfile.WithLabelValues(profile.UserName, profile.AccountName, profile.RiskProfile).Set(profile.ViolationProneness)
@@ -1036,11 +1036,11 @@ func (c *UserBehaviorAnalysisCollector) collectResourceUsagePatterns(ctx context
 	c.cpuRequestAccuracy.WithLabelValues(patterns.UserName, "default").Set(patterns.CPUEfficiency)
 	c.memoryRequestAccuracy.WithLabelValues(patterns.UserName, "default").Set(patterns.MemoryEfficiency)
 	c.resourceLearningRate.WithLabelValues(patterns.UserName, "default").Set(patterns.ResourceLearning)
-	
+
 	c.resourceWasteRate.WithLabelValues(patterns.UserName, "default", "cpu").Set(patterns.WasteRate)
 	c.utilizationVariability.WithLabelValues(patterns.UserName, "default", "cpu").Set(patterns.UtilizationVariability)
 	c.resourceContention.WithLabelValues(patterns.UserName, "default", "cpu").Set(patterns.ResourceContention)
-	
+
 	if patterns.OptimizationTrend == "improving" {
 		c.resourceOptimizationTrend.WithLabelValues(patterns.UserName, "default").Set(1.0)
 	} else if patterns.OptimizationTrend == "declining" {
@@ -1048,7 +1048,7 @@ func (c *UserBehaviorAnalysisCollector) collectResourceUsagePatterns(ctx context
 	} else {
 		c.resourceOptimizationTrend.WithLabelValues(patterns.UserName, "default").Set(0.0)
 	}
-	
+
 	c.bestPracticeAdoption.WithLabelValues(patterns.UserName, "default", "resource_management").Set(patterns.BestPracticeAdoption)
 }
 

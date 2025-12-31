@@ -58,13 +58,13 @@ OPTIONS:
 EXAMPLES:
     # Remove from development environment
     $0 -e development
-    
+
     # Remove and delete namespace
     $0 -e staging --delete-namespace
-    
+
     # Force removal without confirmation
     $0 -e production --force
-    
+
     # Dry run removal
     $0 --dry-run
 
@@ -119,19 +119,19 @@ parse_args() {
 # Check prerequisites
 check_prerequisites() {
     print_info "Checking prerequisites..."
-    
+
     # Check if kubectl is installed
     if ! command -v kubectl &> /dev/null; then
         print_error "kubectl is not installed or not in PATH"
         exit 1
     fi
-    
+
     # Check if helm is installed
     if ! command -v helm &> /dev/null; then
         print_error "helm is not installed or not in PATH"
         exit 1
     fi
-    
+
     print_success "Prerequisites check passed"
 }
 
@@ -157,16 +157,16 @@ confirm_deletion() {
     if [[ "$FORCE" == "true" || "$DRY_RUN" == "true" ]]; then
         return 0
     fi
-    
+
     print_warning "This will remove the SLURM Exporter deployment:"
     echo "  Release: $HELM_RELEASE_NAME"
     echo "  Namespace: $NAMESPACE"
     echo "  Environment: $ENVIRONMENT"
-    
+
     if [[ "$DELETE_NAMESPACE" == "true" ]]; then
         print_warning "The namespace '$NAMESPACE' will also be deleted!"
     fi
-    
+
     read -p "Are you sure you want to continue? (y/N): " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
@@ -181,9 +181,9 @@ undeploy() {
         print_warning "Helm release '$HELM_RELEASE_NAME' not found in namespace '$NAMESPACE'"
         return 0
     fi
-    
+
     print_info "Removing SLURM Exporter deployment..."
-    
+
     if [[ "$DRY_RUN" == "true" ]]; then
         print_info "[DRY RUN] Would execute: helm uninstall $HELM_RELEASE_NAME -n $NAMESPACE"
     else
@@ -201,14 +201,14 @@ delete_namespace() {
     if [[ "$DELETE_NAMESPACE" != "true" ]]; then
         return 0
     fi
-    
+
     if ! kubectl get namespace "$NAMESPACE" &> /dev/null; then
         print_warning "Namespace '$NAMESPACE' does not exist"
         return 0
     fi
-    
+
     print_info "Deleting namespace: $NAMESPACE"
-    
+
     if [[ "$DRY_RUN" == "true" ]]; then
         print_info "[DRY RUN] Would execute: kubectl delete namespace $NAMESPACE"
     else
@@ -224,20 +224,20 @@ delete_namespace() {
 # Clean up persistent resources
 cleanup_resources() {
     print_info "Checking for persistent resources..."
-    
+
     # Check for PVCs that might not be automatically deleted
     local pvcs
     pvcs=$(kubectl get pvc -n "$NAMESPACE" 2>/dev/null | grep -v "^NAME" | wc -l || echo "0")
-    
+
     if [[ "$pvcs" -gt 0 ]]; then
         print_warning "Found $pvcs persistent volume claims in namespace $NAMESPACE"
         print_info "You may need to manually delete them if they're no longer needed"
     fi
-    
+
     # Check for secrets that might be manually created
     local secrets
     secrets=$(kubectl get secrets -n "$NAMESPACE" | grep -E "(slurm-exporter|tls)" | wc -l || echo "0")
-    
+
     if [[ "$secrets" -gt 0 ]]; then
         print_warning "Found $secrets SLURM exporter related secrets in namespace $NAMESPACE"
         print_info "Manual secrets are not automatically deleted"
@@ -250,20 +250,20 @@ show_post_undeploy_info() {
         print_success "Dry run completed successfully!"
         return
     fi
-    
+
     print_success "SLURM Exporter has been removed!"
-    
+
     # Verify removal
     if check_release_exists; then
         print_warning "Helm release still exists - removal may have failed"
     else
         print_success "Helm release successfully removed"
     fi
-    
+
     # Check if any pods are still running
     local running_pods
     running_pods=$(kubectl get pods -n "$NAMESPACE" -l "app.kubernetes.io/instance=$HELM_RELEASE_NAME" 2>/dev/null | grep -v "^NAME" | wc -l || echo "0")
-    
+
     if [[ "$running_pods" -gt 0 ]]; then
         print_warning "$running_pods pods are still running - they should terminate shortly"
     fi

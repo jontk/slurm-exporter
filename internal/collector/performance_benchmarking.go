@@ -18,27 +18,27 @@ type PerformanceBenchmarkingCollector struct {
 	logger          *slog.Logger
 	config          *BenchmarkingConfig
 	metrics         *BenchmarkingMetrics
-	
+
 	// Benchmark data storage
 	benchmarkData   map[string]*BenchmarkDataset
 	historicalData  map[string]*HistoricalPerformanceData
 	comparisonResults map[string]*BenchmarkComparisonResult
-	
+
 	// Performance baselines
 	baselineManager *BaselineManager
-	
+
 	// Comparison engines
 	jobComparator   *JobComparator
 	userComparator  *UserComparator
 	nodeComparator  *NodeComparator
 	clusterComparator *ClusterComparator
-	
+
 	// Statistical analysis
 	statAnalyzer    *StatisticalAnalyzer
-	
+
 	// Trend analysis
 	trendAnalyzer   *TrendAnalyzer
-	
+
 	lastCollection  time.Time
 	mu              sync.RWMutex
 }
@@ -48,36 +48,36 @@ type BenchmarkingConfig struct {
 	CollectionInterval      time.Duration
 	BenchmarkRetention     time.Duration
 	HistoricalDataRetention time.Duration
-	
+
 	// Baseline configuration
 	BaselineCalculationInterval time.Duration
 	BaselineMinSamples         int
 	BaselineConfidenceLevel    float64
-	
+
 	// Comparison configuration
 	EnableJobComparison        bool
 	EnableUserComparison       bool
 	EnableNodeComparison       bool
 	EnableClusterComparison    bool
 	ComparisonThresholds       ComparisonThresholds
-	
+
 	// Statistical analysis configuration
 	EnableStatisticalAnalysis  bool
 	OutlierDetectionMethod     string // "zscore", "iqr", "modified_zscore"
 	OutlierThreshold          float64
 	ConfidenceIntervals       []float64 // e.g., [0.95, 0.99]
-	
+
 	// Benchmarking parameters
 	BenchmarkCategories       []string // e.g., "cpu_intensive", "memory_intensive", "io_intensive"
 	PerformanceMetrics        []string // e.g., "throughput", "latency", "efficiency", "resource_utilization"
 	ComparisonDimensions      []string // e.g., "temporal", "user", "application", "cluster"
-	
+
 	// Data processing
 	MaxJobsPerBenchmark       int
 	MaxNodesPerBenchmark      int
 	EnableParallelProcessing  bool
 	MaxConcurrentComparisons  int
-	
+
 	// Reporting
 	GenerateReports           bool
 	ReportGenerationInterval  time.Duration
@@ -98,18 +98,18 @@ type BenchmarkDataset struct {
 	Category        string
 	DataType        string // "job", "user", "node", "cluster"
 	Timestamp       time.Time
-	
+
 	// Performance metrics
 	Metrics         map[string]*PerformanceMetric
-	
+
 	// Statistical summaries
 	Statistics      *StatisticalSummary
-	
+
 	// Metadata
 	SampleCount     int
 	DataQuality     float64
 	Confidence      float64
-	
+
 	// Related entities
 	JobIDs          []string
 	UserNames       []string
@@ -123,7 +123,7 @@ type PerformanceMetric struct {
 	Value           float64
 	Unit            string
 	Timestamp       time.Time
-	
+
 	// Statistical properties
 	Mean            float64
 	Median          float64
@@ -131,12 +131,12 @@ type PerformanceMetric struct {
 	Min             float64
 	Max             float64
 	Percentiles     map[int]float64 // e.g., map[95]0.95_value
-	
+
 	// Quality indicators
 	DataPoints      int
 	Quality         float64
 	Reliability     float64
-	
+
 	// Comparison context
 	Baseline        *float64
 	Trend           string // "improving", "degrading", "stable"
@@ -154,14 +154,14 @@ type StatisticalSummary struct {
 	Variance        float64
 	Skewness        float64
 	Kurtosis        float64
-	
+
 	// Distribution analysis
 	Distribution    string // "normal", "uniform", "exponential", "bimodal", etc.
 	Outliers        []OutlierData
-	
+
 	// Confidence intervals
 	ConfidenceIntervals map[float64]*BenchmarkConfidenceInterval
-	
+
 	// Quality metrics
 	DataQuality     float64
 	Completeness    float64
@@ -189,19 +189,19 @@ type BenchmarkConfidenceInterval struct {
 type HistoricalPerformanceData struct {
 	EntityID        string
 	EntityType      string // "job", "user", "node", "cluster"
-	
+
 	// Time series data
 	TimeSeriesData  []*BenchmarkTimeSeriesPoint
-	
+
 	// Trend analysis
 	TrendAnalysis   *BenchmarkTrendAnalysis
-	
+
 	// Seasonality detection
 	SeasonalPatterns []*BenchmarkSeasonalPattern
-	
+
 	// Change points
 	ChangePoints    []*ChangePoint
-	
+
 	// Forecast data
 	Forecasts       []*ForecastPoint
 }
@@ -220,12 +220,12 @@ type BenchmarkTrendAnalysis struct {
 	TrendStrength   float64
 	TrendSignificance float64
 	ChangeRate      float64
-	
+
 	// Linear regression
 	Slope           float64
 	Intercept       float64
 	RSquared        float64
-	
+
 	// Trend segments
 	TrendSegments   []*TrendSegment
 }
@@ -274,20 +274,20 @@ type BenchmarkComparisonResult struct {
 	ComparisonID    string
 	ComparisonType  string // "job_vs_job", "user_vs_baseline", "node_vs_cluster", etc.
 	Timestamp       time.Time
-	
+
 	// Entities being compared
 	EntityA         *ComparisonEntity
 	EntityB         *ComparisonEntity
-	
+
 	// Comparison metrics
 	MetricComparisons map[string]*MetricComparison
-	
+
 	// Overall comparison result
 	OverallResult   *OverallComparison
-	
+
 	// Recommendations
 	Recommendations []*PerformanceRecommendation
-	
+
 	// Quality and confidence
 	ComparisonQuality float64
 	Confidence        float64
@@ -312,12 +312,12 @@ type MetricComparison struct {
 	PercentChange   float64
 	Significance    float64
 	ComparisonType  string // "better", "worse", "equivalent"
-	
+
 	// Statistical analysis
 	StatisticalTest string
 	PValue          float64
 	EffectSize      float64
-	
+
 	// Context
 	ExpectedRange   *Range
 	Trend           string
@@ -335,16 +335,16 @@ type Range struct {
 type OverallComparison struct {
 	OverallScore    float64 // -1 to 1, where 1 means A is significantly better than B
 	ScoreExplanation string
-	
+
 	// Performance categories
 	BetterMetrics   []string
 	WorseMetrics    []string
 	SimilarMetrics  []string
-	
+
 	// Summary
 	Summary         string
 	KeyFindings     []string
-	
+
 	// Statistical significance
 	OverallSignificance float64
 	ConfidenceLevel     float64
@@ -359,11 +359,11 @@ type PerformanceRecommendation struct {
 	ExpectedImpact  float64
 	ImplementationEffort string
 	ActionSteps     []string
-	
+
 	// Supporting data
 	SupportingData  map[string]interface{}
 	RelatedMetrics  []string
-	
+
 	// Validation
 	Confidence      float64
 	RiskAssessment  string
@@ -384,18 +384,18 @@ type PerformanceBaseline struct {
 	Category        string
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
-	
+
 	// Baseline metrics
 	BaselineMetrics map[string]*BaselineMetric
-	
+
 	// Statistical properties
 	SampleSize      int
 	ConfidenceLevel float64
 	DataQuality     float64
-	
+
 	// Validation
 	ValidationResults *BaselineValidation
-	
+
 	// Metadata
 	Description     string
 	Tags            []string
@@ -408,16 +408,16 @@ type BaselineMetric struct {
 	BaselineValue   float64
 	Tolerance       float64
 	Unit            string
-	
+
 	// Statistical properties
 	Mean            float64
 	StandardDev     float64
 	PercentileRanges map[string]*Range // e.g., "p95": {min, max, optimal}
-	
+
 	// Quality indicators
 	Reliability     float64
 	Stability       float64
-	
+
 	// Update tracking
 	LastUpdated     time.Time
 	UpdateCount     int
@@ -448,7 +448,7 @@ type JobPerformanceSnapshot struct {
 	PerformanceData map[string]float64
 	ResourceData    map[string]float64
 	EfficiencyData  map[string]float64
-	
+
 	// Quality indicators
 	DataCompleteness float64
 	MeasurementQuality float64
@@ -483,29 +483,29 @@ type UserPerformanceProfile struct {
 	UserName        string
 	Account         string
 	LastUpdated     time.Time
-	
+
 	// Aggregate performance metrics
 	AverageMetrics  map[string]float64
 	BestMetrics     map[string]float64
 	WorstMetrics    map[string]float64
 	TrendMetrics    map[string]*BenchmarkTrendAnalysis
-	
+
 	// Usage patterns
 	UsagePatterns   *BenchmarkUsagePattern
-	
+
 	// Performance consistency
 	ConsistencyScore float64
 	VariabilityScore float64
-	
+
 	// Efficiency indicators
 	ResourceEfficiency float64
 	CostEfficiency     float64
 	QueueEfficiency    float64
-	
+
 	// Improvement tracking
 	ImprovementTrend   string
 	ImprovementRate    float64
-	
+
 	// Benchmarking context
 	PeerGroup          []string
 	RelativeRanking    int
@@ -517,12 +517,12 @@ type BenchmarkUsagePattern struct {
 	JobSubmissionPattern string // "regular", "burst", "irregular"
 	ResourceUsagePattern string // "consistent", "variable", "escalating"
 	TimingPattern        string // "business_hours", "off_hours", "mixed"
-	
+
 	// Temporal patterns
 	PeakUsageHours     []int
 	PreferredPartitions []string
 	TypicalJobDuration time.Duration
-	
+
 	// Resource preferences
 	PreferredJobSizes  []int
 	MemoryUsagePattern string
@@ -542,31 +542,31 @@ type NodePerformanceProfile struct {
 	NodeName        string
 	Partition       string
 	LastUpdated     time.Time
-	
+
 	// Hardware specifications
 	HardwareSpecs   *NodeHardwareSpecs
-	
+
 	// Performance metrics
 	ThroughputMetrics map[string]float64
 	LatencyMetrics    map[string]float64
 	UtilizationMetrics map[string]float64
 	EfficiencyMetrics map[string]float64
-	
+
 	// Reliability metrics
 	UptimePercentage  float64
 	FailureRate       float64
 	MaintenanceEvents int
-	
+
 	// Job performance on this node
 	JobSuccess        float64
 	AverageJobRuntime time.Duration
 	ResourceWasteRate float64
-	
+
 	// Comparative performance
 	RelativePerformance float64 // Compared to cluster average
 	PerformanceRank     int
 	PerformanceGrade    string
-	
+
 	// Issues and recommendations
 	PerformanceIssues   []string
 	MaintenanceNeeds    []string
@@ -600,35 +600,35 @@ type ClusterComparator struct {
 type ClusterPerformanceSnapshot struct {
 	ClusterName     string
 	Timestamp       time.Time
-	
+
 	// Aggregate performance metrics
 	TotalThroughput float64
 	AverageLatency  float64
 	OverallEfficiency float64
 	ResourceUtilization map[string]float64
-	
+
 	// Capacity metrics
 	TotalCapacity   map[string]float64
 	AvailableCapacity map[string]float64
 	UtilizationRate float64
-	
+
 	// Queue performance
 	AverageQueueTime time.Duration
 	QueueThroughput  float64
 	QueueEfficiency  float64
-	
+
 	// Energy efficiency
 	PowerEfficiency  float64
 	CarbonFootprint  float64
-	
+
 	// Reliability metrics
 	SystemUptime     float64
 	FailureRate      float64
 	MaintenanceTime  time.Duration
-	
+
 	// Performance trends
 	PerformanceTrends map[string]string
-	
+
 	// Quality indicators
 	DataQuality      float64
 	MeasurementPeriod time.Duration
@@ -652,43 +652,43 @@ type BenchmarkingMetrics struct {
 	PerformanceComparisons    *prometheus.CounterVec
 	ComparisonQuality         *prometheus.GaugeVec
 	ComparisonSignificance    *prometheus.GaugeVec
-	
+
 	// Baseline metrics
 	BaselineDeviations        *prometheus.GaugeVec
 	BaselineQuality          *prometheus.GaugeVec
 	BaselineAge              *prometheus.GaugeVec
-	
+
 	// Trend metrics
 	PerformanceTrends        *prometheus.GaugeVec
 	TrendSignificance        *prometheus.GaugeVec
 	TrendStrength            *prometheus.GaugeVec
-	
+
 	// Statistical metrics
 	OutlierDetections        *prometheus.CounterVec
 	StatisticalTestResults   *prometheus.GaugeVec
 	DataQuality              *prometheus.GaugeVec
-	
+
 	// Benchmark metrics
 	BenchmarkScore           *prometheus.GaugeVec
 	BenchmarkRank            *prometheus.GaugeVec
 	BenchmarkPercentile      *prometheus.GaugeVec
-	
+
 	// Recommendation metrics
 	RecommendationsGenerated *prometheus.CounterVec
 	RecommendationImpact     *prometheus.GaugeVec
 	RecommendationConfidence *prometheus.GaugeVec
-	
+
 	// Collection metrics
 	BenchmarkingDuration     *prometheus.HistogramVec
 	BenchmarkingErrors       *prometheus.CounterVec
 	ActiveComparisons        *prometheus.GaugeVec
-	
+
 	// Entity performance metrics
 	JobPerformanceScore      *prometheus.GaugeVec
 	UserPerformanceScore     *prometheus.GaugeVec
 	NodePerformanceScore     *prometheus.GaugeVec
 	ClusterPerformanceScore  *prometheus.GaugeVec
-	
+
 	// Efficiency metrics
 	RelativeEfficiency       *prometheus.GaugeVec
 	EfficiencyImprovement    *prometheus.GaugeVec
@@ -732,51 +732,51 @@ func NewPerformanceBenchmarkingCollector(client slurm.SlurmClient, logger *slog.
 			ReportRetention:          7 * 24 * time.Hour,
 		}
 	}
-	
+
 	baselineManager := &BaselineManager{
 		config:    config,
 		logger:    logger,
 		baselines: make(map[string]*PerformanceBaseline),
 	}
-	
+
 	jobComparator := &JobComparator{
 		config:      config,
 		logger:      logger,
 		jobMetrics:  make(map[string]*JobPerformanceSnapshot),
 		comparisons: make(map[string]*BenchmarkComparisonResult),
 	}
-	
+
 	userComparator := &UserComparator{
 		config:      config,
 		logger:      logger,
 		userMetrics: make(map[string]*UserPerformanceProfile),
 		comparisons: make(map[string]*BenchmarkComparisonResult),
 	}
-	
+
 	nodeComparator := &NodeComparator{
 		config:      config,
 		logger:      logger,
 		nodeMetrics: make(map[string]*NodePerformanceProfile),
 		comparisons: make(map[string]*BenchmarkComparisonResult),
 	}
-	
+
 	clusterComparator := &ClusterComparator{
 		config:         config,
 		logger:         logger,
 		clusterMetrics: make(map[string]*ClusterPerformanceSnapshot),
 		comparisons:    make(map[string]*BenchmarkComparisonResult),
 	}
-	
+
 	statAnalyzer := &StatisticalAnalyzer{
 		config: config,
 		logger: logger,
 	}
-	
+
 	trendAnalyzer := &TrendAnalyzer{
 		config: config,
 		logger: logger,
 	}
-	
+
 	return &PerformanceBenchmarkingCollector{
 		slurmClient:       client,
 		logger:            logger,
@@ -1033,12 +1033,12 @@ func (p *PerformanceBenchmarkingCollector) Describe(ch chan<- *prometheus.Desc) 
 // Collect implements the prometheus.Collector interface
 func (p *PerformanceBenchmarkingCollector) Collect(ch chan<- prometheus.Metric) {
 	ctx := context.Background()
-	
+
 	if err := p.collectBenchmarkingMetrics(ctx); err != nil {
 		p.logger.Error("Failed to collect benchmarking metrics", "error", err)
 		p.metrics.BenchmarkingErrors.WithLabelValues("collect", "collection_error").Inc()
 	}
-	
+
 	p.metrics.PerformanceComparisons.Collect(ch)
 	p.metrics.ComparisonQuality.Collect(ch)
 	p.metrics.ComparisonSignificance.Collect(ch)
@@ -1075,47 +1075,47 @@ func (p *PerformanceBenchmarkingCollector) collectBenchmarkingMetrics(ctx contex
 	defer func() {
 		p.metrics.BenchmarkingDuration.WithLabelValues("collect_all", "all").Observe(time.Since(startTime).Seconds())
 	}()
-	
+
 	// Collect job performance data
 	if err := p.collectJobBenchmarks(ctx); err != nil {
 		return fmt.Errorf("job benchmark collection failed: %w", err)
 	}
-	
+
 	// Collect user performance data
 	if err := p.collectUserBenchmarks(ctx); err != nil {
 		return fmt.Errorf("user benchmark collection failed: %w", err)
 	}
-	
+
 	// Collect node performance data
 	if err := p.collectNodeBenchmarks(ctx); err != nil {
 		return fmt.Errorf("node benchmark collection failed: %w", err)
 	}
-	
+
 	// Collect cluster performance data
 	if err := p.collectClusterBenchmarks(ctx); err != nil {
 		return fmt.Errorf("cluster benchmark collection failed: %w", err)
 	}
-	
+
 	// Perform comparisons
 	if err := p.performComparisons(ctx); err != nil {
 		return fmt.Errorf("performance comparisons failed: %w", err)
 	}
-	
+
 	// Update baselines
 	if err := p.updateBaselines(ctx); err != nil {
 		return fmt.Errorf("baseline update failed: %w", err)
 	}
-	
+
 	// Analyze trends
 	if err := p.analyzeTrends(ctx); err != nil {
 		return fmt.Errorf("trend analysis failed: %w", err)
 	}
-	
+
 	// Generate recommendations
 	if err := p.generateRecommendations(ctx); err != nil {
 		return fmt.Errorf("recommendation generation failed: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -1125,7 +1125,7 @@ func (p *PerformanceBenchmarkingCollector) collectJobBenchmarks(ctx context.Cont
 	defer func() {
 		p.metrics.BenchmarkingDuration.WithLabelValues("collect_job_benchmarks", "job").Observe(time.Since(startTime).Seconds())
 	}()
-	
+
 	// Get recent jobs for benchmarking
 	jobManager := p.slurmClient.Jobs()
 	// TODO: ListJobsOptions structure is not compatible with current slurm-client
@@ -1134,7 +1134,7 @@ func (p *PerformanceBenchmarkingCollector) collectJobBenchmarks(ctx context.Cont
 	if err != nil {
 		return fmt.Errorf("failed to list jobs: %w", err)
 	}
-	
+
 	// Process each job for benchmarking
 	// TODO: Job type mismatch - jobList.Jobs returns []interfaces.Job but functions expect *slurm.Job
 	// Skipping job processing for now
@@ -1143,13 +1143,13 @@ func (p *PerformanceBenchmarkingCollector) collectJobBenchmarks(ctx context.Cont
 	for _, job := range jobList.Jobs {
 		snapshot := p.createJobPerformanceSnapshot(job)
 		p.jobComparator.jobMetrics[job.JobID] = snapshot
-		
+
 		// Calculate job performance score
 		score := p.calculateJobPerformanceScore(snapshot)
 		p.updateJobPerformanceMetrics(job, snapshot, score)
 	}
 	*/
-	
+
 	return nil
 }
 
@@ -1159,10 +1159,10 @@ func (p *PerformanceBenchmarkingCollector) collectUserBenchmarks(ctx context.Con
 	defer func() {
 		p.metrics.BenchmarkingDuration.WithLabelValues("collect_user_benchmarks", "user").Observe(time.Since(startTime).Seconds())
 	}()
-	
+
 	// Aggregate user performance data from job metrics
 	userMetrics := make(map[string]*UserPerformanceProfile)
-	
+
 	for _, jobSnapshot := range p.jobComparator.jobMetrics {
 		userName := jobSnapshot.JobMetadata.UserName
 		if _, exists := userMetrics[userName]; !exists {
@@ -1176,18 +1176,18 @@ func (p *PerformanceBenchmarkingCollector) collectUserBenchmarks(ctx context.Con
 				TrendMetrics:   make(map[string]*BenchmarkTrendAnalysis),
 			}
 		}
-		
+
 		// Update user metrics with job data
 		p.updateUserMetricsWithJob(userMetrics[userName], jobSnapshot)
 	}
-	
+
 	// Calculate user performance scores and update metrics
 	for userName, profile := range userMetrics {
 		p.userComparator.userMetrics[userName] = profile
 		score := p.calculateUserPerformanceScore(profile)
 		p.updateUserPerformanceMetrics(profile, score)
 	}
-	
+
 	return nil
 }
 
@@ -1197,7 +1197,7 @@ func (p *PerformanceBenchmarkingCollector) collectNodeBenchmarks(ctx context.Con
 	defer func() {
 		p.metrics.BenchmarkingDuration.WithLabelValues("collect_node_benchmarks", "node").Observe(time.Since(startTime).Seconds())
 	}()
-	
+
 	// Get node information
 	nodeManager := p.slurmClient.Nodes()
 	// TODO: nodeManager.List requires options parameter in current slurm-client
@@ -1205,7 +1205,7 @@ func (p *PerformanceBenchmarkingCollector) collectNodeBenchmarks(ctx context.Con
 	if err != nil {
 		return fmt.Errorf("failed to list nodes: %w", err)
 	}
-	
+
 	// Process each node for benchmarking
 	// TODO: Node type mismatch - nodeList.Nodes returns []interfaces.Node but functions expect *slurm.Node
 	// Skipping node processing for now
@@ -1214,13 +1214,13 @@ func (p *PerformanceBenchmarkingCollector) collectNodeBenchmarks(ctx context.Con
 	for _, node := range nodeList.Nodes {
 		profile := p.createNodePerformanceProfile(node)
 		p.nodeComparator.nodeMetrics[node.Name] = profile
-		
+
 		// Calculate node performance score
 		score := p.calculateNodePerformanceScore(profile)
 		p.updateNodePerformanceMetrics(node, profile, score)
 	}
 	*/
-	
+
 	return nil
 }
 
@@ -1230,15 +1230,15 @@ func (p *PerformanceBenchmarkingCollector) collectClusterBenchmarks(ctx context.
 	defer func() {
 		p.metrics.BenchmarkingDuration.WithLabelValues("collect_cluster_benchmarks", "cluster").Observe(time.Since(startTime).Seconds())
 	}()
-	
+
 	// Create cluster performance snapshot
 	snapshot := p.createClusterPerformanceSnapshot(ctx)
 	p.clusterComparator.clusterMetrics["default"] = snapshot
-	
+
 	// Calculate cluster performance score
 	score := p.calculateClusterPerformanceScore(snapshot)
 	p.updateClusterPerformanceMetrics(snapshot, score)
-	
+
 	return nil
 }
 

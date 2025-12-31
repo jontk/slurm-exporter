@@ -357,28 +357,28 @@ func TestQoSLimitsCollector_Collect_Success(t *testing.T) {
 	client.On("GetQoSLimits", mock.Anything, "normal").Return(&QoSLimits{QoSName: "normal", Priority: 500}, nil)
 	client.On("GetQoSLimits", mock.Anything, "high").Return(qosLimits, nil)
 	client.On("GetQoSLimits", mock.Anything, mock.AnythingOfType("string")).Return(&QoSLimits{}, nil)
-	
+
 	client.On("GetQoSUsage", mock.Anything, "normal").Return(&QoSUsage{QoSName: "normal"}, nil)
 	client.On("GetQoSUsage", mock.Anything, "high").Return(qosUsage, nil)
 	client.On("GetQoSUsage", mock.Anything, mock.AnythingOfType("string")).Return(&QoSUsage{}, nil)
-	
+
 	client.On("GetQoSViolations", mock.Anything, mock.AnythingOfType("*collector.QoSViolationOptions")).Return(qosViolations, nil)
-	
+
 	client.On("GetQoSEnforcement", mock.Anything, "normal").Return(&QoSEnforcement{EnforcementEnabled: false, EnforcementStats: EnforcementStats{}}, nil)
 	client.On("GetQoSEnforcement", mock.Anything, "high").Return(qosEnforcement, nil)
 	client.On("GetQoSEnforcement", mock.Anything, mock.AnythingOfType("string")).Return(&QoSEnforcement{EnforcementStats: EnforcementStats{}}, nil)
-	
+
 	client.On("GetQoSStatistics", mock.Anything, "normal", "24h").Return(&QoSStatistics{QoSName: "normal"}, nil)
 	client.On("GetQoSStatistics", mock.Anything, "high", "24h").Return(qosStatistics, nil)
 	client.On("GetQoSStatistics", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&QoSStatistics{}, nil)
-	
+
 	client.On("GetQoSHierarchy", mock.Anything).Return(qosHierarchy, nil)
 	client.On("GetQoSConflicts", mock.Anything).Return(qosConflicts, nil)
-	
+
 	client.On("GetQoSEffectiveness", mock.Anything, "normal").Return(&QoSEffectiveness{QoSName: "normal"}, nil)
 	client.On("GetQoSEffectiveness", mock.Anything, "high").Return(qosEffectiveness, nil)
 	client.On("GetQoSEffectiveness", mock.Anything, mock.AnythingOfType("string")).Return(&QoSEffectiveness{}, nil)
-	
+
 	client.On("GetSystemQoSOverview", mock.Anything).Return(systemOverview, nil)
 
 	collector := NewQoSLimitsCollector(client)

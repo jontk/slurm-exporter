@@ -194,7 +194,7 @@ func (c *PartitionsSimpleCollector) collect(ch chan<- prometheus.Metric) error {
 		if isPartitionUp(partition.State) {
 			stateValue = 1.0
 		}
-		
+
 		ch <- prometheus.MustNewConstMetric(
 			c.partitionState,
 			prometheus.GaugeValue,
@@ -219,7 +219,7 @@ func (c *PartitionsSimpleCollector) collect(ch chan<- prometheus.Metric) error {
 				allocatedNodes = 0
 			}
 		}
-		
+
 		ch <- prometheus.MustNewConstMetric(
 			c.partitionNodesAllocated,
 			prometheus.GaugeValue,
@@ -288,7 +288,7 @@ func (c *PartitionsSimpleCollector) collect(ch chan<- prometheus.Metric) error {
 		// Partition info
 		maxTime := formatTimeLimit(uint32(partition.MaxTime))
 		defaultTime := formatTimeLimit(uint32(partition.DefaultTime))
-		
+
 		ch <- prometheus.MustNewConstMetric(
 			c.partitionInfo,
 			prometheus.GaugeValue,
@@ -343,7 +343,7 @@ func formatTimeLimit(minutes uint32) string {
 	mins := minutes % 60
 	days := hours / 24
 	hours = hours % 24
-	
+
 	if days > 0 {
 		return fmt.Sprintf("%d-%02d:%02d", days, hours, mins)
 	}

@@ -44,7 +44,7 @@ func TestNewEfficiencyCalculator(t *testing.T) {
 			require.NotNil(t, calculator)
 			assert.NotNil(t, calculator.config)
 			assert.NotNil(t, calculator.logger)
-			
+
 			if tt.config == nil {
 				assert.Equal(t, 0.1, calculator.config.CPUIdleThreshold)
 				assert.Equal(t, 0.8, calculator.config.CPUOptimalThreshold)
@@ -163,16 +163,16 @@ func TestEfficiencyCalculator_CalculateEfficiency(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			metrics, err := calculator.CalculateEfficiency(tt.data)
-			
+
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Nil(t, metrics)
 				return
 			}
-			
+
 			require.NoError(t, err)
 			require.NotNil(t, metrics)
-			
+
 			// Validate basic metric ranges
 			assert.GreaterOrEqual(t, metrics.CPUEfficiency, 0.0)
 			assert.LessOrEqual(t, metrics.CPUEfficiency, 1.0)
@@ -182,7 +182,7 @@ func TestEfficiencyCalculator_CalculateEfficiency(t *testing.T) {
 			assert.LessOrEqual(t, metrics.OverallEfficiency, 1.0)
 			assert.NotEmpty(t, metrics.EfficiencyGrade)
 			assert.NotEmpty(t, metrics.EfficiencyCategory)
-			
+
 			if tt.validate != nil {
 				tt.validate(t, metrics)
 			}
@@ -244,7 +244,7 @@ func TestEfficiencyCalculator_CPUEfficiency(t *testing.T) {
 				WallTime:     tt.wallTime,
 				CPUTimeTotal: tt.cpuTimeTotal,
 			}
-			
+
 			efficiency := calculator.calculateCPUEfficiency(data)
 			assert.GreaterOrEqual(t, efficiency, tt.expectedRange[0], "CPU efficiency below expected minimum")
 			assert.LessOrEqual(t, efficiency, tt.expectedRange[1], "CPU efficiency above expected maximum")
@@ -293,7 +293,7 @@ func TestEfficiencyCalculator_MemoryEfficiency(t *testing.T) {
 				MemoryUsed:      tt.memoryUsed,
 				MemoryPeak:      tt.memoryPeak,
 			}
-			
+
 			efficiency := calculator.calculateMemoryEfficiency(data)
 			assert.GreaterOrEqual(t, efficiency, tt.expectedRange[0], "Memory efficiency below expected minimum")
 			assert.LessOrEqual(t, efficiency, tt.expectedRange[1], "Memory efficiency above expected maximum")
@@ -322,7 +322,7 @@ func TestEfficiencyCalculator_Grades(t *testing.T) {
 		t.Run(tt.expectedGrade, func(t *testing.T) {
 			grade := calculator.determineEfficiencyGrade(tt.efficiency)
 			category := calculator.determineEfficiencyCategory(tt.efficiency)
-			
+
 			assert.Equal(t, tt.expectedGrade, grade)
 			assert.Equal(t, tt.expectedCategory, category)
 		})
@@ -349,7 +349,7 @@ func TestCreateResourceUtilizationDataFromJob(t *testing.T) {
 	}
 
 	data := CreateResourceUtilizationDataFromJob(job)
-	
+
 	assert.Equal(t, 4.0, data.CPURequested)
 	assert.Equal(t, 4.0, data.CPUAllocated)
 	assert.Equal(t, 3.0, data.CPUUsed) // 75% of allocated
@@ -378,7 +378,7 @@ func TestEfficiencyCalculator_Recommendations(t *testing.T) {
 
 	metrics, err := calculator.CalculateEfficiency(lowCPUData)
 	require.NoError(t, err)
-	
+
 	found := false
 	for _, rec := range metrics.Recommendations {
 		if contains(rec, "reducing CPU allocation") {
@@ -399,7 +399,7 @@ func TestEfficiencyCalculator_Recommendations(t *testing.T) {
 
 	metrics, err = calculator.CalculateEfficiency(memoryPressureData)
 	require.NoError(t, err)
-	
+
 	found = false
 	for _, rec := range metrics.Recommendations {
 		if contains(rec, "increasing memory allocation") {

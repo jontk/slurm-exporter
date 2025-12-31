@@ -19,7 +19,7 @@ groups:
             The SLURM exporter has been down for more than 2 minutes.
             Cluster: {{ $labels.cluster_name }}
             Instance: {{ $labels.instance }}
-            
+
             This means we are not collecting any SLURM metrics from this cluster.
           runbook_url: https://wiki.example.com/runbooks/slurm-exporter-down
           dashboard_url: https://grafana.example.com/d/slurm-overview
@@ -37,7 +37,7 @@ groups:
             The {{ $labels.collector }} collector is failing more than 10% of the time.
             Error rate: {{ $value | humanizePercentage }}
             Instance: {{ $labels.instance }}
-            
+
             This may indicate issues with SLURM API connectivity or collector logic.
           runbook_url: https://wiki.example.com/runbooks/slurm-collector-errors
 
@@ -72,7 +72,7 @@ groups:
           description: |
             Cannot connect to SLURM API (slurmctld) on cluster {{ $labels.cluster_name }}.
             This prevents all job scheduling and cluster management operations.
-            
+
             Instance: {{ $labels.instance }}
             Environment: {{ $labels.environment }}
           runbook_url: https://wiki.example.com/runbooks/slurm-api-unreachable
@@ -91,7 +91,7 @@ groups:
             SLURM API response time is elevated.
             P99 latency: {{ $value | humanizeDuration }}
             Endpoint: {{ $labels.endpoint }}
-            
+
             This may impact job submission and cluster query performance.
           runbook_url: https://wiki.example.com/runbooks/slurm-api-latency
 
@@ -108,7 +108,7 @@ groups:
           description: |
             SLURM cannot connect to its database on cluster {{ $labels.cluster_name }}.
             This will prevent job accounting and historical data collection.
-            
+
             Check slurmdbd service and database connectivity.
           runbook_url: https://wiki.example.com/runbooks/slurm-db-connection
 
@@ -128,7 +128,7 @@ groups:
           description: |
             All SLURM controllers (slurmctld) are down on cluster {{ $labels.cluster_name }}.
             The cluster cannot schedule or manage jobs without an active controller.
-            
+
             Environment: {{ $labels.environment }}
             Expected controllers: At least 1
             Active controllers: {{ $value }}
@@ -139,8 +139,8 @@ groups:
       - alert: SLURMNodesOffline
         expr: |
           (
-            sum by (cluster_name, partition) (slurm_node_state{state="down"}) 
-            / 
+            sum by (cluster_name, partition) (slurm_node_state{state="down"})
+            /
             sum by (cluster_name, partition) (slurm_node_state)
           ) > 0.1
         for: 15m
@@ -153,7 +153,7 @@ groups:
           description: |
             More than 10% of nodes are down in partition {{ $labels.partition }} on cluster {{ $labels.cluster_name }}.
             Offline percentage: {{ $value | humanizePercentage }}
-            
+
             This reduces available compute capacity and may impact job scheduling.
           runbook_url: https://wiki.example.com/runbooks/slurm-nodes-offline
 
@@ -170,7 +170,7 @@ groups:
           description: |
             All compute nodes are down in partition {{ $labels.partition }} on cluster {{ $labels.cluster_name }}.
             No jobs can run in this partition.
-            
+
             Immediate action required to restore compute capacity.
           runbook_url: https://wiki.example.com/runbooks/slurm-all-nodes-offline
           pagerduty_key: slurm-partition-down
@@ -188,7 +188,7 @@ groups:
           description: |
             Partition {{ $labels.partition }} is in inactive state on cluster {{ $labels.cluster_name }}.
             Jobs cannot be scheduled to inactive partitions.
-            
+
             Check partition configuration and node states.
           runbook_url: https://wiki.example.com/runbooks/slurm-partition-inactive
 
@@ -202,7 +202,7 @@ groups:
           summary: "SLURM configuration changed on cluster {{ $labels.cluster_name }}"
           description: |
             SLURM configuration ({{ $labels.config_type }}) was modified on cluster {{ $labels.cluster_name }}.
-            
+
             Please verify the changes are intentional and properly tested.
             Last modified: {{ $value | humanizeTimestamp }}
           runbook_url: https://wiki.example.com/runbooks/slurm-config-change

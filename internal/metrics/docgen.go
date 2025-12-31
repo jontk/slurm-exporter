@@ -486,7 +486,7 @@ func (dg *DocumentationGenerator) GenerateMetricsHTML() string {
         function filterMetrics() {
             const searchTerm = document.getElementById('search').value.toLowerCase();
             const metrics = document.querySelectorAll('.metric');
-            
+
             metrics.forEach(metric => {
                 const text = metric.textContent.toLowerCase();
                 if (text.includes(searchTerm)) {
@@ -501,9 +501,9 @@ func (dg *DocumentationGenerator) GenerateMetricsHTML() string {
 <body>
     <h1>SLURM Exporter Metrics Browser</h1>
     <p>Interactive browser for all metrics exposed by the SLURM Prometheus exporter.</p>
-    
+
     <input type="text" id="search" class="search" placeholder="Search metrics..." onkeyup="filterMetrics()">
-    
+
     <div class="toc">
         <h3>Categories</h3>
         <ul>`)

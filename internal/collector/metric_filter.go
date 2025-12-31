@@ -108,7 +108,7 @@ func (mf *MetricFilter) matchesPattern(name, pattern string) bool {
 	if pattern == "*" {
 		return true
 	}
-	
+
 	if strings.Contains(pattern, "*") {
 		// Convert wildcard pattern to regex-like matching
 		if strings.HasSuffix(pattern, "*") {
@@ -125,7 +125,7 @@ func (mf *MetricFilter) matchesPattern(name, pattern string) bool {
 			return strings.HasPrefix(name, parts[0]) && strings.HasSuffix(name, parts[1])
 		}
 	}
-	
+
 	// Exact match
 	return name == pattern
 }
@@ -134,7 +134,7 @@ func (mf *MetricFilter) matchesPattern(name, pattern string) bool {
 func GetMetricType(desc *prometheus.Desc) MetricType {
 	// Since we can't directly get the type from desc, we'll use naming conventions
 	metricName := desc.String()
-	
+
 	if strings.Contains(metricName, "_total") {
 		return MetricTypeCounter
 	}
@@ -160,14 +160,14 @@ func CreateMetricInfo(name string, metricType MetricType, desc string) MetricInf
 	info.IsInfo = strings.Contains(name, "_info") || metricType == MetricTypeInfo
 
 	// Determine if it's a timing metric
-	info.IsTiming = strings.Contains(name, "_time") || 
-		strings.Contains(name, "_duration") || 
+	info.IsTiming = strings.Contains(name, "_time") ||
+		strings.Contains(name, "_duration") ||
 		strings.Contains(name, "_latency") ||
 		strings.Contains(name, "_seconds")
 
 	// Determine if it's a resource metric
-	info.IsResource = strings.Contains(name, "_cpu") || 
-		strings.Contains(name, "_memory") || 
+	info.IsResource = strings.Contains(name, "_cpu") ||
+		strings.Contains(name, "_memory") ||
 		strings.Contains(name, "_disk") ||
 		strings.Contains(name, "_bytes") ||
 		strings.Contains(name, "_usage")

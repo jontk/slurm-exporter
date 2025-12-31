@@ -1,0 +1,145 @@
+# Example configuration demonstrating hot-reload capabilities
+#
+# Configuration changes that can be hot-reloaded:
+# - Enabling/disabling collectors
+# - Changing filter configurations
+# - Updating custom labels
+# - Modifying cardinality limits
+#
+# Configuration changes that require restart:
+# - Server address/port
+# - SLURM connection settings
+# - Authentication changes
+
+# Server configuration (requires restart to change)
+server:
+  address: ":8080"
+  metrics_path: "/metrics"
+  read_timeout: 30s
+  write_timeout: 30s
+  max_request_size: 10485760  # 10MB
+
+# SLURM connection (requires restart to change)
+slurm:
+  base_url: "http://rocky9.ar.jontk.com:6820"
+  timeout: 30s
+  auth:
+    type: "jwt"
+    jwt_path: "/var/run/slurm-jwt"
+
+# Logging configuration
+logging:
+  level: "info"
+  format: "json"
+  output: "stdout"
+
+# Collectors configuration (hot-reloadable)
+collectors:
+  # Jobs collector - try changing enabled state or filters
+  jobs:
+    enabled: true
+    filters:
+      metric_filter:
+        enable_all: false
+        include_metrics:
+          - "slurm_job_state"
+          - "slurm_job_cpus_allocated"
+          - "slurm_job_memory_allocated"
+          - "slurm_job_queue_time_seconds"
+        exclude_metrics: []
+        skip_histograms: false
+        skip_timing_metrics: false
+    custom_labels:
+      cluster_name: "production"
+      environment: "prod"
+      region: "us-east-1"
+
+  # Nodes collector - try toggling this on/off
+  nodes:
+    enabled: true
+    filters:
+      metric_filter:
+        enable_all: true
+        skip_timing_metrics: true
+    custom_labels:
+      cluster_name: "production"
+      environment: "prod"
+
+  # Partitions collector
+  partitions:
+    enabled: true
+    filters:
+      metric_filter:
+        enable_all: true
+    custom_labels:
+      cluster_name: "production"
+
+  # Performance collector - try changing filters
+  performance:
+    enabled: true
+    filters:
+      metric_filter:
+        include_metrics:
+          - "slurm_performance_*_efficiency_ratio"
+          - "slurm_performance_cluster_utilization_ratio"
+        only_gauges: true
+    custom_labels:
+      team: "hpc"
+
+  # System collector
+  system:
+    enabled: true
+    filters:
+      metric_filter:
+        enable_all: true
+        skip_histograms: true
+    custom_labels:
+      monitoring_tier: "primary"
+
+  # QoS collector - try enabling/disabling
+  qos:
+    enabled: false  # Try changing to true
+    filters:
+      metric_filter:
+        enable_all: true
+
+  # Reservations collector
+  reservations:
+    enabled: false  # Try changing to true
+    filters:
+      metric_filter:
+        enable_all: true
+
+  # Cardinality limits (hot-reloadable)
+  cardinality_limits:
+    "slurm_job_*":
+      max_labels: 1000
+      max_series_per_label: 100
+      action: "drop"  # or "sample"
+    "slurm_node_*":
+      max_labels: 500
+      max_series_per_label: 50
+      action: "sample"
+
+# Hot-reload test scenarios:
+#
+# 1. Enable QoS collector:
+#    - Change qos.enabled from false to true
+#    - Save the file
+#    - Watch logs for "Configuration reloaded successfully"
+#    - Check /metrics endpoint for qos metrics
+#
+# 2. Change job metric filters:
+#    - Add/remove metrics from jobs.filters.metric_filter.include_metrics
+#    - Save the file
+#    - Metrics should update without restart
+#
+# 3. Update custom labels:
+#    - Change environment from "prod" to "staging"
+#    - Save the file
+#    - All metrics should now have environment="staging" label
+#
+# 4. Adjust cardinality limits:
+#    - Change max_labels for slurm_job_* from 1000 to 500
+#    - Save the file
+#    - Cardinality enforcement should update immediately

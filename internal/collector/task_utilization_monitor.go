@@ -18,19 +18,19 @@ type TaskUtilizationMonitor struct {
 	logger          *slog.Logger
 	config          *TaskMonitorConfig
 	metrics         *TaskUtilizationMetrics
-	
+
 	// Task-level data tracking
 	taskData        map[string]*JobStepTaskData
 	stepData        map[string]*JobStepData
 	lastCollection  time.Time
 	mu              sync.RWMutex
-	
+
 	// Task performance analysis
 	performanceAnalyzer *TaskPerformanceAnalyzer
-	
+
 	// Load balancing analysis
 	loadBalancer        *TaskLoadBalancer
-	
+
 	// Task efficiency tracking
 	efficiencyTracker   *TaskEfficiencyTracker
 }
@@ -44,26 +44,26 @@ type TaskMonitorConfig struct {
 	EnableTaskLoadBalancing  bool
 	EnablePerformanceAnalysis bool
 	EnableEfficiencyTracking bool
-	
+
 	// Task detection parameters
 	TaskDetectionMethod     string // "process_monitoring", "resource_tracking", "estimated"
 	MinTaskDuration         time.Duration
 	TaskSamplingInterval    time.Duration
-	
+
 	// Load balancing parameters
 	LoadImbalanceThreshold  float64 // Threshold for detecting load imbalance
 	TaskMigrationEnabled    bool
 	LoadBalancingStrategy   string // "round_robin", "least_loaded", "performance_based"
-	
+
 	// Performance analysis parameters
 	PerformanceVarianceThreshold float64
 	TaskBottleneckDetection     bool
 	EnableTaskProfiling         bool
-	
+
 	// Data retention
 	TaskDataRetention       time.Duration
 	StepDataRetention       time.Duration
-	
+
 	// Processing optimization
 	BatchSize               int
 	EnableParallelProcessing bool
@@ -77,45 +77,45 @@ type JobStepTaskData struct {
 	TaskID        string
 	NodeID        string
 	Timestamp     time.Time
-	
+
 	// Task resource utilization
 	CPUUtilization     float64 // CPU utilization for this task
 	MemoryUtilization  float64 // Memory utilization for this task
 	IOUtilization      float64 // I/O utilization for this task
 	NetworkUtilization float64 // Network utilization for this task
-	
+
 	// Task allocation and usage
 	AllocatedCPUs      int     // CPUs allocated to this task
 	AllocatedMemoryMB  int     // Memory allocated to this task in MB
 	ActualCPUUsage     float64 // Actual CPU cores used
 	ActualMemoryUsageMB int64  // Actual memory used in MB
-	
+
 	// Task performance metrics
 	TaskThroughput     float64 // Work units completed per second
 	TaskLatency        float64 // Average task response time
 	TaskEfficiency     float64 // Overall task efficiency score
 	TaskWasteScore     float64 // Resource waste score for this task
-	
+
 	// Task timing information
 	TaskStartTime      time.Time
 	TaskDuration       time.Duration
 	EstimatedCompletion *time.Time
-	
+
 	// Task state and status
 	TaskState          string // "running", "completed", "failed", "idle"
 	TaskProgress       float64 // Progress percentage (0-1)
 	TaskErrorRate      float64 // Error rate for this task
-	
+
 	// Load balancing metrics
 	LoadScore          float64 // Current load score
 	LoadImbalance      float64 // Load imbalance ratio
 	BalancingRecommendation string // Load balancing recommendation
-	
+
 	// Communication patterns
 	MessagesSent       int64   // Number of messages sent
 	MessagesReceived   int64   // Number of messages received
 	DataTransferredMB  float64 // Data transferred in MB
-	
+
 	// Task dependencies
 	DependentTasks     []string // List of dependent task IDs
 	BlockingTasks      []string // List of tasks blocking this task
@@ -127,46 +127,46 @@ type JobStepData struct {
 	JobID         string
 	StepID        string
 	Timestamp     time.Time
-	
+
 	// Step-level aggregations
 	TotalTasks        int
 	ActiveTasks       int
 	CompletedTasks    int
 	FailedTasks       int
-	
+
 	// Resource utilization aggregations
 	AvgCPUUtilization     float64
 	MinCPUUtilization     float64
 	MaxCPUUtilization     float64
 	StdDevCPUUtilization  float64
-	
+
 	AvgMemoryUtilization  float64
 	MinMemoryUtilization  float64
 	MaxMemoryUtilization  float64
 	StdDevMemoryUtilization float64
-	
+
 	// Performance aggregations
 	AvgTaskThroughput     float64
 	AvgTaskLatency        float64
 	AvgTaskEfficiency     float64
 	TotalTaskWaste        float64
-	
+
 	// Load balancing metrics
 	LoadImbalanceScore    float64
 	LoadVarianceScore     float64
 	TaskDistributionScore float64
-	
+
 	// Step performance analysis
 	BottleneckTasks       []string
 	CriticalPathTasks     []string
 	PerformanceIssues     []TaskPerformanceIssue
 	OptimizationOpportunities []TaskOptimizationOpportunity
-	
+
 	// Communication analysis
 	TotalMessagesExchanged int64
 	TotalDataTransferredMB float64
 	CommunicationEfficiency float64
-	
+
 	// Progress and timing
 	StepProgress          float64
 	EstimatedStepCompletion *time.Time
@@ -359,54 +359,54 @@ type TaskUtilizationMetrics struct {
 	TaskMemoryUtilization *prometheus.GaugeVec
 	TaskIOUtilization     *prometheus.GaugeVec
 	TaskNetworkUtilization *prometheus.GaugeVec
-	
+
 	// Task performance metrics
 	TaskThroughput        *prometheus.GaugeVec
 	TaskLatency           *prometheus.GaugeVec
 	TaskEfficiency        *prometheus.GaugeVec
 	TaskWasteScore        *prometheus.GaugeVec
 	TaskErrorRate         *prometheus.GaugeVec
-	
+
 	// Task load balancing metrics
 	TaskLoadScore         *prometheus.GaugeVec
 	TaskLoadImbalance     *prometheus.GaugeVec
 	LoadVarianceScore     *prometheus.GaugeVec
 	TaskMigrationSuggestions *prometheus.GaugeVec
-	
+
 	// Step-level aggregation metrics
 	StepAvgCPUUtilization  *prometheus.GaugeVec
 	StepMaxCPUUtilization  *prometheus.GaugeVec
 	StepCPUVariance        *prometheus.GaugeVec
 	StepAvgMemoryUtilization *prometheus.GaugeVec
 	StepMemoryVariance     *prometheus.GaugeVec
-	
+
 	// Step performance metrics
 	StepAvgThroughput      *prometheus.GaugeVec
 	StepAvgLatency         *prometheus.GaugeVec
 	StepAvgEfficiency      *prometheus.GaugeVec
 	StepLoadImbalanceScore *prometheus.GaugeVec
-	
+
 	// Task communication metrics
 	TaskMessagesExchanged  *prometheus.CounterVec
 	TaskDataTransferred    *prometheus.CounterVec
 	CommunicationEfficiency *prometheus.GaugeVec
-	
+
 	// Task state metrics
 	TasksRunning           *prometheus.GaugeVec
 	TasksCompleted         *prometheus.CounterVec
 	TasksFailed            *prometheus.CounterVec
 	TaskProgress           *prometheus.GaugeVec
-	
+
 	// Performance issue metrics
 	TaskPerformanceIssues  *prometheus.GaugeVec
 	TaskBottlenecks        *prometheus.GaugeVec
 	OptimizationOpportunities *prometheus.GaugeVec
-	
+
 	// Critical path metrics
 	CriticalPathTasks      *prometheus.GaugeVec
 	StepCriticalPathLength *prometheus.GaugeVec
 	CriticalPathBottlenecks *prometheus.GaugeVec
-	
+
 	// Collection metrics
 	TaskDataCollectionDuration *prometheus.HistogramVec
 	TaskDataCollectionErrors   *prometheus.CounterVec
@@ -440,7 +440,7 @@ func NewTaskUtilizationMonitor(client slurm.SlurmClient, logger *slog.Logger, co
 			MaxConcurrentAnalyses:   3,
 		}
 	}
-	
+
 	performanceAnalyzer := &TaskPerformanceAnalyzer{
 		config:          config,
 		logger:          logger,
@@ -448,7 +448,7 @@ func NewTaskUtilizationMonitor(client slurm.SlurmClient, logger *slog.Logger, co
 		analysisResults: make(map[string]*TaskAnalysisResult),
 		issueHistory:    make(map[string][]TaskPerformanceIssue),
 	}
-	
+
 	loadBalancer := &TaskLoadBalancer{
 		config:               config,
 		logger:               logger,
@@ -456,7 +456,7 @@ func NewTaskUtilizationMonitor(client slurm.SlurmClient, logger *slog.Logger, co
 		balancingHistory:     make(map[string][]LoadBalancingEvent),
 		migrationSuggestions: []TaskMigrationSuggestion{},
 	}
-	
+
 	efficiencyTracker := &TaskEfficiencyTracker{
 		config:         config,
 		logger:         logger,
@@ -464,7 +464,7 @@ func NewTaskUtilizationMonitor(client slurm.SlurmClient, logger *slog.Logger, co
 		benchmarkData:  getTaskBenchmarks(),
 		trends:         make(map[string]*EfficiencyTrend),
 	}
-	
+
 	return &TaskUtilizationMonitor{
 		slurmClient:         client,
 		logger:              logger,
@@ -796,12 +796,12 @@ func (t *TaskUtilizationMonitor) Describe(ch chan<- *prometheus.Desc) {
 // Collect implements the prometheus.Collector interface
 func (t *TaskUtilizationMonitor) Collect(ch chan<- prometheus.Metric) {
 	ctx := context.Background()
-	
+
 	if err := t.collectTaskUtilizationMetrics(ctx); err != nil {
 		t.logger.Error("Failed to collect task utilization metrics", "error", err)
 		t.metrics.TaskDataCollectionErrors.WithLabelValues("collect", "collection_error").Inc()
 	}
-	
+
 	t.metrics.TaskCPUUtilization.Collect(ch)
 	t.metrics.TaskMemoryUtilization.Collect(ch)
 	t.metrics.TaskIOUtilization.Collect(ch)
@@ -848,22 +848,22 @@ func (t *TaskUtilizationMonitor) collectTaskUtilizationMetrics(ctx context.Conte
 	defer func() {
 		t.metrics.TaskDataCollectionDuration.WithLabelValues("collect_task_metrics").Observe(time.Since(startTime).Seconds())
 	}()
-	
+
 	// Get running jobs for task monitoring
 	jobManager := t.slurmClient.Jobs()
 	if jobManager == nil {
 		return fmt.Errorf("job manager not available")
 	}
-	
+
 	// TODO: ListJobsOptions structure is not compatible with current slurm-client
 	// Using nil for options as a workaround
 	jobs, err := jobManager.List(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to list jobs for task monitoring: %w", err)
 	}
-	
+
 	totalTasks := 0
-	
+
 	// Process each job for task-level monitoring
 	// TODO: Job type mismatch - jobs.Jobs returns []interfaces.Job but functions expect *slurm.Job
 	// Skipping job processing for now
@@ -875,15 +875,15 @@ func (t *TaskUtilizationMonitor) collectTaskUtilizationMetrics(ctx context.Conte
 			t.metrics.TaskDataCollectionErrors.WithLabelValues("process_job", "job_error").Inc()
 			continue
 		}
-		
+
 		// Count tasks for this job
 		jobTasks := t.countJobTasks(job.JobID)
 		totalTasks += jobTasks
 	}
 	*/
-	
+
 	t.metrics.MonitoredTasksCount.WithLabelValues("total").Set(float64(totalTasks))
-	
+
 	// Perform cross-task analysis
 	if t.config.EnablePerformanceAnalysis {
 		if err := t.performanceAnalyzer.analyzeTaskPerformance(); err != nil {
@@ -891,7 +891,7 @@ func (t *TaskUtilizationMonitor) collectTaskUtilizationMetrics(ctx context.Conte
 			t.metrics.TaskDataCollectionErrors.WithLabelValues("analyze_performance", "analysis_error").Inc()
 		}
 	}
-	
+
 	// Perform load balancing analysis
 	if t.config.EnableTaskLoadBalancing {
 		if err := t.loadBalancer.analyzeLoadBalancing(); err != nil {
@@ -899,10 +899,10 @@ func (t *TaskUtilizationMonitor) collectTaskUtilizationMetrics(ctx context.Conte
 			t.metrics.TaskDataCollectionErrors.WithLabelValues("analyze_load_balancing", "analysis_error").Inc()
 		}
 	}
-	
+
 	// Clean old data
 	t.cleanOldTaskData()
-	
+
 	t.lastCollection = time.Now()
 	return nil
 }
@@ -918,55 +918,55 @@ func (t *TaskUtilizationMonitor) processJobStepTasks(ctx context.Context, job *s
 func (t *TaskUtilizationMonitor) processStepTasks(ctx context.Context, job *slurm.Job, step *JobStepInfo) error {
 	// Get tasks for this step (simplified simulation)
 	tasks := t.generateStepTasks(job, step)
-	
+
 	var stepTaskData []*JobStepTaskData
-	
+
 	// TODO: job.JobID field not available in current slurm-client version
 	jobID := fmt.Sprintf("job_%d", job.ID)
-	
+
 	for i, task := range tasks {
 		if i >= t.config.MaxTasksPerStep {
 			break
 		}
-		
+
 		taskData := t.collectTaskData(job, step, task)
 		stepTaskData = append(stepTaskData, taskData)
-		
+
 		// Store task data
 		taskKey := fmt.Sprintf("%s:%s:%s", jobID, step.StepID, task.TaskID)
 		t.mu.Lock()
 		t.taskData[taskKey] = taskData
 		t.mu.Unlock()
-		
+
 		// Update task metrics
 		t.updateTaskMetrics(job, taskData)
-		
+
 		// Track performance data if enabled
 		if t.config.EnablePerformanceAnalysis {
 			t.performanceAnalyzer.trackTaskPerformance(taskData)
 		}
-		
+
 		// Track load data if enabled
 		if t.config.EnableTaskLoadBalancing {
 			t.loadBalancer.trackTaskLoad(taskData)
 		}
-		
+
 		// Track efficiency if enabled
 		if t.config.EnableEfficiencyTracking {
 			t.efficiencyTracker.trackTaskEfficiency(taskData)
 		}
 	}
-	
+
 	// Aggregate step-level data
 	stepData := t.aggregateStepData(job, step, stepTaskData)
 	stepKey := fmt.Sprintf("%s:%s", jobID, step.StepID)
 	t.mu.Lock()
 	t.stepData[stepKey] = stepData
 	t.mu.Unlock()
-	
+
 	// Update step metrics
 	t.updateStepMetrics(job, stepData)
-	
+
 	return nil
 }
 
@@ -992,7 +992,7 @@ func (t *TaskUtilizationMonitor) getJobSteps(job *slurm.Job) []*JobStepInfo {
 	// Using placeholder values for now
 	stepCount := 1
 	defaultCPUs := 4
-	
+
 	var steps []*JobStepInfo
 	for i := 0; i < stepCount; i++ {
 		step := &JobStepInfo{
@@ -1003,34 +1003,34 @@ func (t *TaskUtilizationMonitor) getJobSteps(job *slurm.Job) []*JobStepInfo {
 		}
 		steps = append(steps, step)
 	}
-	
+
 	return steps
 }
 
 // generateStepTasks generates tasks for a step (simplified simulation)
 func (t *TaskUtilizationMonitor) generateStepTasks(job *slurm.Job, step *JobStepInfo) []*TaskInfo {
 	var tasks []*TaskInfo
-	
+
 	tasksPerNode := step.TaskCount / step.NodeCount
 	if tasksPerNode == 0 {
 		tasksPerNode = 1
 	}
-	
+
 	cpusPerTask := job.CPUs / step.TaskCount
 	if cpusPerTask == 0 {
 		cpusPerTask = 1
 	}
-	
+
 	memoryPerTask := job.Memory / step.TaskCount
 	if memoryPerTask == 0 {
 		memoryPerTask = 1024 // 1GB minimum
 	}
-	
+
 	for nodeIdx := 0; nodeIdx < step.NodeCount; nodeIdx++ {
 		for taskIdx := 0; taskIdx < tasksPerNode; taskIdx++ {
 			taskID := fmt.Sprintf("%d_%d", nodeIdx, taskIdx)
 			nodeID := fmt.Sprintf("node%d", nodeIdx)
-			
+
 			task := &TaskInfo{
 				TaskID:   taskID,
 				NodeID:   nodeID,
@@ -1040,42 +1040,42 @@ func (t *TaskUtilizationMonitor) generateStepTasks(job *slurm.Job, step *JobStep
 			tasks = append(tasks, task)
 		}
 	}
-	
+
 	return tasks
 }
 
 // collectTaskData collects utilization data for a single task
 func (t *TaskUtilizationMonitor) collectTaskData(job *slurm.Job, step *JobStepInfo, task *TaskInfo) *JobStepTaskData {
 	now := time.Now()
-	
+
 	// Simulate task resource utilization
 	cpuUtil := t.simulateTaskCPUUtilization(job, task)
 	memoryUtil := t.simulateTaskMemoryUtilization(job, task)
 	ioUtil := t.simulateTaskIOUtilization(job, task)
 	networkUtil := t.simulateTaskNetworkUtilization(job, task)
-	
+
 	// Calculate actual usage
 	actualCPUUsage := cpuUtil * float64(task.CPUCount)
 	actualMemoryUsage := int64(memoryUtil * float64(task.MemoryMB) * 1024 * 1024) // Convert to bytes
-	
+
 	// Calculate performance metrics
 	throughput := t.calculateTaskThroughput(cpuUtil, memoryUtil)
 	latency := t.calculateTaskLatency(cpuUtil, ioUtil)
 	efficiency := t.calculateTaskEfficiency(cpuUtil, memoryUtil, ioUtil, networkUtil)
 	wasteScore := t.calculateTaskWasteScore(cpuUtil, memoryUtil, efficiency)
 	errorRate := t.simulateTaskErrorRate(job, task)
-	
+
 	// Calculate load metrics
 	loadScore := t.calculateTaskLoadScore(cpuUtil, memoryUtil, throughput)
 	// TODO: job.JobID field not available in current slurm-client version
 	jobID := "job_0"
 	loadImbalance := t.calculateTaskLoadImbalance(jobID, step.StepID, loadScore)
-	
+
 	// Simulate communication metrics
 	messagesSent := t.simulateMessagesSent(job, task)
 	messagesReceived := t.simulateMessagesReceived(job, task)
 	dataTransferred := t.simulateDataTransferred(job, task)
-	
+
 	// Calculate task timing
 	var taskStartTime time.Time
 	var taskDuration time.Duration
@@ -1086,52 +1086,52 @@ func (t *TaskUtilizationMonitor) collectTaskData(job *slurm.Job, step *JobStepIn
 		taskStartTime = now.Add(-time.Hour)
 		taskDuration = time.Hour
 	}
-	
+
 	// Calculate progress and state
 	progress := t.calculateTaskProgress(taskDuration, job.TimeLimit)
 	state := t.determineTaskState(progress, errorRate)
-	
+
 	// Determine critical path
 	criticalPath := t.isTaskOnCriticalPath(job, step, task)
-	
+
 	return &JobStepTaskData{
 		JobID:         jobID,
 		StepID:        step.StepID,
 		TaskID:        task.TaskID,
 		NodeID:        task.NodeID,
 		Timestamp:     now,
-		
+
 		CPUUtilization:     cpuUtil,
 		MemoryUtilization:  memoryUtil,
 		IOUtilization:      ioUtil,
 		NetworkUtilization: networkUtil,
-		
+
 		AllocatedCPUs:      task.CPUCount,
 		AllocatedMemoryMB:  task.MemoryMB,
 		ActualCPUUsage:     actualCPUUsage,
 		ActualMemoryUsageMB: actualMemoryUsage,
-		
+
 		TaskThroughput:     throughput,
 		TaskLatency:        latency,
 		TaskEfficiency:     efficiency,
 		TaskWasteScore:     wasteScore,
-		
+
 		TaskStartTime:      taskStartTime,
 		TaskDuration:       taskDuration,
 		EstimatedCompletion: t.estimateTaskCompletion(taskStartTime, progress, job.TimeLimit),
-		
+
 		TaskState:          state,
 		TaskProgress:       progress,
 		TaskErrorRate:      errorRate,
-		
+
 		LoadScore:          loadScore,
 		LoadImbalance:      loadImbalance,
 		BalancingRecommendation: t.generateBalancingRecommendation(loadScore, loadImbalance),
-		
+
 		MessagesSent:       messagesSent,
 		MessagesReceived:   messagesReceived,
 		DataTransferredMB:  dataTransferred,
-		
+
 		CriticalPath:       criticalPath,
 	}
 }
@@ -1140,19 +1140,19 @@ func (t *TaskUtilizationMonitor) collectTaskData(job *slurm.Job, step *JobStepIn
 func (t *TaskUtilizationMonitor) simulateTaskCPUUtilization(job *slurm.Job, task *TaskInfo) float64 {
 	// Base utilization with task-specific variation
 	baseUtil := 0.7 + (float64(len(task.TaskID)%5) * 0.05)
-	
+
 	// Add job-specific factors
 	if job.CPUs > 16 {
 		baseUtil += 0.1 // Higher utilization for larger jobs
 	}
-	
+
 	// Add time-based variation
 	if job.StartTime != nil {
 		elapsed := time.Since(*job.StartTime).Hours()
 		timeVariation := math.Sin(elapsed/2) * 0.1
 		baseUtil += timeVariation
 	}
-	
+
 	// Clamp between 0.1 and 1.0
 	return math.Max(0.1, math.Min(1.0, baseUtil))
 }
@@ -1161,13 +1161,13 @@ func (t *TaskUtilizationMonitor) simulateTaskCPUUtilization(job *slurm.Job, task
 func (t *TaskUtilizationMonitor) simulateTaskMemoryUtilization(job *slurm.Job, task *TaskInfo) float64 {
 	// Memory utilization tends to be more stable than CPU
 	baseUtil := 0.6 + (float64(len(task.TaskID)%4) * 0.08)
-	
+
 	// Memory-intensive jobs have higher utilization
 	memoryPerCPU := float64(task.MemoryMB) / float64(task.CPUCount)
 	if memoryPerCPU > 4000 { // > 4GB per CPU
 		baseUtil += 0.15
 	}
-	
+
 	// Clamp between 0.2 and 0.95
 	return math.Max(0.2, math.Min(0.95, baseUtil))
 }
@@ -1176,17 +1176,17 @@ func (t *TaskUtilizationMonitor) simulateTaskMemoryUtilization(job *slurm.Job, t
 func (t *TaskUtilizationMonitor) simulateTaskIOUtilization(job *slurm.Job, task *TaskInfo) float64 {
 	// I/O utilization is typically lower and more variable
 	baseUtil := 0.3 + (float64(len(task.TaskID)%6) * 0.06)
-	
+
 	// Multi-node jobs may have higher I/O
 	if len(job.Nodes) > 1 {
 		baseUtil += 0.2
 	}
-	
+
 	// Add random spikes for I/O-intensive periods
 	if len(task.TaskID)%7 == 0 {
 		baseUtil += 0.3 // I/O spike
 	}
-	
+
 	return math.Max(0.05, math.Min(0.8, baseUtil))
 }
 
@@ -1194,18 +1194,18 @@ func (t *TaskUtilizationMonitor) simulateTaskIOUtilization(job *slurm.Job, task 
 func (t *TaskUtilizationMonitor) simulateTaskNetworkUtilization(job *slurm.Job, task *TaskInfo) float64 {
 	// Network utilization depends on job communication patterns
 	baseUtil := 0.2 + (float64(len(task.TaskID)%3) * 0.1)
-	
+
 	// Multi-node jobs have higher network utilization
 	nodeCount := len(job.Nodes)
 	if nodeCount > 1 {
 		baseUtil += 0.3 * float64(nodeCount-1) / 10.0
 	}
-	
+
 	// High-CPU jobs may be communication-intensive
 	if job.CPUs > 32 {
 		baseUtil += 0.2
 	}
-	
+
 	return math.Max(0.05, math.Min(0.7, baseUtil))
 }
 
@@ -1229,12 +1229,12 @@ func (t *TaskUtilizationMonitor) calculateTaskEfficiency(cpuUtil, memoryUtil, io
 	// Weighted efficiency calculation
 	weights := []float64{0.4, 0.3, 0.2, 0.1} // CPU, Memory, I/O, Network
 	utils := []float64{cpuUtil, memoryUtil, ioUtil, networkUtil}
-	
+
 	totalEfficiency := 0.0
 	for i, util := range utils {
 		totalEfficiency += util * weights[i]
 	}
-	
+
 	return totalEfficiency
 }
 
@@ -1244,7 +1244,7 @@ func (t *TaskUtilizationMonitor) calculateTaskWasteScore(cpuUtil, memoryUtil, ef
 	avgUtil := (cpuUtil + memoryUtil) / 2.0
 	wasteFromUtil := 1.0 - avgUtil
 	wasteFromEff := 1.0 - efficiency
-	
+
 	return (wasteFromUtil + wasteFromEff) / 2.0
 }
 
@@ -1252,7 +1252,7 @@ func (t *TaskUtilizationMonitor) calculateTaskWasteScore(cpuUtil, memoryUtil, ef
 func (t *TaskUtilizationMonitor) simulateTaskErrorRate(job *slurm.Job, task *TaskInfo) float64 {
 	// Most tasks have low error rates
 	baseErrorRate := 0.01 + (float64(len(task.TaskID)%10) * 0.005)
-	
+
 	// Increase error rate for longer-running jobs
 	if job.StartTime != nil {
 		elapsed := time.Since(*job.StartTime).Hours()
@@ -1260,7 +1260,7 @@ func (t *TaskUtilizationMonitor) simulateTaskErrorRate(job *slurm.Job, task *Tas
 			baseErrorRate += 0.02
 		}
 	}
-	
+
 	return math.Min(0.1, baseErrorRate)
 }
 
@@ -1269,7 +1269,7 @@ func (t *TaskUtilizationMonitor) calculateTaskLoadScore(cpuUtil, memoryUtil, thr
 	// Load score combines utilization and throughput
 	utilScore := (cpuUtil + memoryUtil) / 2.0
 	throughputScore := throughput / 100.0
-	
+
 	return (utilScore + throughputScore) / 2.0
 }
 
@@ -1277,23 +1277,23 @@ func (t *TaskUtilizationMonitor) calculateTaskLoadScore(cpuUtil, memoryUtil, thr
 func (t *TaskUtilizationMonitor) calculateTaskLoadImbalance(jobID, stepID string, taskLoadScore float64) float64 {
 	// Simple load imbalance calculation
 	// In reality, this would compare against other tasks in the same step
-	
+
 	avgLoadScore := 0.7 // Assume average load score
 	imbalance := math.Abs(taskLoadScore - avgLoadScore) / avgLoadScore
-	
+
 	return math.Min(1.0, imbalance)
 }
 
 // simulateMessagesSent simulates messages sent by a task
 func (t *TaskUtilizationMonitor) simulateMessagesSent(job *slurm.Job, task *TaskInfo) int64 {
 	baseMessages := int64(100 + len(task.TaskID)%500)
-	
+
 	// Multi-node jobs send more messages
 	nodeCount := len(job.Nodes)
 	if nodeCount > 1 {
 		baseMessages *= int64(nodeCount)
 	}
-	
+
 	return baseMessages
 }
 
@@ -1307,17 +1307,17 @@ func (t *TaskUtilizationMonitor) simulateMessagesReceived(job *slurm.Job, task *
 // simulateDataTransferred simulates data transferred by a task
 func (t *TaskUtilizationMonitor) simulateDataTransferred(job *slurm.Job, task *TaskInfo) float64 {
 	baseMB := 10.0 + float64(len(task.TaskID)%100)
-	
+
 	// Larger jobs transfer more data
 	if job.CPUs > 16 {
 		baseMB *= 2.0
 	}
-	
+
 	nodeCount := len(job.Nodes)
 	if nodeCount > 1 {
 		baseMB *= float64(nodeCount) * 0.5
 	}
-	
+
 	return baseMB
 }
 
@@ -1326,14 +1326,14 @@ func (t *TaskUtilizationMonitor) calculateTaskProgress(duration time.Duration, t
 	if timeLimit <= 0 {
 		return 0.5 // Default progress if no time limit
 	}
-	
+
 	timeLimitDuration := time.Duration(timeLimit) * time.Minute
 	progress := duration.Seconds() / timeLimitDuration.Seconds()
-	
+
 	// Add some randomness for more realistic progress
 	variation := float64(len(fmt.Sprintf("%.0f", duration.Seconds()))%20) / 100.0
 	progress += variation - 0.1
-	
+
 	return math.Max(0.0, math.Min(1.0, progress))
 }
 
@@ -1342,15 +1342,15 @@ func (t *TaskUtilizationMonitor) determineTaskState(progress, errorRate float64)
 	if errorRate > 0.05 {
 		return "failed"
 	}
-	
+
 	if progress >= 1.0 {
 		return "completed"
 	}
-	
+
 	if progress > 0.01 {
 		return "running"
 	}
-	
+
 	return "idle"
 }
 
@@ -1360,11 +1360,11 @@ func (t *TaskUtilizationMonitor) isTaskOnCriticalPath(job *slurm.Job, step *JobS
 	if task.CPUCount >= job.CPUs/2 {
 		return true
 	}
-	
+
 	if task.TaskID == "0_0" { // First task
 		return true
 	}
-	
+
 	return false
 }
 
@@ -1373,11 +1373,11 @@ func (t *TaskUtilizationMonitor) estimateTaskCompletion(startTime time.Time, pro
 	if progress <= 0 || timeLimit <= 0 {
 		return nil
 	}
-	
+
 	elapsed := time.Since(startTime)
 	estimatedTotal := elapsed.Seconds() / progress
 	completion := startTime.Add(time.Duration(estimatedTotal) * time.Second)
-	
+
 	return &completion
 }
 
@@ -1390,11 +1390,11 @@ func (t *TaskUtilizationMonitor) generateBalancingRecommendation(loadScore, load
 			return "increase_task_allocation"
 		}
 	}
-	
+
 	if loadScore < 0.3 {
 		return "reduce_task_allocation"
 	}
-	
+
 	return "optimal"
 }
 
@@ -1407,20 +1407,20 @@ func (t *TaskUtilizationMonitor) aggregateStepData(job *slurm.Job, step *JobStep
 			Timestamp: time.Now(),
 		}
 	}
-	
+
 	// Count task states
 	totalTasks := len(tasks)
 	activeTasks := 0
 	completedTasks := 0
 	failedTasks := 0
-	
+
 	// Accumulate metrics for averaging
 	var cpuUtils, memoryUtils, throughputs, latencies, efficiencies, wastes []float64
 	var loadScores []float64
 	var criticalPathTasks []string
 	var messagesTotal int64
 	var dataTotal float64
-	
+
 	for _, task := range tasks {
 		switch task.TaskState {
 		case "running":
@@ -1430,7 +1430,7 @@ func (t *TaskUtilizationMonitor) aggregateStepData(job *slurm.Job, step *JobStep
 		case "failed":
 			failedTasks++
 		}
-		
+
 		cpuUtils = append(cpuUtils, task.CPUUtilization)
 		memoryUtils = append(memoryUtils, task.MemoryUtilization)
 		throughputs = append(throughputs, task.TaskThroughput)
@@ -1438,46 +1438,46 @@ func (t *TaskUtilizationMonitor) aggregateStepData(job *slurm.Job, step *JobStep
 		efficiencies = append(efficiencies, task.TaskEfficiency)
 		wastes = append(wastes, task.TaskWasteScore)
 		loadScores = append(loadScores, task.LoadScore)
-		
+
 		messagesTotal += task.MessagesSent + task.MessagesReceived
 		dataTotal += task.DataTransferredMB
-		
+
 		if task.CriticalPath {
 			criticalPathTasks = append(criticalPathTasks, task.TaskID)
 		}
 	}
-	
+
 	// Calculate averages and statistics
 	avgCPU := average(cpuUtils)
 	minCPU := minimum(cpuUtils)
 	maxCPU := maximum(cpuUtils)
 	stdDevCPU := standardDeviation(cpuUtils)
-	
+
 	avgMemory := average(memoryUtils)
 	minMemory := minimum(memoryUtils)
 	maxMemory := maximum(memoryUtils)
 	stdDevMemory := standardDeviation(memoryUtils)
-	
+
 	avgThroughput := average(throughputs)
 	avgLatency := average(latencies)
 	avgEfficiency := average(efficiencies)
 	totalWaste := sum(wastes)
-	
+
 	// Calculate load balancing metrics
 	loadImbalanceScore := standardDeviation(loadScores) / average(loadScores)
 	loadVarianceScore := variance(loadScores)
 	taskDistributionScore := t.calculateTaskDistributionScore(tasks)
-	
+
 	// Calculate communication efficiency
 	commEfficiency := t.calculateCommunicationEfficiency(tasks)
-	
+
 	// Calculate step progress
 	progresses := make([]float64, len(tasks))
 	for i, task := range tasks {
 		progresses[i] = task.TaskProgress
 	}
 	stepProgress := average(progresses)
-	
+
 	// Estimate step completion
 	var stepCompletion *time.Time
 	if stepProgress > 0 {
@@ -1491,42 +1491,42 @@ func (t *TaskUtilizationMonitor) aggregateStepData(job *slurm.Job, step *JobStep
 			stepCompletion = &maxCompletion
 		}
 	}
-	
+
 	return &JobStepData{
 		JobID:         fmt.Sprintf("job_%d", job.ID),
 		StepID:        step.StepID,
 		Timestamp:     time.Now(),
-		
+
 		TotalTasks:     totalTasks,
 		ActiveTasks:    activeTasks,
 		CompletedTasks: completedTasks,
 		FailedTasks:    failedTasks,
-		
+
 		AvgCPUUtilization:     avgCPU,
 		MinCPUUtilization:     minCPU,
 		MaxCPUUtilization:     maxCPU,
 		StdDevCPUUtilization:  stdDevCPU,
-		
+
 		AvgMemoryUtilization:  avgMemory,
 		MinMemoryUtilization:  minMemory,
 		MaxMemoryUtilization:  maxMemory,
 		StdDevMemoryUtilization: stdDevMemory,
-		
+
 		AvgTaskThroughput:     avgThroughput,
 		AvgTaskLatency:        avgLatency,
 		AvgTaskEfficiency:     avgEfficiency,
 		TotalTaskWaste:        totalWaste,
-		
+
 		LoadImbalanceScore:    loadImbalanceScore,
 		LoadVarianceScore:     loadVarianceScore,
 		TaskDistributionScore: taskDistributionScore,
-		
+
 		CriticalPathTasks:     criticalPathTasks,
-		
+
 		TotalMessagesExchanged: messagesTotal,
 		TotalDataTransferredMB: dataTotal,
 		CommunicationEfficiency: commEfficiency,
-		
+
 		StepProgress:          stepProgress,
 		EstimatedStepCompletion: stepCompletion,
 	}
@@ -1601,28 +1601,28 @@ func (t *TaskUtilizationMonitor) calculateTaskDistributionScore(tasks []*JobStep
 	if len(tasks) == 0 {
 		return 1.0
 	}
-	
+
 	// Count tasks per node
 	nodeTaskCount := make(map[string]int)
 	for _, task := range tasks {
 		nodeTaskCount[task.NodeID]++
 	}
-	
+
 	// Calculate distribution variance
 	var counts []float64
 	for _, count := range nodeTaskCount {
 		counts = append(counts, float64(count))
 	}
-	
+
 	if len(counts) <= 1 {
 		return 1.0
 	}
-	
+
 	// Lower variance = better distribution
 	avgCount := average(counts)
 	varianceScore := variance(counts)
 	distributionScore := 1.0 / (1.0 + varianceScore/avgCount)
-	
+
 	return distributionScore
 }
 
@@ -1631,25 +1631,25 @@ func (t *TaskUtilizationMonitor) calculateCommunicationEfficiency(tasks []*JobSt
 	if len(tasks) == 0 {
 		return 1.0
 	}
-	
+
 	totalMessages := int64(0)
 	totalData := 0.0
 	totalThroughput := 0.0
-	
+
 	for _, task := range tasks {
 		totalMessages += task.MessagesSent + task.MessagesReceived
 		totalData += task.DataTransferredMB
 		totalThroughput += task.TaskThroughput
 	}
-	
+
 	if totalMessages == 0 || totalData == 0 {
 		return 1.0
 	}
-	
+
 	// Simple efficiency model: higher throughput with lower communication overhead
 	avgThroughput := totalThroughput / float64(len(tasks))
 	commOverhead := float64(totalMessages) / totalData
-	
+
 	efficiency := avgThroughput / (1.0 + commOverhead)
 	return math.Min(1.0, efficiency/100.0)
 }
@@ -1658,7 +1658,7 @@ func (t *TaskUtilizationMonitor) calculateCommunicationEfficiency(tasks []*JobSt
 func (t *TaskUtilizationMonitor) countJobTasks(jobID string) int {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
-	
+
 	count := 0
 	for key := range t.taskData {
 		if len(key) > len(jobID) && key[:len(jobID)] == jobID {
@@ -1674,29 +1674,29 @@ func (t *TaskUtilizationMonitor) updateTaskMetrics(job *slurm.Job, taskData *Job
 		taskData.JobID, taskData.StepID, taskData.TaskID, taskData.NodeID,
 		"", "", job.Partition, // TODO: job.User and job.Account fields not available
 	}
-	
+
 	// Update utilization metrics
 	t.metrics.TaskCPUUtilization.WithLabelValues(labels...).Set(taskData.CPUUtilization)
 	t.metrics.TaskMemoryUtilization.WithLabelValues(labels...).Set(taskData.MemoryUtilization)
 	t.metrics.TaskIOUtilization.WithLabelValues(labels...).Set(taskData.IOUtilization)
 	t.metrics.TaskNetworkUtilization.WithLabelValues(labels...).Set(taskData.NetworkUtilization)
-	
+
 	// Update performance metrics
 	t.metrics.TaskThroughput.WithLabelValues(labels...).Set(taskData.TaskThroughput)
 	t.metrics.TaskLatency.WithLabelValues(labels...).Set(taskData.TaskLatency)
 	t.metrics.TaskEfficiency.WithLabelValues(labels...).Set(taskData.TaskEfficiency)
 	t.metrics.TaskWasteScore.WithLabelValues(labels...).Set(taskData.TaskWasteScore)
 	t.metrics.TaskErrorRate.WithLabelValues(labels...).Set(taskData.TaskErrorRate)
-	
+
 	// Update load balancing metrics
 	t.metrics.TaskLoadScore.WithLabelValues(labels...).Set(taskData.LoadScore)
 	t.metrics.TaskLoadImbalance.WithLabelValues(labels...).Set(taskData.LoadImbalance)
-	
+
 	// Update communication metrics
 	t.metrics.TaskMessagesExchanged.WithLabelValues(taskData.JobID, taskData.StepID, taskData.TaskID, "sent").Add(float64(taskData.MessagesSent))
 	t.metrics.TaskMessagesExchanged.WithLabelValues(taskData.JobID, taskData.StepID, taskData.TaskID, "received").Add(float64(taskData.MessagesReceived))
 	t.metrics.TaskDataTransferred.WithLabelValues(taskData.JobID, taskData.StepID, taskData.TaskID, "total").Add(taskData.DataTransferredMB * 1024 * 1024) // Convert to bytes
-	
+
 	// Update task state metrics
 	taskLabels := []string{taskData.JobID, taskData.StepID, "", "", job.Partition} // TODO: job.User and job.Account fields not available
 	switch taskData.TaskState {
@@ -1707,7 +1707,7 @@ func (t *TaskUtilizationMonitor) updateTaskMetrics(job *slurm.Job, taskData *Job
 	case "failed":
 		t.metrics.TasksFailed.WithLabelValues(taskLabels...).Inc()
 	}
-	
+
 	// Update progress
 	progressLabels := []string{taskData.JobID, taskData.StepID, taskData.TaskID, "", "", job.Partition} // TODO: job.User and job.Account fields not available
 	t.metrics.TaskProgress.WithLabelValues(progressLabels...).Set(taskData.TaskProgress)
@@ -1716,26 +1716,26 @@ func (t *TaskUtilizationMonitor) updateTaskMetrics(job *slurm.Job, taskData *Job
 // updateStepMetrics updates Prometheus metrics for a step
 func (t *TaskUtilizationMonitor) updateStepMetrics(job *slurm.Job, stepData *JobStepData) {
 	labels := []string{stepData.JobID, stepData.StepID, "", "", job.Partition} // TODO: job.User and job.Account fields not available
-	
+
 	// Update step-level aggregation metrics
 	t.metrics.StepAvgCPUUtilization.WithLabelValues(labels...).Set(stepData.AvgCPUUtilization)
 	t.metrics.StepMaxCPUUtilization.WithLabelValues(labels...).Set(stepData.MaxCPUUtilization)
 	t.metrics.StepCPUVariance.WithLabelValues(labels...).Set(stepData.StdDevCPUUtilization)
 	t.metrics.StepAvgMemoryUtilization.WithLabelValues(labels...).Set(stepData.AvgMemoryUtilization)
 	t.metrics.StepMemoryVariance.WithLabelValues(labels...).Set(stepData.StdDevMemoryUtilization)
-	
+
 	// Update step performance metrics
 	t.metrics.StepAvgThroughput.WithLabelValues(labels...).Set(stepData.AvgTaskThroughput)
 	t.metrics.StepAvgLatency.WithLabelValues(labels...).Set(stepData.AvgTaskLatency)
 	t.metrics.StepAvgEfficiency.WithLabelValues(labels...).Set(stepData.AvgTaskEfficiency)
 	t.metrics.StepLoadImbalanceScore.WithLabelValues(labels...).Set(stepData.LoadImbalanceScore)
-	
+
 	// Update load balancing metrics
 	t.metrics.LoadVarianceScore.WithLabelValues(labels...).Set(stepData.LoadVarianceScore)
-	
+
 	// Update communication efficiency
 	t.metrics.CommunicationEfficiency.WithLabelValues(labels...).Set(stepData.CommunicationEfficiency)
-	
+
 	// Update critical path metrics
 	t.metrics.CriticalPathTasks.WithLabelValues(labels...).Set(float64(len(stepData.CriticalPathTasks)))
 }
@@ -1768,16 +1768,16 @@ func (e *TaskEfficiencyTracker) trackTaskEfficiency(taskData *JobStepTaskData) {
 func (t *TaskUtilizationMonitor) cleanOldTaskData() {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	
+
 	taskCutoff := time.Now().Add(-t.config.TaskDataRetention)
 	stepCutoff := time.Now().Add(-t.config.StepDataRetention)
-	
+
 	for key, data := range t.taskData {
 		if data.Timestamp.Before(taskCutoff) {
 			delete(t.taskData, key)
 		}
 	}
-	
+
 	for key, data := range t.stepData {
 		if data.Timestamp.Before(stepCutoff) {
 			delete(t.stepData, key)
@@ -1802,7 +1802,7 @@ func getTaskBenchmarks() map[string]float64 {
 func (t *TaskUtilizationMonitor) GetTaskData(jobID, stepID, taskID string) (*JobStepTaskData, bool) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
-	
+
 	key := fmt.Sprintf("%s:%s:%s", jobID, stepID, taskID)
 	data, exists := t.taskData[key]
 	return data, exists
@@ -1812,7 +1812,7 @@ func (t *TaskUtilizationMonitor) GetTaskData(jobID, stepID, taskID string) (*Job
 func (t *TaskUtilizationMonitor) GetStepData(jobID, stepID string) (*JobStepData, bool) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
-	
+
 	key := fmt.Sprintf("%s:%s", jobID, stepID)
 	data, exists := t.stepData[key]
 	return data, exists
@@ -1822,7 +1822,7 @@ func (t *TaskUtilizationMonitor) GetStepData(jobID, stepID string) (*JobStepData
 func (t *TaskUtilizationMonitor) GetTaskMonitoringStats() map[string]interface{} {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
-	
+
 	return map[string]interface{}{
 		"monitored_tasks": len(t.taskData),
 		"monitored_steps": len(t.stepData),

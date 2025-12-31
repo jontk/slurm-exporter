@@ -161,10 +161,10 @@ func (c *ClusterSimpleCollector) collect(ch chan<- prometheus.Metric) error {
 	if version == "" {
 		version = "unknown"
 	}
-	
+
 	// Parse version components (simple parsing)
 	major := "0"
-	minor := "0" 
+	minor := "0"
 	patch := "0"
 	// Version might be like "23.02.1"
 	var maj, min, pat int

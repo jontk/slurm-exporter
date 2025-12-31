@@ -50,23 +50,23 @@ collectors:
   cluster:
     enabled: true
     interval: "30s"
-  
+
   node:
     enabled: true
     interval: "30s"
-  
+
   job:
     enabled: true
     interval: "15s"  # More frequent for development
-  
+
   user:
     enabled: true
     interval: "60s"
-  
+
   partition:
     enabled: true
     interval: "45s"
-  
+
   performance:
     enabled: true
     interval: "30s"

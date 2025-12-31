@@ -238,7 +238,7 @@ type AccountHierarchyCollector struct {
 	accountChildCount         *prometheus.GaugeVec
 	accountUserCount          *prometheus.GaugeVec
 	accountActiveUsers        *prometheus.GaugeVec
-	
+
 	// Association metrics
 	userAccountAssociations   *prometheus.GaugeVec
 	accountAssociationCount   *prometheus.GaugeVec
@@ -246,47 +246,47 @@ type AccountHierarchyCollector struct {
 	accountAssociationType    *prometheus.GaugeVec
 	orphanedUsers             *prometheus.GaugeVec
 	multiAccountUsers         *prometheus.GaugeVec
-	
+
 	// Permission metrics
 	accountPermissionUsers    *prometheus.GaugeVec
 	accountEffectivePerms     *prometheus.GaugeVec
 	accountInheritedPerms     *prometheus.GaugeVec
 	accountCustomRoles        *prometheus.GaugeVec
 	permissionConflicts       *prometheus.GaugeVec
-	
+
 	// Inheritance metrics
 	accountInheritanceDepth   *prometheus.GaugeVec
 	accountInheritedProps     *prometheus.GaugeVec
 	accountOverriddenProps    *prometheus.GaugeVec
 	inheritanceChainLength    *prometheus.GaugeVec
-	
+
 	// Delegation metrics
 	accountDelegationsActive  *prometheus.GaugeVec
 	accountDelegationsPending *prometheus.GaugeVec
 	accountDelegatedRights    *prometheus.GaugeVec
-	
+
 	// Validation metrics
 	hierarchyValidationStatus *prometheus.GaugeVec
 	hierarchyErrors           *prometheus.GaugeVec
 	hierarchyWarnings         *prometheus.GaugeVec
 	circularReferences        *prometheus.GaugeVec
 	hierarchyConflicts        *prometheus.GaugeVec
-	
+
 	// Access matrix metrics
 	accessMatrixPermissions   *prometheus.GaugeVec
 	accessMatrixConflicts     *prometheus.GaugeVec
 	effectivePermissions      *prometheus.GaugeVec
-	
+
 	// Organizational metrics
 	organizationalUnitCount   *prometheus.GaugeVec
 	organizationalUnitUsers   *prometheus.GaugeVec
 	organizationalUnitShare   *prometheus.GaugeVec
-	
+
 	// Relationship metrics
 	accountRelationships      *prometheus.GaugeVec
 	relationshipStrength      *prometheus.GaugeVec
 	bidirectionalRelations    *prometheus.GaugeVec
-	
+
 	// Collection metrics
 	collectionDuration        *prometheus.HistogramVec
 	collectionErrors          *prometheus.CounterVec
@@ -1030,7 +1030,7 @@ func (c *AccountHierarchyCollector) collectValidationMetrics() {
 
 func (c *AccountHierarchyCollector) collectSubAccountMetrics() {
 	ctx := context.Background()
-	
+
 	// Sample parent accounts
 	parentAccounts := []string{"root", "research", "engineering"}
 	for _, parent := range parentAccounts {
@@ -1050,7 +1050,7 @@ func (c *AccountHierarchyCollector) collectSubAccountMetrics() {
 			if sub.InheritedUsers {
 				c.accountInheritedProps.WithLabelValues(sub.AccountName).Inc()
 			}
-			
+
 			c.accountOverriddenProps.WithLabelValues(sub.AccountName).Set(float64(len(sub.OverrideSettings)))
 		}
 	}
@@ -1058,7 +1058,7 @@ func (c *AccountHierarchyCollector) collectSubAccountMetrics() {
 
 func (c *AccountHierarchyCollector) collectInheritanceMetrics() {
 	ctx := context.Background()
-	
+
 	// Sample accounts for inheritance metrics
 	sampleAccounts := []string{"research", "engineering", "finance"}
 	for _, accountName := range sampleAccounts {
@@ -1078,7 +1078,7 @@ func (c *AccountHierarchyCollector) collectInheritanceMetrics() {
 
 func (c *AccountHierarchyCollector) collectDelegationMetrics() {
 	ctx := context.Background()
-	
+
 	// Sample accounts for delegation metrics
 	sampleAccounts := []string{"research", "engineering", "admin"}
 	for _, accountName := range sampleAccounts {
@@ -1090,13 +1090,13 @@ func (c *AccountHierarchyCollector) collectDelegationMetrics() {
 		if delegations != nil {
 			c.accountDelegationsActive.WithLabelValues(accountName).Set(float64(delegations.ActiveDelegations))
 			c.accountDelegationsPending.WithLabelValues(accountName).Set(float64(delegations.PendingDelegations))
-			
+
 			delegatedToCount := 0
 			for _, rights := range delegations.DelegatedTo {
 				delegatedToCount += len(rights)
 			}
 			c.accountDelegatedRights.WithLabelValues(accountName, "to").Set(float64(delegatedToCount))
-			
+
 			delegatedFromCount := 0
 			for _, rights := range delegations.DelegatedFrom {
 				delegatedFromCount += len(rights)
@@ -1113,7 +1113,7 @@ func (c *AccountHierarchyCollector) collectOrganizationalMetrics() {
 
 // Helper function to check if a string contains a substring
 func hierarchyContains(s, substr string) bool {
-	return len(s) >= len(substr) && s[:len(substr)] == substr || 
+	return len(s) >= len(substr) && s[:len(substr)] == substr ||
 		   len(s) >= len(substr) && s[len(s)-len(substr):] == substr ||
 		   len(s) > len(substr) && hierarchyContainsMiddle(s, substr)
 }

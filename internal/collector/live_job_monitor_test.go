@@ -68,7 +68,7 @@ func TestNewLiveJobMonitor(t *testing.T) {
 			assert.NotNil(t, monitor.efficiencyCalc)
 			assert.NotNil(t, monitor.liveData)
 			assert.NotNil(t, monitor.alertChannels)
-			
+
 			if tt.config == nil {
 				assert.Equal(t, 5*time.Second, monitor.config.MonitoringInterval)
 				assert.Equal(t, 50, monitor.config.MaxJobsPerCollection)
@@ -126,7 +126,7 @@ func TestLiveJobMonitor_CollectLiveJobMetrics(t *testing.T) {
 	// Setup mock expectations
 	now := time.Now()
 	startTime := now.Add(-30 * time.Minute)
-	
+
 	testJob := &slurm.Job{
 		JobID:      "live-123",
 		Name:       "live-test-job",
@@ -205,7 +205,7 @@ func TestLiveJobMonitor_SimulateResourceUsage(t *testing.T) {
 
 	now := time.Now()
 	startTime := now.Add(-1 * time.Hour)
-	
+
 	testJob := &slurm.Job{
 		JobID:      "sim-456",
 		Name:       "simulation-job",
@@ -250,7 +250,7 @@ func TestLiveJobMonitor_PerformanceCalculations(t *testing.T) {
 
 	now := time.Now()
 	startTime := now.Add(-2 * time.Hour)
-	
+
 	testJob := &slurm.Job{
 		JobID:      "perf-789",
 		Name:       "performance-job",
@@ -485,7 +485,7 @@ func TestLiveJobMonitor_UpdateLiveMetrics(t *testing.T) {
 
 	now := time.Now()
 	futureTime := now.Add(2 * time.Hour)
-	
+
 	liveMetrics := &JobLiveMetrics{
 		JobID:                     "metrics-555",
 		Timestamp:                 now,
@@ -750,7 +750,7 @@ func TestLiveJobMonitor_MonitoringStats(t *testing.T) {
 	monitor.StartStreaming("job1")
 
 	stats := monitor.GetMonitoringStats()
-	
+
 	assert.Equal(t, 2, stats["monitored_jobs"])
 	assert.Equal(t, 1, stats["active_streams"])
 	assert.True(t, stats["streaming_active"].(bool))

@@ -388,7 +388,7 @@ type QoSLimitsCollector struct {
 	qosMinCPUs                *prometheus.GaugeVec
 	qosMinMemory              *prometheus.GaugeVec
 	qosMinNodes               *prometheus.GaugeVec
-	
+
 	// QoS priority and configuration metrics
 	qosPriority               *prometheus.GaugeVec
 	qosUsageFactor            *prometheus.GaugeVec
@@ -396,7 +396,7 @@ type QoSLimitsCollector struct {
 	qosGraceTime              *prometheus.GaugeVec
 	qosUserCount              *prometheus.GaugeVec
 	qosAccountCount           *prometheus.GaugeVec
-	
+
 	// QoS usage metrics
 	qosResourceUsage          *prometheus.GaugeVec
 	qosResourceUtilization    *prometheus.GaugeVec
@@ -407,7 +407,7 @@ type QoSLimitsCollector struct {
 	qosUsersActive            *prometheus.GaugeVec
 	qosWalltimeConsumed       *prometheus.CounterVec
 	qosEfficiencyScore        *prometheus.GaugeVec
-	
+
 	// QoS violation metrics
 	qosViolations             *prometheus.CounterVec
 	qosViolationSeverity      *prometheus.GaugeVec
@@ -416,7 +416,7 @@ type QoSLimitsCollector struct {
 	qosViolationResolutionTime *prometheus.HistogramVec
 	qosAutoResolutionRate     *prometheus.GaugeVec
 	qosRecurrenceRate         *prometheus.GaugeVec
-	
+
 	// QoS enforcement metrics
 	qosEnforcementEnabled     *prometheus.GaugeVec
 	qosEnforcementActions     *prometheus.CounterVec
@@ -425,7 +425,7 @@ type QoSLimitsCollector struct {
 	qosJobsSuspended          *prometheus.CounterVec
 	qosUsersWarned            *prometheus.CounterVec
 	qosEnforcementEffectiveness *prometheus.GaugeVec
-	
+
 	// QoS performance metrics
 	qosAverageQueueTime       *prometheus.GaugeVec
 	qosAverageRunTime         *prometheus.GaugeVec
@@ -434,13 +434,13 @@ type QoSLimitsCollector struct {
 	qosPerformanceScore       *prometheus.GaugeVec
 	qosUserSatisfaction       *prometheus.GaugeVec
 	qosCostEffectiveness      *prometheus.GaugeVec
-	
+
 	// QoS hierarchy metrics
 	qosHierarchyDepth         *prometheus.GaugeVec
 	qosTotalCount             *prometheus.GaugeVec
 	qosInheritanceChainLength *prometheus.GaugeVec
 	qosConflicts              *prometheus.GaugeVec
-	
+
 	// QoS effectiveness metrics
 	qosOverallEffectiveness   *prometheus.GaugeVec
 	qosResourceOptimization   *prometheus.GaugeVec
@@ -448,14 +448,14 @@ type QoSLimitsCollector struct {
 	qosSystemThroughput       *prometheus.GaugeVec
 	qosPolicyCompliance       *prometheus.GaugeVec
 	qosCostBenefitRatio       *prometheus.GaugeVec
-	
+
 	// System QoS metrics
 	systemQoSUtilization      *prometheus.GaugeVec
 	systemQoSLoad             *prometheus.GaugeVec
 	systemQoSEfficiency       *prometheus.GaugeVec
 	systemQoSViolationRate    *prometheus.GaugeVec
 	systemQoSComplianceScore  *prometheus.GaugeVec
-	
+
 	// Collection metrics
 	collectionDuration        *prometheus.HistogramVec
 	collectionErrors          *prometheus.CounterVec

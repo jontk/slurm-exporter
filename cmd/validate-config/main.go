@@ -52,15 +52,15 @@ func main() {
 		fmt.Printf("✅ Configuration validation passed!\n")
 		fmt.Printf("📄 Config file: %s\n", *configFile)
 		fmt.Printf("🔧 Strict mode: %t\n", *strict)
-		
+
 		// Show some key configuration info
 		fmt.Printf("\n📊 Configuration Summary:\n")
 		fmt.Printf("  • Server: %s\n", cfg.Server.Address)
 		fmt.Printf("  • SLURM: %s\n", cfg.SLURM.BaseURL)
-		
+
 		enabledCollectors := getEnabledCollectors(cfg)
 		fmt.Printf("  • Collectors: %d enabled (%v)\n", len(enabledCollectors), enabledCollectors)
-		
+
 		if cfg.Metrics.Cardinality.MaxSeries > 0 {
 			fmt.Printf("  • Max series: %d\n", cfg.Metrics.Cardinality.MaxSeries)
 		}
@@ -82,12 +82,12 @@ func getEnabledCollectors(cfg *config.Config) []string {
 		"performance":  cfg.Collectors.Performance.Enabled,
 		"system":       cfg.Collectors.System.Enabled,
 	}
-	
+
 	for name, isEnabled := range collectors {
 		if isEnabled {
 			enabled = append(enabled, name)
 		}
 	}
-	
+
 	return enabled
 }

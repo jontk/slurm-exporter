@@ -58,10 +58,10 @@ OPTIONS:
 EXAMPLES:
     # Rollback to previous version
     $0 -e production
-    
+
     # Rollback to specific revision
     $0 -e staging --revision 3
-    
+
     # Dry run rollback
     $0 -e development --dry-run
 
@@ -116,19 +116,19 @@ parse_args() {
 # Check prerequisites
 check_prerequisites() {
     print_info "Checking prerequisites..."
-    
+
     # Check if kubectl is installed
     if ! command -v kubectl &> /dev/null; then
         print_error "kubectl is not installed or not in PATH"
         exit 1
     fi
-    
+
     # Check if helm is installed
     if ! command -v helm &> /dev/null; then
         print_error "helm is not installed or not in PATH"
         exit 1
     fi
-    
+
     print_success "Prerequisites check passed"
 }
 
@@ -155,15 +155,15 @@ show_release_history() {
         print_error "Helm release '$HELM_RELEASE_NAME' not found in namespace '$NAMESPACE'"
         exit 1
     fi
-    
+
     print_info "Release history:"
     helm history -n "$NAMESPACE" "$HELM_RELEASE_NAME" || true
-    
+
     # Get current revision
     local current_revision
     current_revision=$(helm history -n "$NAMESPACE" "$HELM_RELEASE_NAME" --output json | jq -r '.[] | select(.status=="deployed") | .revision' 2>/dev/null || echo "unknown")
     print_info "Current revision: $current_revision"
-    
+
     # If no specific revision provided, use previous one
     if [[ -z "$REVISION" ]]; then
         if [[ "$current_revision" != "unknown" && "$current_revision" -gt 1 ]]; then
@@ -182,7 +182,7 @@ validate_revision() {
         print_error "No revision specified for rollback"
         exit 1
     fi
-    
+
     # Check if revision exists
     if ! helm history -n "$NAMESPACE" "$HELM_RELEASE_NAME" | grep -q "^\s*$REVISION\s"; then
         print_error "Revision $REVISION not found in release history"
@@ -190,7 +190,7 @@ validate_revision() {
         helm history -n "$NAMESPACE" "$HELM_RELEASE_NAME" || true
         exit 1
     fi
-    
+
     print_info "Rolling back to revision: $REVISION"
 }
 
@@ -199,14 +199,14 @@ confirm_rollback() {
     if [[ "$DRY_RUN" == "true" ]]; then
         return 0
     fi
-    
+
     # For production, always require confirmation
     if [[ "$ENVIRONMENT" == "production" ]]; then
         print_warning "This will rollback the SLURM Exporter in PRODUCTION:"
         echo "  Release: $HELM_RELEASE_NAME"
         echo "  Namespace: $NAMESPACE"
         echo "  Target revision: $REVISION"
-        
+
         read -p "Are you sure you want to continue? (y/N): " -n 1 -r
         echo
         if [[ ! $REPLY =~ ^[Yy]$ ]]; then
@@ -219,9 +219,9 @@ confirm_rollback() {
 # Perform rollback
 rollback() {
     print_info "Rolling back SLURM Exporter..."
-    
+
     local rollback_cmd="helm rollback $HELM_RELEASE_NAME $REVISION --namespace $NAMESPACE"
-    
+
     # Environment-specific settings
     case $ENVIRONMENT in
         production)
@@ -234,13 +234,13 @@ rollback() {
             rollback_cmd="$rollback_cmd --timeout 300s"
             ;;
     esac
-    
+
     if [[ "$DRY_RUN" == "true" ]]; then
         rollback_cmd="$rollback_cmd --dry-run"
     fi
-    
+
     print_info "Command: $rollback_cmd"
-    
+
     if eval "$rollback_cmd"; then
         if [[ "$DRY_RUN" == "false" ]]; then
             print_success "Rollback completed successfully!"
@@ -258,9 +258,9 @@ wait_for_rollout() {
     if [[ "$DRY_RUN" == "true" || "$WAIT_FOR_ROLLOUT" == "false" ]]; then
         return 0
     fi
-    
+
     print_info "Waiting for rollout to complete..."
-    
+
     if kubectl rollout status deployment -n "$NAMESPACE" "$HELM_RELEASE_NAME" --timeout=300s; then
         print_success "Rollout completed successfully"
     else
@@ -276,22 +276,22 @@ show_post_rollback_info() {
     if [[ "$DRY_RUN" == "true" ]]; then
         return
     fi
-    
+
     print_info "Post-rollback information:"
-    
+
     # Show updated deployment info
     print_info "Current release status:"
     helm list -n "$NAMESPACE" | grep "^$HELM_RELEASE_NAME" || true
-    
+
     # Get current image
     local current_image
     current_image=$(kubectl get deployment -n "$NAMESPACE" "$HELM_RELEASE_NAME" -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null || echo "unknown")
     print_info "Current image: $current_image"
-    
+
     # Check pod status
     print_info "Pod status:"
     kubectl get pods -n "$NAMESPACE" -l "app.kubernetes.io/instance=$HELM_RELEASE_NAME" || true
-    
+
     # Show how to access the service
     print_info "Access the SLURM Exporter:"
     echo "  kubectl port-forward -n $NAMESPACE service/$HELM_RELEASE_NAME 8080:8080"

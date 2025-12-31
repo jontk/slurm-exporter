@@ -257,34 +257,34 @@ func (c *JobsSimpleCollector) collect(ch chan<- prometheus.Metric) error {
 	for _, job := range jobList.Jobs {
 		// Convert job ID to string
 		jobID := job.ID
-		
+
 		// Get job details with safe defaults
 		jobName := job.Name
 		if jobName == "" {
 			jobName = "unknown"
 		}
-		
+
 		userName := job.UserID
 		if userName == "" {
 			userName = "unknown"
 		}
-		
+
 		partition := "unknown"
 		if job.Partition != "" {
 			partition = job.Partition
 		}
-		
+
 		jobState := "UNKNOWN"
 		if job.State != "" {
 			jobState = job.State
 		}
-		
+
 		// Job state metric
 		stateValue := 0.0
 		if isJobActive(jobState) {
 			stateValue = 1.0
 		}
-		
+
 		// Create labels map for cardinality checking
 		stateLabels := map[string]string{
 			"job_id":    jobID,
@@ -293,8 +293,8 @@ func (c *JobsSimpleCollector) collect(ch chan<- prometheus.Metric) error {
 			"partition": partition,
 			"state":     jobState,
 		}
-		
-		if c.shouldCollectMetric("slurm_job_state", MetricTypeGauge, false, false) && 
+
+		if c.shouldCollectMetric("slurm_job_state", MetricTypeGauge, false, false) &&
 		   c.shouldCollectWithCardinality("slurm_job_state", stateLabels) {
 			ch <- prometheus.MustNewConstMetric(
 				c.jobStates,
@@ -410,7 +410,7 @@ func (c *JobsSimpleCollector) collect(ch chan<- prometheus.Metric) error {
 		// These fields don't exist in interfaces.Job, use defaults
 		account := "default"
 		qos := "normal"
-		
+
 		infoLabels := map[string]string{
 			"job_id":    jobID,
 			"job_name":  jobName,

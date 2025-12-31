@@ -16,31 +16,31 @@ type FairSharePolicyEffectivenessSLURMClient interface {
 	GetPolicyImplementationDetails(ctx context.Context) (*PolicyImplementationDetails, error)
 	GetPolicyParameterAnalysis(ctx context.Context) (*PolicyParameterAnalysis, error)
 	ValidatePolicyConfiguration(ctx context.Context) (*PolicyConfigurationValidation, error)
-	
+
 	// Policy Effectiveness Measurement
 	GetPolicyEffectivenessMetrics(ctx context.Context, period string) (*FairSharePolicyEffectivenessMetrics, error)
 	GetFairnessDistributionAnalysis(ctx context.Context, period string) (*FairnessDistributionAnalysis, error)
 	GetResourceAllocationEffectiveness(ctx context.Context, period string) (*ResourceAllocationEffectiveness, error)
 	GetUserEquityAnalysis(ctx context.Context, period string) (*UserEquityAnalysis, error)
-	
+
 	// Policy Impact Assessment
 	GetPolicyImpactAssessment(ctx context.Context, policyID string, period string) (*PolicyImpactAssessment, error)
 	GetSystemPerformanceImpact(ctx context.Context, period string) (*SystemPerformanceImpact, error)
 	GetUserSatisfactionMetrics(ctx context.Context, period string) (*UserSatisfactionMetrics, error)
 	GetResourceUtilizationImpact(ctx context.Context, period string) (*ResourceUtilizationImpact, error)
-	
+
 	// Policy Optimization
 	GetPolicyOptimizationRecommendations(ctx context.Context) (*PolicyOptimizationRecommendations, error)
 	GetPolicyTuningHistory(ctx context.Context, period string) (*PolicyTuningHistory, error)
 	GetPolicyPerformanceComparison(ctx context.Context, policyA, policyB string) (*PolicyPerformanceComparison, error)
 	GetOptimalPolicyParameters(ctx context.Context, objectiveFunction string) (*OptimalPolicyParameters, error)
-	
+
 	// Policy Monitoring and Alerting
 	GetPolicyComplianceMonitoring(ctx context.Context) (*PolicyComplianceMonitoring, error)
 	GetPolicyViolationAnalysis(ctx context.Context, period string) (*PolicyViolationAnalysis, error)
 	GetPolicyDriftDetection(ctx context.Context) (*PolicyDriftDetection, error)
 	GetPolicyEffectivenessAlerts(ctx context.Context) (*PolicyEffectivenessAlerts, error)
-	
+
 	// Advanced Analytics
 	GetPolicyEffectivenessTrends(ctx context.Context, period string) (*PolicyEffectivenessTrends, error)
 	GetPolicyScenarioAnalysis(ctx context.Context, scenario string) (*PolicyScenarioAnalysis, error)
@@ -55,38 +55,38 @@ type FairSharePolicyConfiguration struct {
 	PolicyVersion           string                 `json:"policy_version"`
 	ImplementationDate      time.Time              `json:"implementation_date"`
 	LastModified            time.Time              `json:"last_modified"`
-	
+
 	// Core Parameters
 	FairShareAlgorithm      string                 `json:"fairshare_algorithm"`
 	DecayHalfLife           float64                `json:"decay_half_life"`
 	UsageFactor             float64                `json:"usage_factor"`
 	LevelFactor             float64                `json:"level_factor"`
 	PriorityWeight          float64                `json:"priority_weight"`
-	
+
 	// Account Hierarchy Settings
 	AccountHierarchyEnabled bool                   `json:"account_hierarchy_enabled"`
 	InheritParentLimits     bool                   `json:"inherit_parent_limits"`
 	AccountNormalization    string                 `json:"account_normalization"`
 	HierarchyDepth          int                    `json:"hierarchy_depth"`
-	
+
 	// User and QoS Settings
 	UserFairShareEnabled    bool                   `json:"user_fairshare_enabled"`
 	QoSFairShareEnabled     bool                   `json:"qos_fairshare_enabled"`
 	PartitionFairShare      map[string]float64     `json:"partition_fairshare"`
 	DefaultFairShare        float64                `json:"default_fairshare"`
-	
+
 	// Enforcement Settings
 	EnforcementLevel        string                 `json:"enforcement_level"`
 	GracePeriodsEnabled     bool                   `json:"grace_periods_enabled"`
 	GracePeriodDuration     float64                `json:"grace_period_duration"`
 	ViolationPenalties      map[string]float64     `json:"violation_penalties"`
-	
+
 	// Advanced Settings
 	CalculationFrequency    string                 `json:"calculation_frequency"`
 	DatabasePurgePolicy     string                 `json:"database_purge_policy"`
 	BackfillConsideration   bool                   `json:"backfill_consideration"`
 	PreemptionEnabled       bool                   `json:"preemption_enabled"`
-	
+
 	// Validation and Status
 	ConfigurationValid      bool                   `json:"configuration_valid"`
 	ValidationErrors        []string               `json:"validation_errors"`
@@ -98,45 +98,45 @@ type FairSharePolicyConfiguration struct {
 type FairSharePolicyEffectivenessMetrics struct {
 	PolicyID            string                 `json:"policy_id"`
 	MeasurementPeriod   string                 `json:"measurement_period"`
-	
+
 	// Fairness Metrics
 	GiniCoefficient     float64                `json:"gini_coefficient"`
 	FairnessIndex       float64                `json:"fairness_index"`
 	EquityScore         float64                `json:"equity_score"`
 	VariationCoefficient float64               `json:"variation_coefficient"`
 	JainsFairnessIndex  float64                `json:"jains_fairness_index"`
-	
+
 	// Effectiveness Scores
 	OverallEffectiveness    float64            `json:"overall_effectiveness"`
 	AllocationEffectiveness float64            `json:"allocation_effectiveness"`
 	EnforcementEffectiveness float64           `json:"enforcement_effectiveness"`
 	UserComplianceRate      float64            `json:"user_compliance_rate"`
 	SystemStabilityScore    float64            `json:"system_stability_score"`
-	
+
 	// Resource Distribution
 	ResourceDistributionFairness float64       `json:"resource_distribution_fairness"`
 	WaitTimeEquity              float64        `json:"wait_time_equity"`
 	ThroughputFairness          float64        `json:"throughput_fairness"`
 	AccessibilityScore          float64        `json:"accessibility_score"`
-	
+
 	// Policy Adherence
 	PolicyAdherenceRate     float64            `json:"policy_adherence_rate"`
 	ViolationRate           float64            `json:"violation_rate"`
 	CorrectionEfficiency    float64            `json:"correction_efficiency"`
 	Responseiveness         float64            `json:"responsiveness"`
-	
+
 	// Impact Assessment
 	UserSatisfactionImpact  float64            `json:"user_satisfaction_impact"`
 	SystemPerformanceImpact float64            `json:"system_performance_impact"`
 	ResourceEfficiencyImpact float64           `json:"resource_efficiency_impact"`
 	CollaborationImpact     float64            `json:"collaboration_impact"`
-	
+
 	// Temporal Analysis
 	TrendDirection          string             `json:"trend_direction"`
 	EffectivenessStability  float64            `json:"effectiveness_stability"`
 	ImprovementRate         float64            `json:"improvement_rate"`
 	AdaptationScore         float64            `json:"adaptation_score"`
-	
+
 	LastMeasured            time.Time          `json:"last_measured"`
 }
 
@@ -352,42 +352,42 @@ type PolicyCostBenefitAnalysis struct {
 type PolicyImpactAssessment struct {
 	PolicyID            string                 `json:"policy_id"`
 	AssessmentPeriod    string                 `json:"assessment_period"`
-	
+
 	// Quantitative Impact
 	ResourceAllocationChange map[string]float64 `json:"resource_allocation_change"`
 	WaitTimeImpact          float64            `json:"wait_time_impact"`
 	ThroughputImpact        float64            `json:"throughput_impact"`
 	UtilizationImpact       float64            `json:"utilization_impact"`
 	EfficiencyImpact        float64            `json:"efficiency_impact"`
-	
+
 	// User Behavior Impact
 	SubmissionPatternChange float64            `json:"submission_pattern_change"`
 	UserAdaptationRate      float64            `json:"user_adaptation_rate"`
 	CollaborationChange     float64            `json:"collaboration_change"`
 	CompetitionLevel        float64            `json:"competition_level"`
 	GameficationPrevention  float64            `json:"gamification_prevention"`
-	
+
 	// System Health Impact
 	SystemStabilityChange   float64            `json:"system_stability_change"`
 	LoadBalancingImprovement float64           `json:"load_balancing_improvement"`
 	ResourceContentionChange float64           `json:"resource_contention_change"`
 	SchedulingEfficiencyChange float64         `json:"scheduling_efficiency_change"`
-	
+
 	// Economic Impact
 	CostEfficiencyChange    float64            `json:"cost_efficiency_change"`
 	ResourceWasteReduction  float64            `json:"resource_waste_reduction"`
 	ProductivityImpact      float64            `json:"productivity_impact"`
 	ROIImprovement          float64            `json:"roi_improvement"`
-	
+
 	// Compliance and Governance
 	PolicyComplianceImprovement float64        `json:"policy_compliance_improvement"`
 	GovernanceEffectiveness     float64        `json:"governance_effectiveness"`
 	AuditabilityScore          float64         `json:"auditability_score"`
 	TransparencyImprovement    float64         `json:"transparency_improvement"`
-	
+
 	// Risk Assessment
 	ImplementationRisk      float64            `json:"implementation_risk"`
-	
+
 	// Additional Impact Metrics
 	UserSatisfactionImpact   float64           `json:"user_satisfaction_impact"`
 	SystemPerformanceImpact  float64           `json:"system_performance_impact"`
@@ -396,7 +396,7 @@ type PolicyImpactAssessment struct {
 	UserAcceptanceRisk      float64            `json:"user_acceptance_risk"`
 	SystemPerformanceRisk   float64            `json:"system_performance_risk"`
 	ComplianceRisk          float64            `json:"compliance_risk"`
-	
+
 	ImpactConfidence        float64            `json:"impact_confidence"`
 	LastAssessed            time.Time          `json:"last_assessed"`
 }
@@ -992,16 +992,16 @@ func (c *FairSharePolicyEffectivenessCollector) Collect(ch chan<- prometheus.Met
 
 	// Collect policy configuration metrics
 	c.collectPolicyConfiguration(ctx)
-	
+
 	// Collect policy effectiveness metrics
 	c.collectPolicyEffectiveness(ctx)
-	
+
 	// Collect impact assessment metrics
 	c.collectImpactAssessment(ctx)
-	
+
 	// Collect optimization metrics
 	c.collectOptimizationMetrics(ctx)
-	
+
 	// Collect advanced analytics
 	c.collectAdvancedAnalytics(ctx)
 
@@ -1139,11 +1139,11 @@ func (c *FairSharePolicyEffectivenessCollector) collectImpactAssessment(ctx cont
 	c.systemPerformanceImpact.WithLabelValues("policy_1", "throughput").Set(impact.SystemPerformanceImpact)
 	c.resourceEfficiencyImpact.WithLabelValues("policy_1", "cpu", "utilization").Set(impact.ResourceEfficiencyImpact)
 	c.collaborationImpact.WithLabelValues("policy_1", "resource_sharing").Set(impact.CollaborationImpact)
-	
+
 	c.waitTimeImpact.WithLabelValues("policy_1", "all_jobs", "all_partitions").Set(impact.WaitTimeImpact * 100)
 	c.throughputImpact.WithLabelValues("policy_1", "jobs_per_hour").Set(impact.ThroughputImpact * 100)
 	c.utilizationImpact.WithLabelValues("policy_1", "cpu").Set(impact.UtilizationImpact * 100)
-	
+
 	// Resource allocation changes
 	for resourceType, change := range impact.ResourceAllocationChange {
 		c.resourceAllocationChange.WithLabelValues("policy_1", resourceType, "all_users").Set(change * 100)

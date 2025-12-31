@@ -20,7 +20,7 @@ type BottleneckAnalyzer struct {
 	metrics        *BottleneckMetrics
 	efficiencyCalc *EfficiencyCalculator
 	mu             sync.RWMutex
-	
+
 	// Cache for analysis results
 	analysisCache   map[string]*StepPerformanceAnalysis
 	cacheTTL        time.Duration
@@ -34,16 +34,16 @@ type BottleneckConfig struct {
 	EnablePredictiveAnalysis  bool          `yaml:"enable_predictive_analysis"`
 	EnableRootCauseAnalysis   bool          `yaml:"enable_root_cause_analysis"`
 	CacheTTL                  time.Duration `yaml:"cache_ttl"`
-	
+
 	// Bottleneck detection thresholds
 	CPUBottleneckThreshold      float64 `yaml:"cpu_bottleneck_threshold"`      // CPU usage above this indicates bottleneck
 	MemoryBottleneckThreshold   float64 `yaml:"memory_bottleneck_threshold"`   // Memory usage above this indicates bottleneck
 	IOBottleneckThreshold       float64 `yaml:"io_bottleneck_threshold"`       // I/O wait above this indicates bottleneck
 	NetworkBottleneckThreshold  float64 `yaml:"network_bottleneck_threshold"`  // Network utilization above this indicates bottleneck
-	
+
 	// Performance degradation thresholds
 	PerformanceDegradationThreshold float64 `yaml:"performance_degradation_threshold"` // Performance drop above this is significant
-	
+
 	// Analysis sensitivity settings
 	SensitivityLevel           string  `yaml:"sensitivity_level"`             // "low", "medium", "high"
 	MinDataPointsForAnalysis   int     `yaml:"min_data_points_for_analysis"`
@@ -55,35 +55,35 @@ type StepPerformanceAnalysis struct {
 	JobID                string    `json:"job_id"`
 	StepID               string    `json:"step_id"`
 	AnalysisTimestamp    time.Time `json:"analysis_timestamp"`
-	
+
 	// Bottleneck identification
 	PrimaryBottleneck    string    `json:"primary_bottleneck"`    // "cpu", "memory", "io", "network", "none"
 	SecondaryBottlenecks []string  `json:"secondary_bottlenecks"`
 	BottleneckSeverity   float64   `json:"bottleneck_severity"`   // 0.0 to 1.0
 	BottleneckConfidence float64   `json:"bottleneck_confidence"` // 0.0 to 1.0
-	
+
 	// Performance metrics
 	CPUEfficiency        float64   `json:"cpu_efficiency"`
 	MemoryEfficiency     float64   `json:"memory_efficiency"`
 	IOEfficiency         float64   `json:"io_efficiency"`
 	NetworkEfficiency    float64   `json:"network_efficiency"`
 	OverallEfficiency    float64   `json:"overall_efficiency"`
-	
+
 	// Resource utilization patterns
 	CPUUtilizationPattern    string `json:"cpu_utilization_pattern"`    // "stable", "bursty", "declining", "increasing"
 	MemoryUtilizationPattern string `json:"memory_utilization_pattern"`
 	IOUtilizationPattern     string `json:"io_utilization_pattern"`
 	NetworkUtilizationPattern string `json:"network_utilization_pattern"`
-	
+
 	// Performance issues
 	PerformanceIssues    []PerformanceIssue `json:"performance_issues"`
 	OptimizationOpportunities []OptimizationOpportunity `json:"optimization_opportunities"`
-	
+
 	// Predictive analysis
 	PredictedCompletion  *time.Time `json:"predicted_completion,omitempty"`
 	EstimatedTimeRemaining float64   `json:"estimated_time_remaining"` // seconds
 	PerformanceTrend     string     `json:"performance_trend"`        // "improving", "stable", "degrading"
-	
+
 	// Root cause analysis
 	RootCauses           []RootCause `json:"root_causes"`
 	RecommendedActions   []string    `json:"recommended_actions"`
@@ -116,21 +116,21 @@ type BottleneckMetrics struct {
 	BottleneckSeverity         *prometheus.GaugeVec
 	BottleneckConfidence       *prometheus.GaugeVec
 	BottleneckType            *prometheus.GaugeVec
-	
+
 	// Performance analysis metrics
 	PerformanceEfficiencyScore *prometheus.GaugeVec
 	PerformanceIssueCount      *prometheus.GaugeVec
 	OptimizationOpportunities  *prometheus.GaugeVec
-	
+
 	// Predictive metrics
 	PredictedCompletionTime    *prometheus.GaugeVec
 	EstimatedTimeRemaining     *prometheus.GaugeVec
 	PerformanceTrendIndicator  *prometheus.GaugeVec
-	
+
 	// Root cause analysis metrics
 	RootCauseCount            *prometheus.GaugeVec
 	RootCauseConfidence       *prometheus.GaugeVec
-	
+
 	// Analysis performance metrics
 	AnalysisDuration          prometheus.Histogram
 	AnalysisErrors            *prometheus.CounterVec
@@ -365,16 +365,16 @@ func (b *BottleneckAnalyzer) analyzeBottlenecks(ctx context.Context) error {
 	// Analyze each job
 	for _, job := range jobs.Jobs {
 		analysis := b.performStepPerformanceAnalysis(&job)
-		
+
 		// Cache the analysis
 		cacheKey := fmt.Sprintf("%d:0", job.ID) // Step 0 for main job step
 		b.analysisCache[cacheKey] = analysis
 
 		// Update metrics
 		b.updateAnalysisMetrics(&job, analysis)
-		
+
 		b.metrics.StepsAnalyzed.Inc()
-		
+
 		if analysis.PrimaryBottleneck != "none" {
 			b.metrics.BottlenecksFound.Inc()
 		}
@@ -397,7 +397,7 @@ func (b *BottleneckAnalyzer) performStepPerformanceAnalysis(job *slurm.Job) *Ste
 
 	// Create resource utilization data for efficiency calculation
 	utilizationData := CreateResourceUtilizationDataFromJob(job)
-	
+
 	// Calculate efficiency metrics
 	efficiencyMetrics, err := b.efficiencyCalc.CalculateEfficiency(utilizationData)
 	if err != nil {
@@ -421,7 +421,7 @@ func (b *BottleneckAnalyzer) performStepPerformanceAnalysis(job *slurm.Job) *Ste
 
 	// Identify primary bottleneck
 	analysis.PrimaryBottleneck, analysis.BottleneckSeverity, analysis.BottleneckConfidence = b.identifyPrimaryBottleneck(utilizationData, efficiencyMetrics)
-	
+
 	// Identify secondary bottlenecks
 	analysis.SecondaryBottlenecks = b.identifySecondaryBottlenecks(utilizationData, efficiencyMetrics, analysis.PrimaryBottleneck)
 
@@ -433,7 +433,7 @@ func (b *BottleneckAnalyzer) performStepPerformanceAnalysis(job *slurm.Job) *Ste
 
 	// Detect performance issues
 	analysis.PerformanceIssues = b.detectPerformanceIssues(utilizationData, efficiencyMetrics)
-	
+
 	// Identify optimization opportunities
 	analysis.OptimizationOpportunities = b.identifyOptimizationOpportunities(utilizationData, efficiencyMetrics, analysis.PerformanceIssues)
 
@@ -466,7 +466,7 @@ func (b *BottleneckAnalyzer) identifyPrimaryBottleneck(data *ResourceUtilization
 	// Find the highest scoring bottleneck
 	maxScore := 0.0
 	primaryBottleneck := "none"
-	
+
 	for resource, score := range scores {
 		if score > maxScore {
 			maxScore = score
@@ -489,7 +489,7 @@ func (b *BottleneckAnalyzer) identifyPrimaryBottleneck(data *ResourceUtilization
 // identifySecondaryBottlenecks identifies secondary bottlenecks
 func (b *BottleneckAnalyzer) identifySecondaryBottlenecks(data *ResourceUtilizationData, efficiency *EfficiencyMetrics, primary string) []string {
 	secondary := []string{}
-	
+
 	if primary != "cpu" && efficiency.CPUEfficiency < 0.6 {
 		secondary = append(secondary, "cpu")
 	}
@@ -513,12 +513,12 @@ func (b *BottleneckAnalyzer) calculateCPUBottleneckScore(data *ResourceUtilizati
 	}
 
 	cpuUtil := data.CPUUsed / data.CPUAllocated
-	
+
 	// High CPU utilization with low efficiency indicates bottleneck
 	if cpuUtil > b.config.CPUBottleneckThreshold && efficiency.CPUEfficiency < 0.7 {
 		return cpuUtil * (1.0 - efficiency.CPUEfficiency)
 	}
-	
+
 	return 0.0
 }
 
@@ -529,12 +529,12 @@ func (b *BottleneckAnalyzer) calculateMemoryBottleneckScore(data *ResourceUtiliz
 	}
 
 	memoryUtil := float64(data.MemoryUsed) / float64(data.MemoryAllocated)
-	
+
 	// High memory utilization indicates bottleneck
 	if memoryUtil > b.config.MemoryBottleneckThreshold {
 		return memoryUtil * (1.0 - efficiency.MemoryEfficiency)
 	}
-	
+
 	return 0.0
 }
 
@@ -545,12 +545,12 @@ func (b *BottleneckAnalyzer) calculateIOBottleneckScore(data *ResourceUtilizatio
 	}
 
 	ioWaitRatio := data.IOWaitTime / data.WallTime
-	
+
 	// High I/O wait indicates bottleneck
 	if ioWaitRatio > b.config.IOBottleneckThreshold {
 		return ioWaitRatio * (1.0 - efficiency.IOEfficiency)
 	}
-	
+
 	return 0.0
 }
 
@@ -567,12 +567,12 @@ func (b *BottleneckAnalyzer) calculateNetworkBottleneckScore(data *ResourceUtili
 
 	// Calculate network utilization (simplified)
 	networkThroughput := float64(totalBytes) / data.WallTime
-	
+
 	// If network throughput is very high and efficiency is low, it might be a bottleneck
 	if networkThroughput > 100*1024*1024 && efficiency.NetworkEfficiency < 0.7 { // 100 MB/s threshold
 		return (1.0 - efficiency.NetworkEfficiency) * 0.8 // Lower weight for network bottlenecks
 	}
-	
+
 	return 0.0
 }
 
@@ -584,7 +584,7 @@ func (b *BottleneckAnalyzer) calculateBottleneckConfidence(scores map[string]flo
 
 	primaryScore := scores[primary]
 	totalOtherScores := 0.0
-	
+
 	for resource, score := range scores {
 		if resource != primary {
 			totalOtherScores += score
@@ -595,12 +595,12 @@ func (b *BottleneckAnalyzer) calculateBottleneckConfidence(scores map[string]flo
 	if totalOtherScores == 0 {
 		return 1.0
 	}
-	
+
 	confidence := primaryScore / (primaryScore + totalOtherScores)
 	return math.Min(confidence, 1.0)
 }
 
-// Additional methods would continue here for pattern analysis, issue detection, 
+// Additional methods would continue here for pattern analysis, issue detection,
 // optimization opportunities, predictive analysis, root cause analysis, etc.
 // These are simplified implementations for the core functionality.
 
@@ -697,7 +697,7 @@ func (b *BottleneckAnalyzer) performPredictiveAnalysis(job *slurm.Job, data *Res
 			if progress > 0 && progress < 1 {
 				estimatedTotal := data.WallTime / progress
 				analysis.EstimatedTimeRemaining = estimatedTotal - data.WallTime
-				
+
 				predictedCompletion := time.Now().Add(time.Duration(analysis.EstimatedTimeRemaining) * time.Second)
 				analysis.PredictedCompletion = &predictedCompletion
 			}
@@ -779,7 +779,7 @@ func (b *BottleneckAnalyzer) updateAnalysisMetrics(job *slurm.Job, analysis *Ste
 	labels := []string{
 		analysis.JobID,
 		analysis.StepID,
-		"", // TODO: job.UserName field not available  
+		"", // TODO: job.UserName field not available
 		"", // TODO: job.Account field not available
 		job.Partition,
 	}
@@ -795,7 +795,7 @@ func (b *BottleneckAnalyzer) updateAnalysisMetrics(job *slurm.Job, analysis *Ste
 		severityLabels := append(labels, analysis.PrimaryBottleneck)
 		b.metrics.BottleneckSeverity.WithLabelValues(severityLabels...).Set(analysis.BottleneckSeverity)
 		b.metrics.BottleneckConfidence.WithLabelValues(severityLabels...).Set(analysis.BottleneckConfidence)
-		
+
 		typeLabels := append(labels, analysis.PrimaryBottleneck)
 		b.metrics.BottleneckType.WithLabelValues(typeLabels...).Set(1.0)
 	}

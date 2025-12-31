@@ -19,7 +19,7 @@ type JobPerformanceCollector struct {
 	metrics         *JobPerformanceMetrics
 	lastCollection  time.Time
 	mu              sync.RWMutex
-	
+
 	// Cache for recent job data
 	jobCache        map[string]*JobUtilization
 	cacheTTL        time.Duration
@@ -56,18 +56,18 @@ type JobPerformanceMetrics struct {
 	JobIOUtilization        *prometheus.GaugeVec
 	JobNetworkUtilization   *prometheus.GaugeVec
 	JobEnergyConsumption    *prometheus.GaugeVec
-	
+
 	// Job efficiency metrics
 	JobCPUEfficiency        *prometheus.GaugeVec
 	JobMemoryEfficiency     *prometheus.GaugeVec
 	JobIOEfficiency         *prometheus.GaugeVec
 	JobOverallEfficiency    *prometheus.GaugeVec
-	
+
 	// Job resource waste metrics
 	JobCPUWasted            *prometheus.GaugeVec
 	JobMemoryWasted         *prometheus.GaugeVec
 	JobResourceWasteRatio   *prometheus.GaugeVec
-	
+
 	// Collection performance metrics
 	CollectionDuration      prometheus.Histogram
 	CollectionErrors        *prometheus.CounterVec
@@ -369,10 +369,10 @@ func (c *JobPerformanceCollector) updateMetricsFromUtilization(job *slurm.Job, u
 	if util.IOUtilization != nil {
 		readLabels := append(labels, "read")
 		writeLabels := append(labels, "write")
-		
+
 		c.metrics.JobIOUtilization.WithLabelValues(readLabels...).Set(util.IOUtilization.ReadBytesPerSecond)
 		c.metrics.JobIOUtilization.WithLabelValues(writeLabels...).Set(util.IOUtilization.WriteBytesPerSecond)
-		
+
 		if util.IOUtilization.Efficiency > 0 {
 			c.metrics.JobIOEfficiency.WithLabelValues(labels...).Set(util.IOUtilization.Efficiency)
 		}
@@ -382,7 +382,7 @@ func (c *JobPerformanceCollector) updateMetricsFromUtilization(job *slurm.Job, u
 	if util.NetworkUtilization != nil {
 		rxLabels := append(labels, "rx")
 		txLabels := append(labels, "tx")
-		
+
 		c.metrics.JobNetworkUtilization.WithLabelValues(rxLabels...).Set(util.NetworkUtilization.ReceiveBytesPerSecond)
 		c.metrics.JobNetworkUtilization.WithLabelValues(txLabels...).Set(util.NetworkUtilization.TransmitBytesPerSecond)
 	}
@@ -396,7 +396,7 @@ func (c *JobPerformanceCollector) updateMetricsFromUtilization(job *slurm.Job, u
 	if util.CPUUtilization != nil && util.MemoryUtilization != nil {
 		overallEfficiency := (util.CPUUtilization.Efficiency + util.MemoryUtilization.Efficiency) / 2.0
 		c.metrics.JobOverallEfficiency.WithLabelValues(labels...).Set(overallEfficiency)
-		
+
 		// Resource waste ratio
 		if util.CPUUtilization.Wasted > 0 || util.MemoryUtilization.Wasted > 0 {
 			totalAllocated := util.CPUUtilization.Allocated + util.MemoryUtilization.Allocated

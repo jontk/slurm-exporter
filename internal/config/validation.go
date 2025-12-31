@@ -31,7 +31,7 @@ func (v ValidationErrors) Error() string {
 	if len(v) == 0 {
 		return "no validation errors"
 	}
-	
+
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("configuration validation failed with %d error(s):\n", len(v)))
 	for i, err := range v {
@@ -86,7 +86,7 @@ func (c *Config) validateSecurity() ValidationErrors {
 				Code:    "TLS_KEY_REQUIRED",
 			})
 		}
-		
+
 		// Validate TLS version
 		if c.Server.TLS.MinVersion != "" {
 			validVersions := []string{"1.0", "1.1", "1.2", "1.3"}
@@ -124,7 +124,7 @@ func (c *Config) validateSecurity() ValidationErrors {
 				Code:    "BASIC_AUTH_PASSWORD_REQUIRED",
 			})
 		}
-		
+
 		// Password strength validation
 		if len(c.Server.BasicAuth.Password) < 8 {
 			errors = append(errors, ValidationError{
@@ -395,8 +395,8 @@ func (c *Config) validateMetricFilters() ValidationErrors {
 		filters := collector.Filters.Metrics
 		if !filters.EnableAll && len(filters.IncludeMetrics) == 0 && len(filters.ExcludeMetrics) == 0 {
 			// Check if any type-specific filters are enabled
-			hasTypeFilters := filters.OnlyInfo || filters.OnlyCounters || filters.OnlyGauges || 
-				filters.OnlyHistograms || filters.SkipHistograms || filters.SkipTimingMetrics || 
+			hasTypeFilters := filters.OnlyInfo || filters.OnlyCounters || filters.OnlyGauges ||
+				filters.OnlyHistograms || filters.SkipHistograms || filters.SkipTimingMetrics ||
 				filters.SkipResourceMetrics
 
 			if !hasTypeFilters {
@@ -473,7 +473,7 @@ func isLocalhost(host string) bool {
 	if colonIndex := strings.LastIndex(host, ":"); colonIndex > 0 {
 		host = host[:colonIndex]
 	}
-	
+
 	for _, local := range localHosts {
 		if host == local {
 			return true

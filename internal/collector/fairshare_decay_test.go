@@ -324,7 +324,7 @@ func TestFairShareDecayCollector_Collect_Success(t *testing.T) {
 	foundResetSchedule := false
 	foundSystemEffectiveness := false
 	foundAnomalyDetection := false
-	
+
 	for name := range metricNames {
 		if strings.Contains(name, "fairshare_decay_rate") {
 			foundDecayRate = true
@@ -427,7 +427,7 @@ func TestFairShareDecayCollector_MetricValues(t *testing.T) {
 	foundDecayFactor := false
 	foundResetCountdown := false
 	foundEffectiveness := false
-	
+
 	for _, mf := range metricFamilies {
 		switch *mf.Name {
 		case "slurm_fairshare_half_life_hours":
@@ -478,7 +478,7 @@ func TestFairShareDecayCollector_Integration(t *testing.T) {
 		slurm_fairshare_half_life_hours{config_version="v2.0",scope="system"} 24
 	`
 
-	err := testutil.CollectAndCompare(collector, strings.NewReader(expected), 
+	err := testutil.CollectAndCompare(collector, strings.NewReader(expected),
 		"slurm_fairshare_half_life_hours")
 	assert.NoError(t, err)
 }

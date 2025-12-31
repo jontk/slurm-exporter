@@ -187,28 +187,28 @@ func main() {
 func performHealthCheck() error {
 	// Default address for health check
 	healthURL := "http://localhost:8080/health"
-	
+
 	// Try to read address from environment or config
 	if envAddr := os.Getenv("SLURM_EXPORTER_ADDRESS"); envAddr != "" {
 		healthURL = fmt.Sprintf("http://%s/health", envAddr)
 	}
-	
+
 	// Create HTTP client with timeout
 	client := &http.Client{
 		Timeout: 5 * time.Second,
 	}
-	
+
 	// Perform health check request
 	resp, err := client.Get(healthURL)
 	if err != nil {
 		return fmt.Errorf("failed to connect to health endpoint: %w", err)
 	}
 	defer resp.Body.Close()
-	
+
 	// Check response status
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("health endpoint returned status %d", resp.StatusCode)
 	}
-	
+
 	return nil
 }

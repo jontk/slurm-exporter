@@ -34,13 +34,13 @@ type Collector interface {
 // FilterableCollector extends the base Collector interface with filtering capabilities
 type FilterableCollector interface {
 	Collector
-	
+
 	// SetMetricFilter sets the metric filter for this collector
 	SetMetricFilter(filter *MetricFilter)
-	
+
 	// GetMetricFilter returns the current metric filter
 	GetMetricFilter() *MetricFilter
-	
+
 	// UpdateFilterConfig updates the filter configuration
 	UpdateFilterConfig(config config.FilterConfig)
 }
@@ -48,7 +48,7 @@ type FilterableCollector interface {
 // CardinalityAwareCollector extends collectors with cardinality management
 type CardinalityAwareCollector interface {
 	Collector
-	
+
 	// SetCardinalityManager sets the cardinality manager for this collector
 	SetCardinalityManager(cm *metrics.CardinalityManager)
 }
@@ -56,7 +56,7 @@ type CardinalityAwareCollector interface {
 // CustomLabelsCollector extends collectors with custom label support
 type CustomLabelsCollector interface {
 	Collector
-	
+
 	// SetCustomLabels sets custom labels for this collector
 	SetCustomLabels(labels map[string]string)
 }

@@ -303,7 +303,7 @@ func TestJobSchedulingStreamingCollector_Collect_ActiveStreams(t *testing.T) {
 	}
 
 	assert.Greater(t, len(metrics), 0)
-	
+
 	// Verify that we have metrics for active streams
 	hasActiveStreamMetric := false
 	for _, m := range metrics {
@@ -319,7 +319,7 @@ func TestJobSchedulingStreamingCollector_Collect_ActiveStreams(t *testing.T) {
 		}
 	}
 	assert.True(t, hasActiveStreamMetric, "Should have metrics for active streams")
-	
+
 	client.AssertExpectations(t)
 }
 

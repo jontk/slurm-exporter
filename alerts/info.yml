@@ -52,10 +52,10 @@ groups:
       - alert: ProjectedCapacityShortage
         expr: |
           predict_linear(
-            slurm_cluster_cpus_total{state="allocated"}[7d], 
+            slurm_cluster_cpus_total{state="allocated"}[7d],
             86400 * 30  # 30 days
-          ) 
-          > 
+          )
+          >
           slurm_cluster_cpus_total{state="total"} * 0.95
         for: 6h
         labels:
@@ -88,8 +88,8 @@ groups:
 
       - alert: SeasonalCapacityTrend
         expr: |
-          avg_over_time(slurm_cluster_jobs_total{state="running"}[7d]) 
-          > 
+          avg_over_time(slurm_cluster_jobs_total{state="running"}[7d])
+          >
           avg_over_time(slurm_cluster_jobs_total{state="running"}[30d]) * 1.2
         for: 48h
         labels:
@@ -178,8 +178,8 @@ groups:
 
       - alert: HomogeneousJobSizes
         expr: |
-          stddev by (partition) (slurm_job_nodes_allocated) 
-          / 
+          stddev by (partition) (slurm_job_nodes_allocated)
+          /
           avg by (partition) (slurm_job_nodes_allocated) < 0.1
         for: 48h
         labels:
@@ -249,7 +249,7 @@ groups:
         expr: |
           (
             sum(slurm_node_gpus_total) - sum(slurm_node_gpus_allocated)
-          ) * 
+          ) *
           avg(slurm_gpu_hourly_cost) > 100
         for: 12h
         labels:

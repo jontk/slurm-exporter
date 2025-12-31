@@ -21,7 +21,7 @@ type SimplifiedJobPerformanceCollector struct {
 	efficiencyCalc     *EfficiencyCalculator
 	lastCollection     time.Time
 	mu                 sync.RWMutex
-	
+
 	// Cache for recent job data
 	jobCache           map[string]*slurm.Job
 	efficiencyCache    map[string]*EfficiencyMetrics
@@ -38,25 +38,25 @@ type SimplifiedJobMetrics struct {
 	JobGPUAllocated       *prometheus.GaugeVec
 	JobQueueTime          *prometheus.GaugeVec
 	JobStartDelay         *prometheus.GaugeVec
-	
+
 	// Job state tracking
 	JobStateTransitions   *prometheus.CounterVec
 	JobsByState           *prometheus.GaugeVec
 	JobsByUser            *prometheus.GaugeVec
 	JobsByAccount         *prometheus.GaugeVec
 	JobsByPartition       *prometheus.GaugeVec
-	
+
 	// Performance indicators (estimated)
 	JobResourceRatio      *prometheus.GaugeVec
 	JobEfficiencyEstimate *prometheus.GaugeVec
-	
+
 	// Efficiency metrics from calculator
 	JobCPUEfficiencyScore     *prometheus.GaugeVec
 	JobMemoryEfficiencyScore  *prometheus.GaugeVec
 	JobOverallEfficiencyScore *prometheus.GaugeVec
 	JobEfficiencyGrade        *prometheus.GaugeVec
 	JobWasteRatio             *prometheus.GaugeVec
-	
+
 	// Collection performance metrics
 	CollectionDuration    prometheus.Histogram
 	CollectionErrors      *prometheus.CounterVec
@@ -347,7 +347,7 @@ func (c *SimplifiedJobPerformanceCollector) collectJobMetrics(ctx context.Contex
 
 	cacheHits := 0
 	totalJobs := len(jobs.Jobs)
-	
+
 	// Track state counts for aggregation
 	stateCounts := make(map[string]map[string]int) // partition -> state -> count
 	userStateCounts := make(map[string]map[string]int) // user -> state -> count
@@ -397,13 +397,13 @@ func (c *SimplifiedJobPerformanceCollector) updateMetricsFromJob(job *slurm.Job)
 	if job.CPUs > 0 {
 		c.metrics.JobCPUAllocated.WithLabelValues(labels...).Set(float64(job.CPUs))
 	}
-	
+
 	if job.Memory > 0 {
 		// Convert MB to bytes
 		memoryBytes := float64(job.Memory) * 1024 * 1024
 		c.metrics.JobMemoryAllocated.WithLabelValues(labels...).Set(memoryBytes)
 	}
-	
+
 	if job.Nodes > 0 {
 		c.metrics.JobNodesAllocated.WithLabelValues(labels...).Set(float64(job.Nodes))
 	}
@@ -540,7 +540,7 @@ func (c *SimplifiedJobPerformanceCollector) updateEfficiencyMetrics(job *slurm.J
 
 	// Create resource utilization data from job
 	utilizationData := CreateResourceUtilizationDataFromJob(job)
-	
+
 	// Calculate efficiency metrics
 	efficiencyMetrics, err := c.efficiencyCalc.CalculateEfficiency(utilizationData)
 	if err != nil {

@@ -336,7 +336,7 @@ func (s *Server) Start(ctx context.Context) error {
 	if s.config.Server.TLS.Enabled {
 		scheme = "HTTPS"
 	}
-	
+
 	s.logger.WithFields(logrus.Fields{
 		"address": s.config.Server.Address,
 		"scheme":  scheme,
@@ -495,12 +495,12 @@ func (s *Server) handleRoot(w http.ResponseWriter, r *http.Request) {
 <body>
     <h1>SLURM Prometheus Exporter</h1>
     <p>This is a Prometheus exporter for SLURM workload manager metrics.</p>
-    
+
     <h2>Available Endpoints</h2>
     <div class="endpoint">📊 <a href="%s">Metrics</a> - Prometheus metrics endpoint</div>
     <div class="endpoint">❤️ <a href="/health">Health</a> - Health check endpoint</div>
     <div class="endpoint">⚡ <a href="/ready">Ready</a> - Readiness check endpoint</div>
-    
+
     <div class="stats">
         <h3>Collector Status</h3>
         %s
@@ -653,10 +653,10 @@ func (s *Server) handleDebugHealth(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	report := s.healthChecker.CheckHealth(ctx)
-	
+
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-cache")
-	
+
 	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"health_report": report,
 		"server_info": map[string]interface{}{
@@ -681,10 +681,10 @@ func (s *Server) handleDebugCollectors(w http.ResponseWriter, r *http.Request) {
 	}
 
 	stats := s.registry.GetStats()
-	
+
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-cache")
-	
+
 	debugInfo := map[string]interface{}{
 		"collectors": stats,
 		"summary": map[string]interface{}{
@@ -701,7 +701,7 @@ func (s *Server) handleDebugCollectors(w http.ResponseWriter, r *http.Request) {
 		},
 		"timestamp": time.Now(),
 	}
-	
+
 	if err := json.NewEncoder(w).Encode(debugInfo); err != nil {
 		logger.WithError(err).Error("Failed to encode debug collectors response")
 		http.Error(w, "Internal server error", http.StatusInternalServerError)

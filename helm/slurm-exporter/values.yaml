@@ -118,7 +118,7 @@ config:
     readTimeout: "30s"
     writeTimeout: "30s"
     maxRequestSize: 10485760
-  
+
   # SLURM connection
   slurm:
     baseUrl: "http://slurm-api.example.com:6820"
@@ -126,13 +126,13 @@ config:
     auth:
       type: "jwt"  # jwt, basic, or token
       jwtPath: "/var/run/secrets/slurm-jwt/token"
-  
+
   # Logging
   logging:
     level: "info"
     format: "json"
     output: "stdout"
-  
+
   # Collectors
   collectors:
     jobs:
@@ -190,7 +190,7 @@ config:
       filters:
         metricFilter:
           enableAll: true
-    
+
     # Cardinality limits
     cardinalityLimits:
       "slurm_job_*":

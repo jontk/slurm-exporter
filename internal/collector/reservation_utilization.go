@@ -601,7 +601,7 @@ type ReservationUtilizationCollector struct {
 	reservationNodeCount          *prometheus.GaugeVec
 	reservationCoreCount          *prometheus.GaugeVec
 	reservationUtilization        *prometheus.GaugeVec
-	
+
 	// Resource utilization metrics
 	reservationNodesAllocated     *prometheus.GaugeVec
 	reservationCoresAllocated     *prometheus.GaugeVec
@@ -611,7 +611,7 @@ type ReservationUtilizationCollector struct {
 	reservationNodesDrained       *prometheus.GaugeVec
 	reservationWalltimeUsed       *prometheus.CounterVec
 	reservationWalltimeUtilization *prometheus.GaugeVec
-	
+
 	// Job metrics
 	reservationJobsRunning        *prometheus.GaugeVec
 	reservationJobsCompleted      *prometheus.CounterVec
@@ -619,7 +619,7 @@ type ReservationUtilizationCollector struct {
 	reservationJobThroughput      *prometheus.GaugeVec
 	reservationAverageJobRuntime  *prometheus.GaugeVec
 	reservationAverageQueueTime   *prometheus.GaugeVec
-	
+
 	// Efficiency metrics
 	reservationEfficiencyScore    *prometheus.GaugeVec
 	reservationResourceEfficiency *prometheus.GaugeVec
@@ -627,52 +627,52 @@ type ReservationUtilizationCollector struct {
 	reservationEnergyEfficiency   *prometheus.GaugeVec
 	reservationCostEfficiency     *prometheus.GaugeVec
 	reservationWastedResources    *prometheus.GaugeVec
-	
+
 	// User and account metrics
 	reservationUserCount          *prometheus.GaugeVec
 	reservationAccountCount       *prometheus.GaugeVec
 	reservationUserSatisfaction   *prometheus.GaugeVec
 	reservationSLACompliance      *prometheus.GaugeVec
-	
+
 	// Cost metrics
 	reservationCostEstimate       *prometheus.GaugeVec
 	reservationCostPerHour        *prometheus.GaugeVec
 	reservationROI                *prometheus.GaugeVec
 	reservationTotalCost          *prometheus.CounterVec
-	
+
 	// Conflict metrics
 	reservationConflicts          *prometheus.GaugeVec
 	reservationConflictResolution *prometheus.HistogramVec
-	
+
 	// Alert metrics
 	reservationAlerts             *prometheus.CounterVec
 	reservationActiveAlerts       *prometheus.GaugeVec
 	reservationAlertResolution    *prometheus.HistogramVec
 	reservationFalsePositiveRate  *prometheus.GaugeVec
-	
+
 	// Trend and prediction metrics
 	reservationUtilizationTrend   *prometheus.GaugeVec
 	reservationEfficiencyTrend    *prometheus.GaugeVec
 	reservationForecastAccuracy   *prometheus.GaugeVec
 	reservationPredictionConfidence *prometheus.GaugeVec
-	
+
 	// Performance metrics
 	reservationPerformanceScore   *prometheus.GaugeVec
 	reservationThroughputScore    *prometheus.GaugeVec
 	reservationReliabilityScore   *prometheus.GaugeVec
 	reservationAvailabilityScore  *prometheus.GaugeVec
-	
+
 	// Optimization metrics
 	reservationOptimizationScore  *prometheus.GaugeVec
 	reservationOptimizationPotential *prometheus.GaugeVec
 	reservationImprovementPotential  *prometheus.GaugeVec
-	
+
 	// System metrics
 	systemReservationUtilization  *prometheus.GaugeVec
 	systemReservationEfficiency   *prometheus.GaugeVec
 	systemReservationCost         *prometheus.GaugeVec
 	systemReservationHealth       *prometheus.GaugeVec
-	
+
 	// Collection metrics
 	collectionDuration            *prometheus.HistogramVec
 	collectionErrors              *prometheus.CounterVec

@@ -56,7 +56,7 @@ func NewHealthChecker(logger *logrus.Logger) *HealthChecker {
 func (h *HealthChecker) RegisterCheck(name string, checkFunc CheckFunc) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	
+
 	h.checks[name] = checkFunc
 	h.logger.WithField("check", name).Debug("Health check registered")
 }
@@ -65,7 +65,7 @@ func (h *HealthChecker) RegisterCheck(name string, checkFunc CheckFunc) {
 func (h *HealthChecker) RemoveCheck(name string) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	
+
 	delete(h.checks, name)
 	delete(h.cache, name)
 	h.logger.WithField("check", name).Debug("Health check removed")
@@ -94,13 +94,13 @@ func (h *HealthChecker) CheckHealth(ctx context.Context) HealthReport {
 		wg.Add(1)
 		go func(name string, check CheckFunc) {
 			defer wg.Done()
-			
+
 			start := time.Now()
 			result := check(ctx)
 			result.Name = name
 			result.LastChecked = start
 			result.Duration = time.Since(start)
-			
+
 			results <- result
 		}(name, checkFunc)
 	}
@@ -114,12 +114,12 @@ func (h *HealthChecker) CheckHealth(ctx context.Context) HealthReport {
 	// Collect results
 	for result := range results {
 		report.Checks[result.Name] = result
-		
+
 		// Update cache
 		h.mu.Lock()
 		h.cache[result.Name] = result
 		h.mu.Unlock()
-		
+
 		// Determine overall status
 		switch result.Status {
 		case StatusUnhealthy:
@@ -132,7 +132,7 @@ func (h *HealthChecker) CheckHealth(ctx context.Context) HealthReport {
 	}
 
 	report.Duration = time.Since(report.Timestamp)
-	
+
 	h.logger.WithFields(logrus.Fields{
 		"status":       report.Status,
 		"checks_count": len(report.Checks),
@@ -146,7 +146,7 @@ func (h *HealthChecker) CheckHealth(ctx context.Context) HealthReport {
 func (h *HealthChecker) GetCachedCheck(name string) (Check, bool) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
-	
+
 	check, exists := h.cache[name]
 	return check, exists
 }
@@ -177,9 +177,9 @@ func (h *HealthChecker) HealthHandler() http.HandlerFunc {
 		defer cancel()
 
 		report := h.CheckHealth(ctx)
-		
+
 		w.Header().Set("Content-Type", "application/json")
-		
+
 		// Set HTTP status based on health
 		switch report.Status {
 		case StatusHealthy:
@@ -191,7 +191,7 @@ func (h *HealthChecker) HealthHandler() http.HandlerFunc {
 		default:
 			w.WriteHeader(http.StatusInternalServerError)
 		}
-		
+
 		if err := json.NewEncoder(w).Encode(report); err != nil {
 			h.logger.WithError(err).Error("Failed to encode health report")
 		}
@@ -205,15 +205,15 @@ func (h *HealthChecker) ReadinessHandler() http.HandlerFunc {
 		defer cancel()
 
 		report := h.CheckHealth(ctx)
-		
+
 		w.Header().Set("Content-Type", "application/json")
-		
+
 		if report.IsReady() {
 			w.WriteHeader(http.StatusOK)
 		} else {
 			w.WriteHeader(http.StatusServiceUnavailable)
 		}
-		
+
 		// Return simplified response for readiness
 		response := map[string]interface{}{
 			"ready":      report.IsReady(),
@@ -230,7 +230,7 @@ func (h *HealthChecker) ReadinessHandler() http.HandlerFunc {
 			}(),
 			"total_checks": len(report.Checks),
 		}
-		
+
 		if err := json.NewEncoder(w).Encode(response); err != nil {
 			h.logger.WithError(err).Error("Failed to encode readiness report")
 		}
@@ -242,16 +242,16 @@ func (h *HealthChecker) LivenessHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Liveness is simpler - just check if the service is running
 		// We don't want to kill the pod due to external dependencies being down
-		
+
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		
+
 		response := map[string]interface{}{
 			"alive":     true,
 			"timestamp": time.Now(),
 			"uptime":    time.Since(startTime),
 		}
-		
+
 		json.NewEncoder(w).Encode(response)
 	}
 }
@@ -268,11 +268,11 @@ func SLURMConnectivityCheck(client interface{}, timeout time.Duration) CheckFunc
 		defer cancel()
 
 		start := time.Now()
-		
+
 		// Try to ping SLURM API
 		// This would be implemented based on your SLURM client interface
 		// For now, we'll create a basic connectivity check
-		
+
 		check := Check{
 			Status:      StatusHealthy,
 			Message:     "SLURM API is reachable",
@@ -300,7 +300,7 @@ func SLURMConnectivityCheck(client interface{}, timeout time.Duration) CheckFunc
 func CollectorHealthCheck(collectorName string, lastCollection time.Time, maxAge time.Duration) CheckFunc {
 	return func(ctx context.Context) Check {
 		age := time.Since(lastCollection)
-		
+
 		check := Check{
 			Message: fmt.Sprintf("Last collection: %s ago", age.Round(time.Second)),
 			Metadata: map[string]string{

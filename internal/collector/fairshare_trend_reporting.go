@@ -16,25 +16,25 @@ type FairShareTrendReportingSLURMClient interface {
 	GetUserFairShareHistory(ctx context.Context, userName string, period string) (*UserFairShareHistory, error)
 	GetAccountFairShareHistory(ctx context.Context, accountName string, period string) (*AccountFairShareHistory, error)
 	GetSystemFairShareTrends(ctx context.Context, period string) (*SystemFairShareTrends, error)
-	
+
 	// Time Series Analysis
 	GetFairShareTimeSeries(ctx context.Context, entity string, metric string, resolution string) (*FairShareTimeSeries, error)
 	GetFairShareAggregations(ctx context.Context, aggregationType string, period string) (*FairShareAggregations, error)
 	GetFairShareMovingAverages(ctx context.Context, entity string, windows []string) (*FairShareMovingAverages, error)
 	GetSeasonalDecomposition(ctx context.Context, entity string, period string) (*SeasonalDecomposition, error)
-	
+
 	// Visualization Data
 	GetFairShareHeatmap(ctx context.Context, entityType string, period string) (*FairShareHeatmap, error)
 	GetFairShareDistribution(ctx context.Context, timestamp time.Time) (*FairShareDistribution, error)
 	GetFairShareComparison(ctx context.Context, entities []string, period string) (*FairShareComparison, error)
 	GetFairShareCorrelations(ctx context.Context, metrics []string, period string) (*FairShareCorrelations, error)
-	
+
 	// Reporting and Insights
 	GenerateFairShareReport(ctx context.Context, reportType string, period string) (*FairShareReport, error)
 	GetFairShareInsights(ctx context.Context, entity string, period string) (*FairShareInsights, error)
 	GetFairShareAnomalies(ctx context.Context, period string) (*FairShareAnomalies, error)
 	GetFairShareForecast(ctx context.Context, entity string, horizon string) (*FairShareForecast, error)
-	
+
 	// Dashboard Support
 	GetDashboardMetrics(ctx context.Context, dashboardID string) (*DashboardMetrics, error)
 	GetRealtimeUpdates(ctx context.Context, updateType string) (*RealtimeUpdates, error)
@@ -206,14 +206,14 @@ type FairShareTrendReportData struct {
 	Entity            string                 `json:"entity"`
 	EntityType        string                 `json:"entity_type"`
 	Period            string                 `json:"period"`
-	
+
 	// Core Trend Metrics
 	FairShareValues   []float64              `json:"fairshare_values"`
 	Timestamps        []time.Time            `json:"timestamps"`
 	TrendDirection    string                 `json:"trend_direction"`
 	TrendSlope        float64                `json:"trend_slope"`
 	TrendConfidence   float64                `json:"trend_confidence"`
-	
+
 	// Statistical Analysis
 	Mean              float64                `json:"mean"`
 	Median            float64                `json:"median"`
@@ -222,29 +222,29 @@ type FairShareTrendReportData struct {
 	Minimum           float64                `json:"minimum"`
 	Maximum           float64                `json:"maximum"`
 	Range             float64                `json:"range"`
-	
+
 	// Change Metrics
 	PercentageChange  float64                `json:"percentage_change"`
 	AbsoluteChange    float64                `json:"absolute_change"`
 	ChangeRate        float64                `json:"change_rate"`
 	Volatility        float64                `json:"volatility"`
-	
+
 	// Percentile Analysis
 	Percentiles       map[int]float64        `json:"percentiles"`
 	Quartiles         map[int]float64        `json:"quartiles"`
 	InterquartileRange float64               `json:"interquartile_range"`
-	
+
 	// Pattern Detection
 	TrendPattern      string                 `json:"trend_pattern"`
 	Seasonality       bool                   `json:"seasonality"`
 	Cyclicality       bool                   `json:"cyclicality"`
 	Stationarity      bool                   `json:"stationarity"`
-	
+
 	// Forecasting Metrics
 	NextPeriodForecast float64               `json:"next_period_forecast"`
 	ForecastConfidence float64               `json:"forecast_confidence"`
 	ForecastError      float64               `json:"forecast_error"`
-	
+
 	// Metadata
 	DataPoints        int                    `json:"data_points"`
 	MissingPoints     int                    `json:"missing_points"`
@@ -257,27 +257,27 @@ type FairShareTimeSeries struct {
 	Entity           string                  `json:"entity"`
 	Metric           string                  `json:"metric"`
 	Resolution       string                  `json:"resolution"`
-	
+
 	// Time Series Data
 	DataPoints       []FairShareTimeSeriesPoint       `json:"data_points"`
 	Interpolated     []FairShareTimeSeriesPoint       `json:"interpolated_points"`
 	Smoothed         []FairShareTimeSeriesPoint       `json:"smoothed_points"`
-	
+
 	// Trend Components
 	TrendComponent   []float64               `json:"trend_component"`
 	SeasonalComponent []float64              `json:"seasonal_component"`
 	ResidualComponent []float64              `json:"residual_component"`
-	
+
 	// Analysis Results
 	AutoCorrelation  []float64               `json:"autocorrelation"`
 	PartialAutoCorrelation []float64         `json:"partial_autocorrelation"`
 	SpectralDensity  []float64               `json:"spectral_density"`
-	
+
 	// Change Points
 	ChangePoints     []TrendChangePoint           `json:"change_points"`
 	Breakpoints      []time.Time             `json:"breakpoints"`
 	RegimeChanges    []RegimeChange          `json:"regime_changes"`
-	
+
 	// Quality Metrics
 	SignalToNoise    float64                 `json:"signal_to_noise"`
 	DataCompleteness float64                 `json:"data_completeness"`
@@ -296,28 +296,28 @@ type FairShareTimeSeriesPoint struct {
 type FairShareHeatmap struct {
 	EntityType      string                  `json:"entity_type"`
 	Period          string                  `json:"period"`
-	
+
 	// Heatmap Data
 	Entities        []string                `json:"entities"`
 	TimeSlots       []time.Time             `json:"time_slots"`
 	Values          [][]float64             `json:"values"`
-	
+
 	// Color Mapping
 	ColorScale      string                  `json:"color_scale"`
 	MinValue        float64                 `json:"min_value"`
 	MaxValue        float64                 `json:"max_value"`
 	ColorBreaks     []float64               `json:"color_breaks"`
-	
+
 	// Clustering
 	EntityClusters  [][]int                 `json:"entity_clusters"`
 	TimeClusters    [][]int                 `json:"time_clusters"`
 	ClusterLabels   map[int]string          `json:"cluster_labels"`
-	
+
 	// Annotations
 	Hotspots        []HeatmapHotspot        `json:"hotspots"`
 	Anomalies       []HeatmapAnomaly        `json:"anomalies"`
 	Patterns        []HeatmapPattern        `json:"patterns"`
-	
+
 	// Interactivity
 	DrillDownLinks  map[string]string       `json:"drill_down_links"`
 	TooltipData     map[string]interface{}  `json:"tooltip_data"`
@@ -330,34 +330,34 @@ type FairShareReport struct {
 	ReportType      string                  `json:"report_type"`
 	Period          string                  `json:"period"`
 	GeneratedAt     time.Time               `json:"generated_at"`
-	
+
 	// Executive Summary
 	Summary         ReportSummary           `json:"summary"`
 	KeyFindings     []string                `json:"key_findings"`
 	Recommendations []string                `json:"recommendations"`
 	ActionItems     []ActionItem            `json:"action_items"`
-	
+
 	// Detailed Sections
 	TrendAnalysis   TrendAnalysisSection    `json:"trend_analysis"`
 	UserAnalysis    UserAnalysisSection     `json:"user_analysis"`
 	AccountAnalysis AccountAnalysisSection  `json:"account_analysis"`
 	PolicyAnalysis  PolicyAnalysisSection   `json:"policy_analysis"`
-	
+
 	// Visualizations
 	Charts          []ChartDefinition       `json:"charts"`
 	Tables          []TableDefinition       `json:"tables"`
 	Infographics    []InfographicDefinition `json:"infographics"`
-	
+
 	// Comparative Analysis
 	Benchmarks      []BenchmarkComparison   `json:"benchmarks"`
 	PeerComparison  []PeerAnalysis          `json:"peer_comparison"`
 	HistoricalComparison []HistoricalAnalysis `json:"historical_comparison"`
-	
+
 	// Insights and Predictions
 	Insights        []InsightItem           `json:"insights"`
 	Predictions     []PredictionItem        `json:"predictions"`
 	RiskAssessment  []RiskItem              `json:"risk_assessment"`
-	
+
 	// Export Options
 	ExportFormats   []string                `json:"export_formats"`
 	DeliveryOptions []DeliveryOption        `json:"delivery_options"`
@@ -1009,19 +1009,19 @@ func (c *FairShareTrendReportingCollector) Collect(ch chan<- prometheus.Metric) 
 	c.collectTrendData(ctx, "user", "user1", "7d")
 	c.collectTrendData(ctx, "account", "account1", "30d")
 	c.collectSystemTrends(ctx, "24h")
-	
+
 	// Collect time series analysis
 	c.collectTimeSeriesAnalysis(ctx)
-	
+
 	// Collect visualization data
 	c.collectVisualizationData(ctx)
-	
+
 	// Collect forecasting metrics
 	c.collectForecastingMetrics(ctx)
-	
+
 	// Collect reporting metrics
 	c.collectReportingMetrics(ctx)
-	
+
 	// Collect system health metrics
 	c.collectSystemHealthMetrics(ctx)
 
@@ -1121,40 +1121,40 @@ func (c *FairShareTrendReportingCollector) collectTrendData(ctx context.Context,
 	c.fairSharePercentageChange.WithLabelValues(entity, entityType, period).Set(trendData.PercentageChange)
 	c.fairShareStandardDeviation.WithLabelValues(entity, entityType, period).Set(trendData.StandardDeviation)
 	c.fairShareVariance.WithLabelValues(entity, entityType, period).Set(trendData.Variance)
-	
+
 	// Distribution metrics
 	c.fairShareMedian.WithLabelValues(entity, entityType, period).Set(trendData.Median)
 	c.fairShareInterquartileRange.WithLabelValues(entity, entityType).Set(trendData.InterquartileRange)
-	
+
 	// Percentiles
 	for percentile, value := range trendData.Percentiles {
 		c.fairSharePercentile.WithLabelValues(entity, entityType, string(rune(percentile+'0'))).Set(value)
 	}
-	
+
 	// Quartiles
 	for quartile, value := range trendData.Quartiles {
 		c.fairShareQuartile.WithLabelValues(entity, entityType, string(rune(quartile+'0'))).Set(value)
 	}
-	
+
 	// Pattern detection
 	if trendData.Seasonality {
 		c.fairShareSeasonalityDetected.WithLabelValues(entity, entityType).Set(1.0)
 	} else {
 		c.fairShareSeasonalityDetected.WithLabelValues(entity, entityType).Set(0.0)
 	}
-	
+
 	if trendData.Cyclicality {
 		c.fairShareCyclicalityDetected.WithLabelValues(entity, entityType).Set(1.0)
 	} else {
 		c.fairShareCyclicalityDetected.WithLabelValues(entity, entityType).Set(0.0)
 	}
-	
+
 	if trendData.Stationarity {
 		c.fairShareStationarity.WithLabelValues(entity, entityType).Set(1.0)
 	} else {
 		c.fairShareStationarity.WithLabelValues(entity, entityType).Set(0.0)
 	}
-	
+
 	// Forecast metrics
 	c.fairShareForecastValue.WithLabelValues(entity, entityType, "1d").Set(trendData.NextPeriodForecast)
 	c.fairShareForecastConfidence.WithLabelValues(entity, entityType, "1d").Set(trendData.ForecastConfidence)
@@ -1166,7 +1166,7 @@ func (c *FairShareTrendReportingCollector) collectSystemTrends(ctx context.Conte
 	if err != nil {
 		return
 	}
-	
+
 	// Mock implementation - would use actual system trend data
 	c.fairShareGiniCoefficient.WithLabelValues("system", period).Set(0.35)  // Mock data
 	c.fairShareEntropy.WithLabelValues("system", period).Set(2.8)          // Mock data
@@ -1179,7 +1179,7 @@ func (c *FairShareTrendReportingCollector) collectTimeSeriesAnalysis(ctx context
 		c.fairShareSignalToNoise.WithLabelValues("user1", "user").Set(0.8)  // Mock data
 		c.fairShareAutoCorrelation.WithLabelValues("user1", "user", "1").Set(0.75)  // Mock data
 	}
-	
+
 	// Moving averages
 	_, err = c.client.GetFairShareMovingAverages(ctx, "user1", []string{"7d", "30d"})
 	if err == nil {
@@ -1187,7 +1187,7 @@ func (c *FairShareTrendReportingCollector) collectTimeSeriesAnalysis(ctx context
 		c.fairShareMovingAverage.WithLabelValues("user1", "user", "30d").Set(0.62)  // Mock data
 		c.fairShareExponentialAverage.WithLabelValues("user1", "user", "0.1").Set(0.64)  // Mock data
 	}
-	
+
 	// Seasonal decomposition
 	_, err = c.client.GetSeasonalDecomposition(ctx, "user1", "30d")
 	if err == nil {
@@ -1204,20 +1204,20 @@ func (c *FairShareTrendReportingCollector) collectVisualizationData(ctx context.
 		c.fairShareHeatmapIntensity.WithLabelValues("user1", "morning").Set(0.75)   // Mock data
 		c.fairShareHeatmapIntensity.WithLabelValues("user1", "afternoon").Set(0.82) // Mock data
 	}
-	
+
 	// Correlation analysis
 	_, err = c.client.GetFairShareCorrelations(ctx, []string{"fairshare", "usage"}, "30d")
 	if err == nil {
 		c.fairShareCorrelation.WithLabelValues("user1", "user2", "fairshare").Set(0.65)    // Mock data
 		c.fairShareSimilarityScore.WithLabelValues("user1", "user2", "cosine").Set(0.78)   // Mock data
 	}
-	
+
 	// Ranking and benchmarking
 	c.fairShareRankingPosition.WithLabelValues("user1", "user", "fairshare").Set(5.0)      // Mock data
 	c.fairShareRelativePerformance.WithLabelValues("user1", "user", "peers").Set(0.85)     // Mock data
 	c.fairShareBenchmarkDelta.WithLabelValues("user1", "user", "department_avg").Set(0.12) // Mock data
 	c.fairShareDivergence.WithLabelValues("user1", "user", "historical_avg").Set(0.08)     // Mock data
-	
+
 	// Clustering
 	c.fairShareClusterAssignment.WithLabelValues("user1", "user", "kmeans").Set(2.0)       // Mock data
 }
@@ -1234,7 +1234,7 @@ func (c *FairShareTrendReportingCollector) collectForecastingMetrics(ctx context
 		c.fairShareModelFitness.WithLabelValues("user1", "user", "arima").Set(0.85)          // Mock R-squared
 		c.fairShareResidualError.WithLabelValues("user1", "user", "arima").Set(0.03)         // Mock data
 	}
-	
+
 	// Pattern detection
 	c.fairShareChangePointDetected.WithLabelValues("user1", "user").Set(1.0)               // Mock detected
 	c.fairShareAnomalyScore.WithLabelValues("user1", "user", "spike").Set(0.15)           // Mock low anomaly
@@ -1254,7 +1254,7 @@ func (c *FairShareTrendReportingCollector) collectReportingMetrics(ctx context.C
 		c.reportActionItemCount.WithLabelValues("monthly", "high").Set(3.0)                // Mock data
 		c.reportActionItemCount.WithLabelValues("monthly", "medium").Set(7.0)              // Mock data
 	}
-	
+
 	// Report delivery and engagement
 	c.reportDeliveryStatus.WithLabelValues("monthly", "email").Set(1.0)                   // Mock success
 	c.reportScheduleAdherence.WithLabelValues("monthly", "first_monday").Set(0.95)        // Mock data
@@ -1265,25 +1265,25 @@ func (c *FairShareTrendReportingCollector) collectSystemHealthMetrics(ctx contex
 	// Data collection and processing latency
 	c.dataCollectionLatency.WithLabelValues("slurm_api").Observe(0.15)                    // Mock 150ms
 	c.dataProcessingLatency.WithLabelValues("trend_analysis").Observe(0.35)               // Mock 350ms
-	
+
 	// Visualization performance
 	c.visualizationRenderTime.WithLabelValues("heatmap").Observe(0.8)                     // Mock 800ms
 	c.visualizationRenderTime.WithLabelValues("timeseries").Observe(0.5)                  // Mock 500ms
 	c.dashboardLoadTime.WithLabelValues("fairshare_overview").Observe(1.2)                // Mock 1.2s
-	
+
 	// Real-time updates
 	c.realtimeUpdateLatency.WithLabelValues("fairshare_value").Observe(0.025)             // Mock 25ms
-	
+
 	// Data quality
 	c.dataQualityScore.WithLabelValues("slurm_api", "completeness").Set(0.98)             // Mock data
 	c.dataQualityScore.WithLabelValues("slurm_api", "accuracy").Set(0.95)                 // Mock data
 	c.dataQualityScore.WithLabelValues("slurm_api", "timeliness").Set(0.92)               // Mock data
-	
+
 	// System availability
 	c.systemAvailability.WithLabelValues("api").Set(0.999)                                // Mock 99.9%
 	c.systemAvailability.WithLabelValues("dashboard").Set(0.998)                          // Mock 99.8%
 	c.systemAvailability.WithLabelValues("reporting").Set(0.995)                          // Mock 99.5%
-	
+
 	// Error rates
 	c.errorRate.WithLabelValues("data_collection", "api").Set(0.001)                      // Mock 0.1%
 	c.errorRate.WithLabelValues("visualization", "rendering").Set(0.002)                  // Mock 0.2%

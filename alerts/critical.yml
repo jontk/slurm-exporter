@@ -22,8 +22,8 @@ groups:
 
       - alert: SlurmControllerFailover
         expr: |
-          slurm_cluster_info{control_host!=""} 
-          and 
+          slurm_cluster_info{control_host!=""}
+          and
           (slurm_cluster_info{control_host=""} offset 5m) != 0
         for: 1m
         labels:
@@ -42,8 +42,8 @@ groups:
       - alert: MassNodeFailure
         expr: |
           (
-            sum(slurm_node_state{state="down"} == 1) 
-            / 
+            sum(slurm_node_state{state="down"} == 1)
+            /
             sum(slurm_node_state == 1)
           ) > 0.1
         for: 10m
@@ -62,8 +62,8 @@ groups:
 
       - alert: EntirePartitionDown
         expr: |
-          sum by (partition) (slurm_partition_nodes_total{state="down"}) 
-          == 
+          sum by (partition) (slurm_partition_nodes_total{state="down"})
+          ==
           sum by (partition) (slurm_partition_nodes_total{state="total"})
         for: 5m
         labels:
@@ -99,7 +99,7 @@ groups:
 
       - alert: SchedulerPerformanceCritical
         expr: |
-          histogram_quantile(0.95, 
+          histogram_quantile(0.95,
             rate(slurm_scheduler_cycle_duration_seconds_bucket[5m])
           ) > 30
         for: 10m
@@ -117,8 +117,8 @@ groups:
       # Data Loss Risk
       - alert: AccountingDatabaseDown
         expr: |
-          slurm_exporter_api_requests_total{endpoint="/slurmdb",status!="200"} 
-          / 
+          slurm_exporter_api_requests_total{endpoint="/slurmdb",status!="200"}
+          /
           slurm_exporter_api_requests_total{endpoint="/slurmdb"} > 0.95
         for: 15m
         labels:
@@ -168,8 +168,8 @@ groups:
       - alert: ClusterResourceExhaustion
         expr: |
           (
-            slurm_cluster_cpus_total{state="allocated"} 
-            / 
+            slurm_cluster_cpus_total{state="allocated"}
+            /
             slurm_cluster_cpus_total{state="total"}
           ) > 0.99
           and

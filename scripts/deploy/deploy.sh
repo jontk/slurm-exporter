@@ -64,13 +64,13 @@ OPTIONS:
 EXAMPLES:
     # Deploy to development
     $0 -e development -u "http://slurm-dev:6820"
-    
+
     # Deploy to production with custom image
     $0 -e production -t "v1.0.0" -u "https://slurm-prod:6820"
-    
+
     # Deploy with custom values file
     $0 -f custom-values.yaml -k prod-cluster
-    
+
     # Dry run deployment
     $0 -e staging --dry-run
 
@@ -151,25 +151,25 @@ validate_environment() {
 # Check prerequisites
 check_prerequisites() {
     print_info "Checking prerequisites..."
-    
+
     # Check if kubectl is installed
     if ! command -v kubectl &> /dev/null; then
         print_error "kubectl is not installed or not in PATH"
         exit 1
     fi
-    
+
     # Check if helm is installed
     if ! command -v helm &> /dev/null; then
         print_error "helm is not installed or not in PATH"
         exit 1
     fi
-    
+
     # Check if chart exists
     if [[ ! -d "$HELM_CHART_PATH" ]]; then
         print_error "Helm chart not found at: $HELM_CHART_PATH"
         exit 1
     fi
-    
+
     print_success "Prerequisites check passed"
 }
 
@@ -212,34 +212,34 @@ set_values_file() {
                 ;;
         esac
     fi
-    
+
     if [[ ! -f "$VALUES_FILE" ]]; then
         print_error "Values file not found: $VALUES_FILE"
         exit 1
     fi
-    
+
     print_info "Using values file: $VALUES_FILE"
 }
 
 # Build helm command
 build_helm_command() {
     local helm_cmd="helm"
-    
+
     if [[ "$DRY_RUN" == "true" ]]; then
         helm_cmd="$helm_cmd upgrade --install --dry-run"
     else
         helm_cmd="$helm_cmd upgrade --install"
     fi
-    
+
     helm_cmd="$helm_cmd $HELM_RELEASE_NAME $HELM_CHART_PATH"
     helm_cmd="$helm_cmd --namespace $NAMESPACE"
     helm_cmd="$helm_cmd --values $VALUES_FILE"
     helm_cmd="$helm_cmd --set image.tag=$IMAGE_TAG"
-    
+
     if [[ -n "$SLURM_BASE_URL" ]]; then
         helm_cmd="$helm_cmd --set config.slurm.baseURL=$SLURM_BASE_URL"
     fi
-    
+
     # Environment-specific settings
     case $ENVIRONMENT in
         production)
@@ -253,7 +253,7 @@ build_helm_command() {
             helm_cmd="$helm_cmd --timeout 300s"
             ;;
     esac
-    
+
     echo "$helm_cmd"
 }
 
@@ -261,10 +261,10 @@ build_helm_command() {
 deploy() {
     local helm_cmd
     helm_cmd=$(build_helm_command)
-    
+
     print_info "Deploying SLURM Exporter..."
     print_info "Command: $helm_cmd"
-    
+
     if eval "$helm_cmd"; then
         if [[ "$DRY_RUN" == "false" ]]; then
             print_success "Deployment completed successfully!"
@@ -285,17 +285,17 @@ show_post_deployment_info() {
     if [[ "$DRY_RUN" == "true" ]]; then
         return
     fi
-    
+
     print_info "Post-deployment information:"
-    
+
     # Check pod status
     print_info "Checking pod status..."
     kubectl get pods -n "$NAMESPACE" -l "app.kubernetes.io/instance=$HELM_RELEASE_NAME" || true
-    
+
     # Get service information
     print_info "Service information:"
     kubectl get service -n "$NAMESPACE" "$HELM_RELEASE_NAME" || true
-    
+
     # Show how to access the exporter
     print_info "To access the SLURM Exporter:"
     echo "  kubectl port-forward -n $NAMESPACE service/$HELM_RELEASE_NAME 8080:8080"

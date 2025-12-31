@@ -465,7 +465,7 @@ func TestFairShareViolationsCollector_Collect_Success(t *testing.T) {
 	foundSystemOverview := false
 	foundUserProfile := false
 	foundNotifications := false
-	
+
 	for name := range metricNames {
 		if strings.Contains(name, "fairshare_violations") {
 			foundViolations = true
@@ -571,7 +571,7 @@ func TestFairShareViolationsCollector_MetricValues(t *testing.T) {
 	foundViolationDuration := false
 	foundSystemTotal := false
 	foundComplianceHealth := false
-	
+
 	for _, mf := range metricFamilies {
 		switch *mf.Name {
 		case "slurm_fairshare_violation_severity_score":
@@ -626,7 +626,7 @@ func TestFairShareViolationsCollector_Integration(t *testing.T) {
 		slurm_system_violation_overview{metric="total_violations"} 150
 	`
 
-	err := testutil.CollectAndCompare(collector, strings.NewReader(expected), 
+	err := testutil.CollectAndCompare(collector, strings.NewReader(expected),
 		"slurm_system_violation_overview")
 	assert.NoError(t, err)
 }
@@ -684,7 +684,7 @@ func TestFairShareViolationsCollector_ViolationDetection(t *testing.T) {
 	// Verify violation detection metrics are present
 	foundViolationMetrics := false
 	foundImpactMetrics := false
-	
+
 	for _, metric := range metrics {
 		desc := metric.Desc().String()
 		if strings.Contains(desc, "fairshare_violations") {

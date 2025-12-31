@@ -60,13 +60,13 @@ OPTIONS:
 EXAMPLES:
     # Build and deploy to development
     $0 -e development
-    
+
     # Build with custom registry and deploy to production
     $0 -e production -r myregistry.com -t v1.0.0
-    
+
     # Only build, don't deploy
     $0 --skip-deploy -t latest
-    
+
     # Only deploy with existing image
     $0 --skip-build -t v1.0.0
 
@@ -125,19 +125,19 @@ parse_args() {
 # Check prerequisites
 check_prerequisites() {
     print_info "Checking prerequisites..."
-    
+
     # Check if docker is installed
     if ! command -v docker &> /dev/null; then
         print_error "docker is not installed or not in PATH"
         exit 1
     fi
-    
+
     # Check if git is installed (for getting commit hash)
     if ! command -v git &> /dev/null; then
         print_warning "git is not installed - using 'latest' as default tag"
         IMAGE_TAG="latest"
     fi
-    
+
     # Check if we're in a git repository
     if [[ "$IMAGE_TAG" == "$(git rev-parse --short HEAD 2>/dev/null || echo 'latest')" ]]; then
         if ! git rev-parse --git-dir &> /dev/null; then
@@ -145,7 +145,7 @@ check_prerequisites() {
             IMAGE_TAG="latest"
         fi
     fi
-    
+
     print_success "Prerequisites check passed"
 }
 
@@ -155,29 +155,29 @@ build_image() {
         print_info "Skipping Docker build"
         return 0
     fi
-    
+
     local image_name="$DOCKER_REPOSITORY:$IMAGE_TAG"
     if [[ -n "$DOCKER_REGISTRY" ]]; then
         image_name="$DOCKER_REGISTRY/$image_name"
     fi
-    
+
     print_info "Building Docker image: $image_name"
-    
+
     # Build the image
     local build_cmd="docker build -t $image_name ."
     if [[ -n "$BUILD_ARGS" ]]; then
         build_cmd="$build_cmd $BUILD_ARGS"
     fi
-    
+
     print_info "Build command: $build_cmd"
-    
+
     if eval "$build_cmd"; then
         print_success "Docker image built successfully: $image_name"
     else
         print_error "Docker build failed"
         exit 1
     fi
-    
+
     # Tag as latest for local development
     if [[ "$ENVIRONMENT" == "development" && "$IMAGE_TAG" != "latest" ]]; then
         local latest_tag="$DOCKER_REPOSITORY:latest"
@@ -195,23 +195,23 @@ push_image() {
         print_info "Skipping image push"
         return 0
     fi
-    
+
     if [[ -z "$DOCKER_REGISTRY" ]]; then
         print_warning "No registry specified - skipping push"
         return 0
     fi
-    
+
     local image_name="$DOCKER_REGISTRY/$DOCKER_REPOSITORY:$IMAGE_TAG"
-    
+
     print_info "Pushing Docker image: $image_name"
-    
+
     if docker push "$image_name"; then
         print_success "Docker image pushed successfully"
     else
         print_error "Docker push failed"
         exit 1
     fi
-    
+
     # Push latest tag for development
     if [[ "$ENVIRONMENT" == "development" && "$IMAGE_TAG" != "latest" ]]; then
         local latest_tag="$DOCKER_REGISTRY/$DOCKER_REPOSITORY:latest"
@@ -226,25 +226,25 @@ deploy_to_kubernetes() {
         print_info "Skipping deployment"
         return 0
     fi
-    
+
     print_info "Deploying to Kubernetes environment: $ENVIRONMENT"
-    
+
     # Construct image name for deployment
     local full_image_name="$DOCKER_REPOSITORY:$IMAGE_TAG"
     if [[ -n "$DOCKER_REGISTRY" ]]; then
         full_image_name="$DOCKER_REGISTRY/$full_image_name"
     fi
-    
+
     # Check if deploy script exists
     local deploy_script="$(dirname "$0")/deploy.sh"
     if [[ ! -f "$deploy_script" ]]; then
         print_error "Deploy script not found: $deploy_script"
         exit 1
     fi
-    
+
     # Run the deploy script
     print_info "Running deployment with image: $full_image_name"
-    
+
     if "$deploy_script" -e "$ENVIRONMENT" -t "$IMAGE_TAG"; then
         print_success "Deployment completed successfully"
     else
@@ -256,7 +256,7 @@ deploy_to_kubernetes() {
 # Run tests before deployment
 run_tests() {
     print_info "Running tests..."
-    
+
     if command -v make &> /dev/null; then
         if make test; then
             print_success "Tests passed"
@@ -275,7 +275,7 @@ show_summary() {
     if [[ -n "$DOCKER_REGISTRY" ]]; then
         image_name="$DOCKER_REGISTRY/$image_name"
     fi
-    
+
     print_success "Build and deployment summary:"
     echo "  Environment: $ENVIRONMENT"
     echo "  Image: $image_name"
@@ -288,12 +288,12 @@ show_summary() {
 main() {
     parse_args "$@"
     check_prerequisites
-    
+
     # Only run tests for production deployments
     if [[ "$ENVIRONMENT" == "production" ]]; then
         run_tests
     fi
-    
+
     build_image
     push_image
     deploy_to_kubernetes

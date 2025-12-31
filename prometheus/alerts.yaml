@@ -1,5 +1,5 @@
 # SLURM Exporter Alerting Rules
-# 
+#
 # This file includes all SLURM monitoring alert rules.
 # Deploy this to your Prometheus server to enable comprehensive SLURM monitoring.
 #

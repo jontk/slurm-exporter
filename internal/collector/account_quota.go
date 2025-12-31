@@ -16,13 +16,13 @@ type AccountQuotaSLURMClient interface {
 	GetAllAccountQuotas(ctx context.Context) ([]*AccountQuotas, error)
 	GetAccountQuotaUsage(ctx context.Context, accountName string) (*AccountQuotaUsage, error)
 	GetAccountQuotaHistory(ctx context.Context, accountName string, period string) (*AccountQuotaHistory, error)
-	
+
 	// Resource Limit Operations
 	GetAccountResourceLimits(ctx context.Context, accountName string) (*AccountResourceLimits, error)
 	GetEffectiveResourceLimits(ctx context.Context, accountName string, userName string) (*EffectiveResourceLimits, error)
 	GetAccountQuotaViolations(ctx context.Context, accountName string, period string) ([]*QuotaViolation, error)
 	GetQuotaEnforcementStatus(ctx context.Context, accountName string) (*QuotaEnforcementStatus, error)
-	
+
 	// Quota Analysis Operations
 	GetAccountQuotaUtilization(ctx context.Context, accountName string) (*QuotaUtilization, error)
 	GetAccountQuotaTrends(ctx context.Context, accountName string, period string) (*QuotaTrends, error)
@@ -36,45 +36,45 @@ type AccountQuotas struct {
 	ParentAccount    string                 `json:"parent_account"`
 	Description      string                 `json:"description"`
 	Organization     string                 `json:"organization"`
-	
+
 	// CPU Quotas
 	CPUMinutes       *ResourceQuota         `json:"cpu_minutes"`
 	CPUCores         *ResourceQuota         `json:"cpu_cores"`
 	CPUNodes         *ResourceQuota         `json:"cpu_nodes"`
-	
+
 	// Memory Quotas
 	MemoryGB         *ResourceQuota         `json:"memory_gb"`
 	MemoryNodeHours  *ResourceQuota         `json:"memory_node_hours"`
-	
+
 	// GPU Quotas
 	GPUHours         *ResourceQuota         `json:"gpu_hours"`
 	GPUCards         *ResourceQuota         `json:"gpu_cards"`
-	
+
 	// Storage Quotas
 	StorageGB        *ResourceQuota         `json:"storage_gb"`
 	ScratchGB        *ResourceQuota         `json:"scratch_gb"`
 	ArchiveGB        *ResourceQuota         `json:"archive_gb"`
-	
+
 	// Job Quotas
 	MaxJobs          *LimitQuota            `json:"max_jobs"`
 	MaxSubmitJobs    *LimitQuota            `json:"max_submit_jobs"`
 	MaxArraySize     *LimitQuota            `json:"max_array_size"`
 	MaxJobDuration   *DurationQuota         `json:"max_job_duration"`
-	
+
 	// QoS Quotas
 	QoSLimits        map[string]*QoSQuota   `json:"qos_limits"`
 	DefaultQoS       string                 `json:"default_qos"`
 	AllowedQoS       []string               `json:"allowed_qos"`
-	
+
 	// Partition Quotas
 	PartitionQuotas  map[string]*PartitionQuota `json:"partition_quotas"`
 	AllowedPartitions []string              `json:"allowed_partitions"`
-	
+
 	// Time-based Quotas
 	QuotaPeriod      string                 `json:"quota_period"`
 	QuotaResetDate   time.Time              `json:"quota_reset_date"`
 	GracePeriod      time.Duration          `json:"grace_period"`
-	
+
 	// Metadata
 	CreatedAt        time.Time              `json:"created_at"`
 	ModifiedAt       time.Time              `json:"modified_at"`
@@ -142,35 +142,35 @@ type PartitionQuota struct {
 type AccountQuotaUsage struct {
 	AccountName      string                 `json:"account_name"`
 	Period           string                 `json:"period"`
-	
+
 	// Resource Usage
 	CPUUsage         ResourceUsageStats     `json:"cpu_usage"`
 	MemoryUsage      ResourceUsageStats     `json:"memory_usage"`
 	GPUUsage         ResourceUsageStats     `json:"gpu_usage"`
 	StorageUsage     ResourceUsageStats     `json:"storage_usage"`
-	
+
 	// Job Statistics
 	JobsSubmitted    int                    `json:"jobs_submitted"`
 	JobsRunning      int                    `json:"jobs_running"`
 	JobsPending      int                    `json:"jobs_pending"`
 	JobsCompleted    int                    `json:"jobs_completed"`
 	JobsFailed       int                    `json:"jobs_failed"`
-	
+
 	// User Activity
 	ActiveUsers      int                    `json:"active_users"`
 	TotalUsers       int                    `json:"total_users"`
 	UserQuotaShares  map[string]float64     `json:"user_quota_shares"`
-	
+
 	// Efficiency Metrics
 	ResourceEfficiency float64              `json:"resource_efficiency"`
 	QuotaEfficiency    float64              `json:"quota_efficiency"`
 	WastePercentage    float64              `json:"waste_percentage"`
-	
+
 	// Trend Indicators
 	UsageTrend       string                 `json:"usage_trend"`
 	GrowthRate       float64                `json:"growth_rate"`
 	ProjectedDepletion *time.Time           `json:"projected_depletion"`
-	
+
 	LastUpdated      time.Time              `json:"last_updated"`
 }
 
@@ -712,7 +712,7 @@ func (c *AccountQuotaCollector) collectAccountQuota(ctx context.Context, quota *
 		c.accountQuotaAvailable.WithLabelValues(quota.AccountName, "cpu", "minutes").Set(quota.CPUMinutes.Available)
 		c.accountQuotaUtilization.WithLabelValues(quota.AccountName, "cpu", "minutes").Set(quota.CPUMinutes.UtilizationRate)
 		c.accountQuotaThreshold.WithLabelValues(quota.AccountName, "cpu").Set(quota.CPUMinutes.ThresholdPercent)
-		
+
 		c.accountCPUQuotaMinutes.WithLabelValues(quota.AccountName, "limit").Set(quota.CPUMinutes.Limit)
 		c.accountCPUQuotaMinutes.WithLabelValues(quota.AccountName, "used").Set(quota.CPUMinutes.Used)
 		c.accountCPUQuotaMinutes.WithLabelValues(quota.AccountName, "available").Set(quota.CPUMinutes.Available)
@@ -725,7 +725,7 @@ func (c *AccountQuotaCollector) collectAccountQuota(ctx context.Context, quota *
 		c.accountQuotaReserved.WithLabelValues(quota.AccountName, "memory", "gb").Set(quota.MemoryGB.Reserved)
 		c.accountQuotaAvailable.WithLabelValues(quota.AccountName, "memory", "gb").Set(quota.MemoryGB.Available)
 		c.accountQuotaUtilization.WithLabelValues(quota.AccountName, "memory", "gb").Set(quota.MemoryGB.UtilizationRate)
-		
+
 		c.accountMemoryQuotaGB.WithLabelValues(quota.AccountName, "limit").Set(quota.MemoryGB.Limit)
 		c.accountMemoryQuotaGB.WithLabelValues(quota.AccountName, "used").Set(quota.MemoryGB.Used)
 		c.accountMemoryQuotaGB.WithLabelValues(quota.AccountName, "available").Set(quota.MemoryGB.Available)
@@ -736,7 +736,7 @@ func (c *AccountQuotaCollector) collectAccountQuota(ctx context.Context, quota *
 		c.accountQuotaLimit.WithLabelValues(quota.AccountName, "gpu", "hours").Set(quota.GPUHours.Limit)
 		c.accountQuotaUsed.WithLabelValues(quota.AccountName, "gpu", "hours").Set(quota.GPUHours.Used)
 		c.accountQuotaUtilization.WithLabelValues(quota.AccountName, "gpu", "hours").Set(quota.GPUHours.UtilizationRate)
-		
+
 		c.accountGPUQuotaHours.WithLabelValues(quota.AccountName, "limit").Set(quota.GPUHours.Limit)
 		c.accountGPUQuotaHours.WithLabelValues(quota.AccountName, "used").Set(quota.GPUHours.Used)
 	}
@@ -764,7 +764,7 @@ func (c *AccountQuotaCollector) collectAccountQuota(ctx context.Context, quota *
 	// QoS Quotas
 	for qosName, qosQuota := range quota.QoSLimits {
 		c.accountQoSPriority.WithLabelValues(quota.AccountName, qosName).Set(float64(qosQuota.Priority))
-		
+
 		if qosQuota.CPULimit != nil {
 			c.accountQoSQuotaLimit.WithLabelValues(quota.AccountName, qosName, "cpu").Set(qosQuota.CPULimit.Limit)
 			c.accountQoSQuotaUsed.WithLabelValues(quota.AccountName, qosName, "cpu").Set(qosQuota.CPULimit.Used)
@@ -778,7 +778,7 @@ func (c *AccountQuotaCollector) collectAccountQuota(ctx context.Context, quota *
 	for partName, partQuota := range quota.PartitionQuotas {
 		c.accountPartitionPriority.WithLabelValues(quota.AccountName, partName).Set(float64(partQuota.Priority))
 		c.accountPartitionMaxJobs.WithLabelValues(quota.AccountName, partName).Set(float64(partQuota.MaxJobsPerUser))
-		
+
 		if partQuota.CPUQuota != nil {
 			c.accountPartitionQuotaLimit.WithLabelValues(quota.AccountName, partName, "cpu").Set(partQuota.CPUQuota.Limit)
 			c.accountPartitionQuotaUsed.WithLabelValues(quota.AccountName, partName, "cpu").Set(partQuota.CPUQuota.Used)
@@ -789,10 +789,10 @@ func (c *AccountQuotaCollector) collectAccountQuota(ctx context.Context, quota *
 	c.accountQuotaActive.WithLabelValues(quota.AccountName).Set(boolToFloat64(quota.Active))
 	c.accountQuotaVersion.WithLabelValues(quota.AccountName).Set(float64(quota.QuotaVersion))
 	c.accountQuotaLastModified.WithLabelValues(quota.AccountName).Set(float64(quota.ModifiedAt.Unix()))
-	
+
 	// Grace period
 	c.accountQuotaGracePeriod.WithLabelValues(quota.AccountName).Set(quota.GracePeriod.Hours())
-	
+
 	// Days until reset
 	daysUntilReset := time.Until(quota.QuotaResetDate).Hours() / 24
 	c.accountQuotaResetDays.WithLabelValues(quota.AccountName).Set(daysUntilReset)
@@ -821,7 +821,7 @@ func (c *AccountQuotaCollector) collectAccountUsage(ctx context.Context, account
 
 	// Growth and trends
 	c.accountQuotaGrowthRate.WithLabelValues(accountName, "cpu").Set(usage.GrowthRate)
-	
+
 	var trendValue float64
 	switch usage.UsageTrend {
 	case "increasing":

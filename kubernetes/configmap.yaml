@@ -15,7 +15,7 @@ data:
       read_timeout: 30s
       write_timeout: 30s
       max_request_size: 10485760  # 10MB
-      
+
     # SLURM connection configuration
     slurm:
       base_url: "${SLURM_BASE_URL}"  # Set via environment variable
@@ -26,13 +26,13 @@ data:
         username: "${SLURM_USERNAME}"
         password: "${SLURM_PASSWORD}"
         token: "${SLURM_TOKEN}"
-      
+
     # Logging configuration
     logging:
       level: "${LOG_LEVEL:-info}"
       format: "json"
       output: "stdout"
-      
+
     # Collectors configuration
     collectors:
       # Jobs collector
@@ -44,7 +44,7 @@ data:
         custom_labels:
           cluster_name: "${CLUSTER_NAME}"
           environment: "${ENVIRONMENT:-production}"
-      
+
       # Nodes collector
       nodes:
         enabled: true
@@ -54,7 +54,7 @@ data:
         custom_labels:
           cluster_name: "${CLUSTER_NAME}"
           environment: "${ENVIRONMENT:-production}"
-      
+
       # Partitions collector
       partitions:
         enabled: true
@@ -64,7 +64,7 @@ data:
         custom_labels:
           cluster_name: "${CLUSTER_NAME}"
           environment: "${ENVIRONMENT:-production}"
-      
+
       # Accounts collector
       accounts:
         enabled: true
@@ -74,7 +74,7 @@ data:
         custom_labels:
           cluster_name: "${CLUSTER_NAME}"
           environment: "${ENVIRONMENT:-production}"
-      
+
       # Users collector
       users:
         enabled: true
@@ -84,7 +84,7 @@ data:
         custom_labels:
           cluster_name: "${CLUSTER_NAME}"
           environment: "${ENVIRONMENT:-production}"
-      
+
       # QoS collector
       qos:
         enabled: true
@@ -94,7 +94,7 @@ data:
         custom_labels:
           cluster_name: "${CLUSTER_NAME}"
           environment: "${ENVIRONMENT:-production}"
-      
+
       # Reservations collector
       reservations:
         enabled: true
@@ -104,7 +104,7 @@ data:
         custom_labels:
           cluster_name: "${CLUSTER_NAME}"
           environment: "${ENVIRONMENT:-production}"
-      
+
       # Associations collector
       associations:
         enabled: true
@@ -114,7 +114,7 @@ data:
         custom_labels:
           cluster_name: "${CLUSTER_NAME}"
           environment: "${ENVIRONMENT:-production}"
-      
+
       # Cluster collector
       cluster:
         enabled: true
@@ -124,7 +124,7 @@ data:
         custom_labels:
           cluster_name: "${CLUSTER_NAME}"
           environment: "${ENVIRONMENT:-production}"
-      
+
       # Performance collector
       performance:
         enabled: true
@@ -134,7 +134,7 @@ data:
         custom_labels:
           cluster_name: "${CLUSTER_NAME}"
           environment: "${ENVIRONMENT:-production}"
-      
+
       # System collector
       system:
         enabled: true
@@ -144,7 +144,7 @@ data:
         custom_labels:
           cluster_name: "${CLUSTER_NAME}"
           environment: "${ENVIRONMENT:-production}"
-      
+
       # Cardinality limits
       cardinality_limits:
         "slurm_job_*":

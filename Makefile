@@ -33,16 +33,61 @@ test:
 	@echo "Running tests..."
 	go test -v -race -coverprofile=coverage.out ./...
 
+# Run tests with short flag (skip integration tests)
+test-short:
+	@echo "Running short tests..."
+	go test -v -race -short ./...
+
+# Run unit tests only
+test-unit:
+	@echo "Running unit tests..."
+	go test -v -race ./internal/collector/ ./internal/config/ ./internal/testutil/
+
+# Run integration tests only
+test-integration:
+	@echo "Running integration tests..."
+	go test -v -race ./internal/integration/
+
 # Run tests with coverage report
 test-coverage: test
 	@echo "Generating coverage report..."
 	go tool cover -html=coverage.out -o coverage.html
 	@echo "Coverage report generated: coverage.html"
 
+# Run comprehensive test coverage
+coverage:
+	@echo "Running comprehensive test coverage..."
+	./scripts/test-coverage.sh
+
 # Run benchmarks
 benchmark:
 	@echo "Running benchmarks..."
 	go test -bench=. -benchmem ./...
+
+# Run performance benchmarks
+bench-performance:
+	@echo "Running performance benchmarks..."
+	go test -bench=. -benchmem ./internal/performance/
+
+# Run load tests
+load-test:
+	@echo "Running load tests..."
+	./scripts/load-test.sh
+
+# Run CPU profiling
+profile-cpu:
+	@echo "Running CPU profiling..."
+	./scripts/profile.sh -t cpu -d 30s
+
+# Run memory profiling
+profile-memory:
+	@echo "Running memory profiling..."
+	./scripts/profile.sh -t memory -d 30s
+
+# Run all profiling
+profile-all:
+	@echo "Running all profiling..."
+	./scripts/profile.sh -a
 
 # Lint the code
 lint: install-tools

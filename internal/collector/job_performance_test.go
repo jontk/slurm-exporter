@@ -106,7 +106,7 @@ func TestNewSimplifiedJobPerformanceCollector(t *testing.T) {
 			assert.NotNil(t, collector)
 			assert.NotNil(t, collector.metrics)
 			assert.NotNil(t, collector.jobCache)
-			
+
 			if tt.config == nil {
 				assert.Equal(t, 30*time.Second, collector.config.CollectionInterval)
 				assert.Equal(t, 1000, collector.config.MaxJobsPerCollection)
@@ -158,7 +158,7 @@ func TestSimplifiedJobPerformanceCollector_CollectJobMetrics(t *testing.T) {
 	now := time.Now()
 	submitTime := now.Add(-2 * time.Hour)
 	startTime := now.Add(-1 * time.Hour)
-	
+
 	testJob := &slurm.Job{
 		JobID:      "12345",
 		Name:       "test-job",
@@ -264,7 +264,7 @@ func TestSimplifiedJobPerformanceCollector_UpdateMetricsFromJob(t *testing.T) {
 	startTime := now.Add(-1 * time.Hour)
 	endTime := now
 	submitTime := now.Add(-2 * time.Hour)
-	
+
 	testJob := &slurm.Job{
 		JobID:      "test-123",
 		Name:       "test-job",

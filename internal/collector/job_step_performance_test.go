@@ -56,7 +56,7 @@ func TestNewJobStepPerformanceCollector(t *testing.T) {
 			assert.NotNil(t, collector.metrics)
 			assert.NotNil(t, collector.stepCache)
 			assert.NotNil(t, collector.bottleneckCache)
-			
+
 			if tt.config == nil {
 				assert.Equal(t, 30*time.Second, collector.config.CollectionInterval)
 				assert.Equal(t, 500, collector.config.MaxJobsPerCollection)
@@ -111,7 +111,7 @@ func TestJobStepPerformanceCollector_CollectJobStepMetrics(t *testing.T) {
 	// Setup mock expectations
 	now := time.Now()
 	startTime := now.Add(-30 * time.Minute)
-	
+
 	testJob := &slurm.Job{
 		JobID:      "12345",
 		Name:       "test-job",
@@ -206,7 +206,7 @@ func TestJobStepPerformanceCollector_BottleneckDetection(t *testing.T) {
 	assert.NotNil(t, bottleneckAnalysis)
 	assert.Equal(t, testJob.JobID, bottleneckAnalysis.JobID)
 	assert.Equal(t, "0", bottleneckAnalysis.StepID)
-	
+
 	// The simplified implementation should detect a bottleneck (either CPU underutilization or memory pressure)
 	assert.True(t, bottleneckAnalysis.Detected || bottleneckAnalysis.BottleneckType == "none")
 	assert.GreaterOrEqual(t, bottleneckAnalysis.Severity, 0.0)
@@ -265,12 +265,12 @@ func TestJobStepPerformanceCollector_CacheManagement(t *testing.T) {
 	// Only fresh entries should remain
 	assert.Equal(t, 1, collector.GetCacheSize())
 	assert.Equal(t, 1, collector.GetBottleneckCacheSize())
-	
+
 	_, exists := collector.stepCache["fresh-job:0"]
 	assert.True(t, exists)
 	_, exists = collector.stepCache["expired-job:0"]
 	assert.False(t, exists)
-	
+
 	_, exists = collector.bottleneckCache["fresh-job:0"]
 	assert.True(t, exists)
 	_, exists = collector.bottleneckCache["expired-job:0"]
@@ -289,7 +289,7 @@ func TestJobStepPerformanceCollector_UpdateMetrics(t *testing.T) {
 	now := time.Now()
 	startTime := now.Add(-1 * time.Hour)
 	endTime := now
-	
+
 	testJob := &slurm.Job{
 		JobID:      "test-123",
 		Name:       "test-job",

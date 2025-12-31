@@ -54,7 +54,7 @@ func TestNewBottleneckAnalyzer(t *testing.T) {
 			assert.NotNil(t, analyzer.metrics)
 			assert.NotNil(t, analyzer.efficiencyCalc)
 			assert.NotNil(t, analyzer.analysisCache)
-			
+
 			if tt.config == nil {
 				assert.Equal(t, 30*time.Second, analyzer.config.AnalysisInterval)
 				assert.Equal(t, 100, analyzer.config.MaxJobsPerAnalysis)
@@ -113,7 +113,7 @@ func TestBottleneckAnalyzer_AnalyzeBottlenecks(t *testing.T) {
 	// Setup mock expectations with a high-CPU usage job
 	now := time.Now()
 	startTime := now.Add(-1 * time.Hour)
-	
+
 	testJob := &slurm.Job{
 		JobID:      "12345",
 		Name:       "cpu-intensive-job",
@@ -260,9 +260,9 @@ func TestBottleneckAnalyzer_IdentifyPrimaryBottleneck(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			bottleneckType, severity, confidence := analyzer.identifyPrimaryBottleneck(tt.data, tt.efficiency)
-			
+
 			assert.Equal(t, tt.expectedType, bottleneckType)
-			
+
 			if tt.expectBottleneck {
 				assert.Greater(t, severity, 0.0)
 				assert.Greater(t, confidence, 0.0)
@@ -289,7 +289,7 @@ func TestBottleneckAnalyzer_PerformStepPerformanceAnalysis(t *testing.T) {
 
 	now := time.Now()
 	startTime := now.Add(-30 * time.Minute)
-	
+
 	testJob := &slurm.Job{
 		JobID:      "test-123",
 		Name:       "analysis-job",
@@ -305,12 +305,12 @@ func TestBottleneckAnalyzer_PerformStepPerformanceAnalysis(t *testing.T) {
 	}
 
 	analysis := analyzer.performStepPerformanceAnalysis(testJob)
-	
+
 	// Verify basic analysis structure
 	assert.Equal(t, testJob.JobID, analysis.JobID)
 	assert.Equal(t, "0", analysis.StepID)
 	assert.NotZero(t, analysis.AnalysisTimestamp)
-	
+
 	// Verify efficiency metrics are set
 	assert.GreaterOrEqual(t, analysis.CPUEfficiency, 0.0)
 	assert.LessOrEqual(t, analysis.CPUEfficiency, 1.0)
@@ -318,22 +318,22 @@ func TestBottleneckAnalyzer_PerformStepPerformanceAnalysis(t *testing.T) {
 	assert.LessOrEqual(t, analysis.MemoryEfficiency, 1.0)
 	assert.GreaterOrEqual(t, analysis.OverallEfficiency, 0.0)
 	assert.LessOrEqual(t, analysis.OverallEfficiency, 1.0)
-	
+
 	// Verify bottleneck analysis
 	assert.Contains(t, []string{"cpu", "memory", "io", "network", "none"}, analysis.PrimaryBottleneck)
 	assert.GreaterOrEqual(t, analysis.BottleneckSeverity, 0.0)
 	assert.LessOrEqual(t, analysis.BottleneckSeverity, 1.0)
 	assert.GreaterOrEqual(t, analysis.BottleneckConfidence, 0.0)
 	assert.LessOrEqual(t, analysis.BottleneckConfidence, 1.0)
-	
+
 	// Verify patterns are analyzed
 	assert.NotEmpty(t, analysis.CPUUtilizationPattern)
 	assert.NotEmpty(t, analysis.MemoryUtilizationPattern)
-	
+
 	// Verify predictive analysis was performed
 	assert.Greater(t, analysis.EstimatedTimeRemaining, 0.0)
 	assert.NotEmpty(t, analysis.PerformanceTrend)
-	
+
 	// Verify recommendations are provided
 	assert.NotEmpty(t, analysis.RecommendedActions)
 }
@@ -405,15 +405,15 @@ func TestBottleneckAnalyzer_DetectPerformanceIssues(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			issues := analyzer.detectPerformanceIssues(tt.data, tt.efficiency)
-			
+
 			if tt.expectIssues {
 				assert.NotEmpty(t, issues)
-				
+
 				// Check for expected issue types
 				foundTypes := make(map[string]bool)
 				for _, issue := range issues {
 					foundTypes[issue.Type] = true
-					
+
 					// Verify issue structure
 					assert.NotEmpty(t, issue.Type)
 					assert.NotEmpty(t, issue.Severity)
@@ -422,7 +422,7 @@ func TestBottleneckAnalyzer_DetectPerformanceIssues(t *testing.T) {
 					assert.GreaterOrEqual(t, issue.Frequency, 0.0)
 					assert.LessOrEqual(t, issue.Frequency, 1.0)
 				}
-				
+
 				for _, expectedType := range tt.expectedIssueTypes {
 					assert.True(t, foundTypes[expectedType], "Expected issue type %s not found", expectedType)
 				}
@@ -453,7 +453,7 @@ func TestBottleneckAnalyzer_UpdateAnalysisMetrics(t *testing.T) {
 
 	now := time.Now()
 	predictedCompletion := now.Add(1 * time.Hour)
-	
+
 	analysis := &StepPerformanceAnalysis{
 		JobID:                  "test-456",
 		StepID:                 "0",
@@ -538,7 +538,7 @@ func TestBottleneckAnalyzer_CacheManagement(t *testing.T) {
 
 	// Only fresh entry should remain
 	assert.Equal(t, 1, analyzer.GetCacheSize())
-	
+
 	_, exists := analyzer.analysisCache["fresh-job:0"]
 	assert.True(t, exists)
 	_, exists = analyzer.analysisCache["expired-job:0"]

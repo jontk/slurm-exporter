@@ -23,7 +23,7 @@ groups:
           description: |
             The {{ $labels.collector }} collector is taking too long to collect metrics.
             P95 collection duration: {{ $value | humanizeDuration }}
-            
+
             This may cause metrics staleness or timeouts.
           runbook_url: https://wiki.example.com/runbooks/slurm-exporter-slow-collection
 
@@ -45,7 +45,7 @@ groups:
           description: |
             The {{ $labels.collector }} collector is critically slow and may timeout.
             P99 collection duration: {{ $value | humanizeDuration }}
-            
+
             Immediate investigation required to prevent metric loss.
           runbook_url: https://wiki.example.com/runbooks/slurm-exporter-critical-performance
 
@@ -55,7 +55,7 @@ groups:
           (
             sum by (collector) (rate(slurm_exporter_collector_errors_total[5m]))
             /
-            (sum by (collector) (rate(slurm_exporter_collector_success_total[5m])) + 
+            (sum by (collector) (rate(slurm_exporter_collector_success_total[5m])) +
              sum by (collector) (rate(slurm_exporter_collector_errors_total[5m])))
           ) > 0.05
         for: 10m
@@ -68,7 +68,7 @@ groups:
           description: |
             Collector {{ $labels.collector }} has error rate above 5%.
             Current error rate: {{ $value | humanizePercentage }}
-            
+
             Check collector logs for error details.
           runbook_url: https://wiki.example.com/runbooks/slurm-exporter-errors
 
@@ -87,7 +87,7 @@ groups:
           summary: "Persistent errors in SLURM exporter collector {{ $labels.collector }}"
           description: |
             Collector {{ $labels.collector }} has recorded {{ $value }} errors in the last hour.
-            
+
             This indicates a systematic issue requiring investigation.
           runbook_url: https://wiki.example.com/runbooks/slurm-exporter-persistent-errors
 
@@ -104,7 +104,7 @@ groups:
           summary: "High memory usage for SLURM exporter collector {{ $labels.collector }}"
           description: |
             Collector {{ $labels.collector }} is using {{ $value | humanize1024 }}B of memory.
-            
+
             This exceeds the 100MB threshold and may indicate a memory leak.
           runbook_url: https://wiki.example.com/runbooks/slurm-exporter-memory
 
@@ -122,7 +122,7 @@ groups:
           description: |
             Collector {{ $labels.collector }} shows increasing goroutine count.
             Growth rate: {{ $value }} goroutines/second
-            
+
             This may indicate a goroutine leak.
           runbook_url: https://wiki.example.com/runbooks/slurm-exporter-goroutine-leak
 
@@ -141,7 +141,7 @@ groups:
             Collector {{ $labels.collector }} is violating SLAs frequently.
             Violation type: {{ $labels.violation_type }}
             Rate: {{ $value }} violations/second
-            
+
             Review collector configuration and performance.
           runbook_url: https://wiki.example.com/runbooks/slurm-exporter-sla-violations
 
@@ -158,7 +158,7 @@ groups:
           summary: "No recent collections from SLURM exporter collector {{ $labels.collector }}"
           description: |
             Collector {{ $labels.collector }} hasn't successfully collected metrics for {{ $value | humanizeDuration }}.
-            
+
             This indicates the collector may be stuck or failing.
           runbook_url: https://wiki.example.com/runbooks/slurm-exporter-stale-collection
 
@@ -179,7 +179,7 @@ groups:
           description: |
             More than 10% of collections are timing out for collector {{ $labels.collector }}.
             Timeout rate: {{ $value | humanizePercentage }}
-            
+
             Consider increasing timeout or investigating SLURM API performance.
           runbook_url: https://wiki.example.com/runbooks/slurm-exporter-timeouts
 
@@ -188,7 +188,7 @@ groups:
         expr: |
           (
             sum(rate(slurm_exporter_collector_success_total[5m])) /
-            (sum(rate(slurm_exporter_collector_success_total[5m])) + 
+            (sum(rate(slurm_exporter_collector_success_total[5m])) +
              sum(rate(slurm_exporter_collector_errors_total[5m])))
           ) < 0.9
         for: 15m
@@ -201,7 +201,7 @@ groups:
           description: |
             Overall success rate across all collectors is below 90%.
             Current success rate: {{ $value | humanizePercentage }}
-            
+
             Multiple collectors may be experiencing issues.
           runbook_url: https://wiki.example.com/runbooks/slurm-exporter-health
 
@@ -222,7 +222,7 @@ groups:
           description: |
             SLURM exporter process is using {{ $value | humanize1024 }}B of memory.
             Instance: {{ $labels.instance }}
-            
+
             This is above the 500MB warning threshold.
           runbook_url: https://wiki.example.com/runbooks/slurm-exporter-process-memory
 
@@ -240,7 +240,7 @@ groups:
           description: |
             SLURM exporter is using {{ $value | humanizePercentage }} CPU.
             Instance: {{ $labels.instance }}
-            
+
             High CPU usage may impact collection performance.
           runbook_url: https://wiki.example.com/runbooks/slurm-exporter-cpu
 
@@ -261,6 +261,6 @@ groups:
           description: |
             SLURM exporter is using {{ $value | humanizePercentage }} of available file descriptors.
             Instance: {{ $labels.instance }}
-            
+
             This may indicate a file descriptor leak.
           runbook_url: https://wiki.example.com/runbooks/slurm-exporter-fd-leak

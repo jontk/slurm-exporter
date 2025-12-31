@@ -365,7 +365,7 @@ func TestPriorityFactorsCollector_Collect_Success(t *testing.T) {
 	foundTrendAnalysis := false
 	foundSystemConfig := false
 	foundUserProfile := false
-	
+
 	for name := range metricNames {
 		if strings.Contains(name, "priority_factor_weight") {
 			foundFactorWeight = true
@@ -478,7 +478,7 @@ func TestPriorityFactorsCollector_MetricValues(t *testing.T) {
 	foundSystemWeight := false
 	foundFactorValue := false
 	foundWeightBalance := false
-	
+
 	for _, mf := range metricFamilies {
 		switch *mf.Name {
 		case "slurm_system_factor_configuration":
@@ -527,7 +527,7 @@ func TestPriorityFactorsCollector_Integration(t *testing.T) {
 		slurm_system_factor_configuration{config_type="weight",factor="age",version="v2.0"} 0.3
 	`
 
-	err := testutil.CollectAndCompare(collector, strings.NewReader(expected), 
+	err := testutil.CollectAndCompare(collector, strings.NewReader(expected),
 		"slurm_system_factor_configuration")
 	assert.NoError(t, err)
 }
@@ -589,7 +589,7 @@ func TestPriorityFactorsCollector_FactorBreakdown(t *testing.T) {
 	// Verify factor breakdown metrics are present
 	foundFactorValue := false
 	foundFactorContribution := false
-	
+
 	for _, metric := range metrics {
 		desc := metric.Desc().String()
 		if strings.Contains(desc, "priority_factor_value") {

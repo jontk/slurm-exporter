@@ -181,7 +181,7 @@ func (c *NodesSimpleCollector) collect(ch chan<- prometheus.Metric) error {
 		if isNodeUp(node.State) {
 			stateValue = 1.0
 		}
-		
+
 		ch <- prometheus.MustNewConstMetric(
 			c.nodeState,
 			prometheus.GaugeValue,
@@ -251,10 +251,10 @@ func (c *NodesSimpleCollector) collect(ch chan<- prometheus.Metric) error {
 		if node.Reason != "" {
 			reason = node.Reason
 		}
-		
+
 		arch := "x86_64" // default
 		os := "linux"     // default
-		
+
 		ch <- prometheus.MustNewConstMetric(
 			c.nodeInfo,
 			prometheus.GaugeValue,

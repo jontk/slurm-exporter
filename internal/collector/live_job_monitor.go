@@ -19,12 +19,12 @@ type LiveJobMonitor struct {
 	config          *LiveMonitorConfig
 	metrics         *LiveJobMetrics
 	efficiencyCalc  *EfficiencyCalculator
-	
+
 	// Real-time data tracking
 	liveData        map[string]*JobLiveMetrics
 	lastCollection  time.Time
 	mu              sync.RWMutex
-	
+
 	// Streaming and alerting
 	alertChannels   map[string]chan *PerformanceAlert
 	streamingActive bool
@@ -41,7 +41,7 @@ type LiveMonitorConfig struct {
 	StreamingBufferSize      int
 	DataRetentionPeriod      time.Duration
 	CacheTTL                 time.Duration
-	
+
 	// Performance optimization
 	BatchSize                int
 	EnablePredictiveAlerting bool
@@ -58,22 +58,22 @@ type JobLiveMetrics struct {
 	CurrentMemoryUsage int64
 	CurrentIORate      float64
 	CurrentNetworkRate float64
-	
+
 	// Real-time efficiency metrics
 	InstantCPUEfficiency    float64
 	InstantMemoryEfficiency float64
 	InstantOverallEfficiency float64
-	
+
 	// Performance indicators
 	ThroughputRate         float64
 	ResponseTime           float64
 	ResourceWasteRate      float64
-	
+
 	// Prediction data
 	EstimatedCompletion    *time.Time
 	ResourceExhaustionRisk string
 	PerformanceTrend       string
-	
+
 	// Health status
 	HealthScore           float64
 	PerformanceGrade      string
@@ -114,28 +114,28 @@ type LiveJobMetrics struct {
 	CurrentMemoryUsage *prometheus.GaugeVec
 	CurrentIORate      *prometheus.GaugeVec
 	CurrentNetworkRate *prometheus.GaugeVec
-	
+
 	// Real-time efficiency metrics
 	InstantCPUEfficiency    *prometheus.GaugeVec
 	InstantMemoryEfficiency *prometheus.GaugeVec
 	InstantOverallEfficiency *prometheus.GaugeVec
-	
+
 	// Performance indicators
 	ThroughputRate    *prometheus.GaugeVec
 	ResponseTime      *prometheus.GaugeVec
 	ResourceWasteRate *prometheus.GaugeVec
 	HealthScore       *prometheus.GaugeVec
-	
+
 	// Alert metrics
 	ActiveAlerts      *prometheus.GaugeVec
 	AlertsGenerated   *prometheus.CounterVec
 	AlertResolutions  *prometheus.CounterVec
-	
+
 	// Prediction metrics
 	EstimatedTimeRemaining *prometheus.GaugeVec
 	ResourceExhaustionRisk *prometheus.GaugeVec
 	PerformanceTrend       *prometheus.GaugeVec
-	
+
 	// Collection metrics
 	LiveDataCollectionDuration *prometheus.HistogramVec
 	LiveDataCollectionErrors   *prometheus.CounterVec
@@ -170,9 +170,9 @@ func NewLiveJobMonitor(client slurm.SlurmClient, logger *slog.Logger, config *Li
 			},
 		}
 	}
-	
+
 	efficiencyCalc := NewEfficiencyCalculator(logger, nil)
-	
+
 	return &LiveJobMonitor{
 		slurmClient:    client,
 		logger:         logger,
@@ -358,12 +358,12 @@ func (l *LiveJobMonitor) Describe(ch chan<- *prometheus.Desc) {
 // Collect implements the prometheus.Collector interface
 func (l *LiveJobMonitor) Collect(ch chan<- prometheus.Metric) {
 	ctx := context.Background()
-	
+
 	if err := l.collectLiveJobMetrics(ctx); err != nil {
 		l.logger.Error("Failed to collect live job metrics", "error", err)
 		l.metrics.LiveDataCollectionErrors.WithLabelValues("collect", "collection_error").Inc()
 	}
-	
+
 	l.metrics.CurrentCPUUsage.Collect(ch)
 	l.metrics.CurrentMemoryUsage.Collect(ch)
 	l.metrics.CurrentIORate.Collect(ch)
@@ -392,22 +392,22 @@ func (l *LiveJobMonitor) collectLiveJobMetrics(ctx context.Context) error {
 	defer func() {
 		l.metrics.LiveDataCollectionDuration.WithLabelValues("collect_live_metrics").Observe(time.Since(startTime).Seconds())
 	}()
-	
+
 	// Get running jobs for live monitoring
 	jobManager := l.slurmClient.Jobs()
 	if jobManager == nil {
 		return fmt.Errorf("job manager not available")
 	}
-	
+
 	// TODO: ListJobsOptions structure is not compatible with current slurm-client
 	// Using nil for options as a workaround
 	jobs, err := jobManager.List(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to list jobs for live monitoring: %w", err)
 	}
-	
+
 	l.metrics.MonitoredJobsCount.WithLabelValues("running").Set(float64(len(jobs.Jobs)))
-	
+
 	// Process jobs in batches for better performance
 	// TODO: Job type mismatch - jobs.Jobs returns []interfaces.Job but processBatch expects []*slurm.Job
 	// Skipping job processing for now
@@ -418,7 +418,7 @@ func (l *LiveJobMonitor) collectLiveJobMetrics(ctx context.Context) error {
 		if end > len(jobs.Jobs) {
 			end = len(jobs.Jobs)
 		}
-		
+
 		batch := jobs.Jobs[i:end]
 		if err := l.processBatch(ctx, batch); err != nil {
 			l.logger.Error("Failed to process job batch", "error", err, "batch_size", len(batch))
@@ -426,10 +426,10 @@ func (l *LiveJobMonitor) collectLiveJobMetrics(ctx context.Context) error {
 		}
 	}
 	*/
-	
+
 	// Clean old data
 	l.cleanOldLiveData()
-	
+
 	l.lastCollection = time.Now()
 	return nil
 }
@@ -451,7 +451,7 @@ func (l *LiveJobMonitor) processBatch(ctx context.Context, jobs []*slurm.Job) er
 func (l *LiveJobMonitor) processJobLiveMetrics(ctx context.Context, job *slurm.Job) error {
 	// Get live metrics for the job (placeholder implementation)
 	liveMetrics := l.getJobLiveMetrics(ctx, job)
-	
+
 	// Store in cache
 	// TODO: job.JobID field not available in current slurm-client version
 	// Using placeholder job ID for now
@@ -459,15 +459,15 @@ func (l *LiveJobMonitor) processJobLiveMetrics(ctx context.Context, job *slurm.J
 	l.mu.Lock()
 	l.liveData[jobID] = liveMetrics
 	l.mu.Unlock()
-	
+
 	// Update Prometheus metrics
 	l.updateLiveMetrics(job, liveMetrics)
-	
+
 	// Check for alerts if enabled
 	if l.config.EnableRealTimeAlerting {
 		l.checkForAlerts(job, liveMetrics)
 	}
-	
+
 	return nil
 }
 
@@ -475,15 +475,15 @@ func (l *LiveJobMonitor) processJobLiveMetrics(ctx context.Context, job *slurm.J
 func (l *LiveJobMonitor) getJobLiveMetrics(ctx context.Context, job *slurm.Job) *JobLiveMetrics {
 	// This is a simplified implementation using basic job data
 	// In the real implementation, this would call slurm-client's GetJobLiveMetrics()
-	
+
 	now := time.Now()
-	
+
 	// Simulate current resource usage based on job allocation
 	cpuUsage := l.simulateCurrentCPUUsage(job)
 	memoryUsage := l.simulateCurrentMemoryUsage(job)
 	ioRate := l.simulateCurrentIORate(job)
 	networkRate := l.simulateCurrentNetworkRate(job)
-	
+
 	// Calculate instantaneous efficiency
 	// TODO: CalculateInstantEfficiency method doesn't exist, using placeholder
 	instantEfficiency := &EfficiencyMetrics{
@@ -493,20 +493,20 @@ func (l *LiveJobMonitor) getJobLiveMetrics(ctx context.Context, job *slurm.Job) 
 		WasteRatio:        0.3,
 		EfficiencyGrade:   "B",
 	}
-	
+
 	// Calculate performance indicators
 	throughputRate := l.calculateThroughputRate(job, cpuUsage)
 	responseTime := l.calculateResponseTime(job)
 	wasteRate := l.calculateResourceWasteRate(instantEfficiency)
 	healthScore := l.calculateHealthScore(instantEfficiency, wasteRate, throughputRate)
-	
+
 	// Predict completion and trends
 	estimatedCompletion := l.predictCompletion(job, throughputRate)
 	exhaustionRisk := l.assessResourceExhaustionRisk(job, memoryUsage, cpuUsage)
 	// TODO: job.JobID field not available in current slurm-client version
 	jobID := "job_0"
 	trend := l.analyzePerformanceTrend(jobID)
-	
+
 	return &JobLiveMetrics{
 		JobID:              jobID,
 		Timestamp:          now,
@@ -514,19 +514,19 @@ func (l *LiveJobMonitor) getJobLiveMetrics(ctx context.Context, job *slurm.Job) 
 		CurrentMemoryUsage: int64(memoryUsage),
 		CurrentIORate:      ioRate,
 		CurrentNetworkRate: networkRate,
-		
+
 		InstantCPUEfficiency:    instantEfficiency.CPUEfficiency,
 		InstantMemoryEfficiency: instantEfficiency.MemoryEfficiency,
 		InstantOverallEfficiency: instantEfficiency.OverallEfficiency,
-		
+
 		ThroughputRate:         throughputRate,
 		ResponseTime:           responseTime,
 		ResourceWasteRate:      wasteRate,
-		
+
 		EstimatedCompletion:    estimatedCompletion,
 		ResourceExhaustionRisk: exhaustionRisk,
 		PerformanceTrend:       trend,
-		
+
 		HealthScore:           healthScore,
 		PerformanceGrade:      l.calculatePerformanceGrade(healthScore),
 		CriticalIssues:        l.identifyCriticalIssues(instantEfficiency, wasteRate),
@@ -542,7 +542,7 @@ func (l *LiveJobMonitor) simulateCurrentCPUUsage(job *slurm.Job) float64 {
 	// Add some time-based variation
 	timeVariation := math.Sin(float64(time.Now().Unix()%3600)/600) * 0.1
 	usage := baseUsage + timeVariation
-	
+
 	// Clamp between 0 and allocated CPUs
 	if usage < 0 {
 		usage = 0.1
@@ -550,7 +550,7 @@ func (l *LiveJobMonitor) simulateCurrentCPUUsage(job *slurm.Job) float64 {
 	if usage > float64(job.CPUs) {
 		usage = float64(job.CPUs)
 	}
-	
+
 	return usage
 }
 
@@ -564,14 +564,14 @@ func (l *LiveJobMonitor) simulateCurrentMemoryUsage(job *slurm.Job) float64 {
 	// Add some variation
 	timeVariation := math.Cos(float64(time.Now().Unix()%3600)/800) * 0.05
 	finalRatio := usageRatio + timeVariation
-	
+
 	if finalRatio < 0.1 {
 		finalRatio = 0.1
 	}
 	if finalRatio > 0.95 {
 		finalRatio = 0.95
 	}
-	
+
 	return allocatedBytes * finalRatio
 }
 
@@ -596,12 +596,12 @@ func (l *LiveJobMonitor) calculateThroughputRate(job *slurm.Job, cpuUsage float6
 	if job.StartTime == nil {
 		return 0
 	}
-	
+
 	elapsed := time.Since(*job.StartTime).Seconds()
 	if elapsed <= 0 {
 		return 0
 	}
-	
+
 	// Simple throughput approximation based on CPU efficiency
 	cpuEfficiency := cpuUsage / float64(job.CPUs)
 	return cpuEfficiency * 100 // Normalized throughput score
@@ -612,14 +612,14 @@ func (l *LiveJobMonitor) calculateResponseTime(job *slurm.Job) float64 {
 	if job.StartTime == nil {
 		return 0
 	}
-	
+
 	// Simple response time based on elapsed time and job characteristics
 	elapsed := time.Since(*job.StartTime).Seconds()
 	// Normalize by time limit if available
 	if job.TimeLimit > 0 {
 		return elapsed / (float64(job.TimeLimit) * 60) // TimeLimit is in minutes
 	}
-	
+
 	return elapsed / 3600 // Default normalization by hour
 }
 
@@ -636,7 +636,7 @@ func (l *LiveJobMonitor) calculateHealthScore(efficiency *EfficiencyMetrics, was
 	efficiencyScore := efficiency.OverallEfficiency
 	wasteScore := 1.0 - wasteRate
 	throughputScore := math.Min(1.0, throughputRate/100) // Normalize throughput
-	
+
 	// Weighted average: 40% efficiency, 30% waste, 30% throughput
 	healthScore := (efficiencyScore*0.4 + wasteScore*0.3 + throughputScore*0.3)
 	return math.Max(0, math.Min(1.0, healthScore))
@@ -663,15 +663,15 @@ func (l *LiveJobMonitor) predictCompletion(job *slurm.Job, throughputRate float6
 	if job.StartTime == nil || job.TimeLimit <= 0 || throughputRate <= 0 {
 		return nil
 	}
-	
+
 	_ = time.Since(*job.StartTime) // elapsed time, might be used for more complex predictions
 	timeLimitDuration := time.Duration(job.TimeLimit) * time.Minute
-	
+
 	// Simple prediction based on throughput rate
 	// If throughput is low, job might take longer
 	efficiencyFactor := math.Max(0.1, throughputRate/100)
 	predictedTotal := float64(timeLimitDuration.Seconds()) / efficiencyFactor
-	
+
 	estimatedCompletion := job.StartTime.Add(time.Duration(predictedTotal) * time.Second)
 	return &estimatedCompletion
 }
@@ -680,9 +680,9 @@ func (l *LiveJobMonitor) predictCompletion(job *slurm.Job, throughputRate float6
 func (l *LiveJobMonitor) assessResourceExhaustionRisk(job *slurm.Job, memoryUsage, cpuUsage float64) string {
 	memoryRatio := memoryUsage / float64(job.Memory*1024*1024)
 	cpuRatio := cpuUsage / float64(job.CPUs)
-	
+
 	maxRatio := math.Max(memoryRatio, cpuRatio)
-	
+
 	switch {
 	case maxRatio >= 0.95:
 		return "high"
@@ -708,7 +708,7 @@ func (l *LiveJobMonitor) analyzePerformanceTrend(jobID string) string {
 // identifyCriticalIssues identifies critical performance issues
 func (l *LiveJobMonitor) identifyCriticalIssues(efficiency *EfficiencyMetrics, wasteRate float64) []string {
 	var issues []string
-	
+
 	if efficiency.CPUEfficiency < 0.3 {
 		issues = append(issues, "Low CPU efficiency detected")
 	}
@@ -721,14 +721,14 @@ func (l *LiveJobMonitor) identifyCriticalIssues(efficiency *EfficiencyMetrics, w
 	if efficiency.OverallEfficiency < 0.4 {
 		issues = append(issues, "Overall poor performance detected")
 	}
-	
+
 	return issues
 }
 
 // generateRecommendations generates performance recommendations
 func (l *LiveJobMonitor) generateRecommendations(efficiency *EfficiencyMetrics, wasteRate, throughputRate float64) []string {
 	var recommendations []string
-	
+
 	if efficiency.CPUEfficiency < 0.5 {
 		recommendations = append(recommendations, "Consider reducing CPU allocation or optimizing CPU-bound operations")
 	}
@@ -744,7 +744,7 @@ func (l *LiveJobMonitor) generateRecommendations(efficiency *EfficiencyMetrics, 
 	if efficiency.OverallEfficiency < 0.6 {
 		recommendations = append(recommendations, "Consider job optimization or resource reallocation")
 	}
-	
+
 	return recommendations
 }
 
@@ -752,30 +752,30 @@ func (l *LiveJobMonitor) generateRecommendations(efficiency *EfficiencyMetrics, 
 func (l *LiveJobMonitor) updateLiveMetrics(job *slurm.Job, liveMetrics *JobLiveMetrics) {
 	// TODO: job field names are not compatible with current slurm-client version
 	labels := []string{liveMetrics.JobID, "unknown_user", "unknown_account", "unknown_partition"}
-	
+
 	// Update utilization metrics
 	l.metrics.CurrentCPUUsage.WithLabelValues(labels...).Set(liveMetrics.CurrentCPUUsage)
 	l.metrics.CurrentMemoryUsage.WithLabelValues(labels...).Set(float64(liveMetrics.CurrentMemoryUsage))
 	l.metrics.CurrentIORate.WithLabelValues(labels...).Set(liveMetrics.CurrentIORate)
 	l.metrics.CurrentNetworkRate.WithLabelValues(labels...).Set(liveMetrics.CurrentNetworkRate)
-	
+
 	// Update efficiency metrics
 	l.metrics.InstantCPUEfficiency.WithLabelValues(labels...).Set(liveMetrics.InstantCPUEfficiency)
 	l.metrics.InstantMemoryEfficiency.WithLabelValues(labels...).Set(liveMetrics.InstantMemoryEfficiency)
 	l.metrics.InstantOverallEfficiency.WithLabelValues(labels...).Set(liveMetrics.InstantOverallEfficiency)
-	
+
 	// Update performance indicators
 	l.metrics.ThroughputRate.WithLabelValues(labels...).Set(liveMetrics.ThroughputRate)
 	l.metrics.ResponseTime.WithLabelValues(labels...).Set(liveMetrics.ResponseTime)
 	l.metrics.ResourceWasteRate.WithLabelValues(labels...).Set(liveMetrics.ResourceWasteRate)
 	l.metrics.HealthScore.WithLabelValues(labels...).Set(liveMetrics.HealthScore)
-	
+
 	// Update prediction metrics
 	if liveMetrics.EstimatedCompletion != nil {
 		remaining := time.Until(*liveMetrics.EstimatedCompletion).Seconds()
 		l.metrics.EstimatedTimeRemaining.WithLabelValues(labels...).Set(math.Max(0, remaining))
 	}
-	
+
 	// Update risk metrics
 	riskValue := 0.0
 	switch liveMetrics.ResourceExhaustionRisk {
@@ -785,7 +785,7 @@ func (l *LiveJobMonitor) updateLiveMetrics(job *slurm.Job, liveMetrics *JobLiveM
 		riskValue = 2.0
 	}
 	l.metrics.ResourceExhaustionRisk.WithLabelValues(append(labels, "overall")...).Set(riskValue)
-	
+
 	// Update trend metrics
 	trendValue := 0.0
 	switch liveMetrics.PerformanceTrend {
@@ -802,10 +802,10 @@ func (l *LiveJobMonitor) checkForAlerts(job *slurm.Job, liveMetrics *JobLiveMetr
 	if !l.config.EnableRealTimeAlerting {
 		return
 	}
-	
+
 	thresholds := l.config.AlertThresholds
 	var alerts []*PerformanceAlert
-	
+
 	// Check CPU utilization alerts
 	// TODO: job.CPUs field might not be available in current slurm-client version
 	defaultCPUs := 4.0
@@ -833,7 +833,7 @@ func (l *LiveJobMonitor) checkForAlerts(job *slurm.Job, liveMetrics *JobLiveMetr
 			Recommendations: []string{"Consider reducing CPU allocation"},
 		})
 	}
-	
+
 	// Check memory utilization alerts
 	// TODO: job.Memory field might not be available in current slurm-client version
 	defaultMemoryMB := 4096.0
@@ -850,7 +850,7 @@ func (l *LiveJobMonitor) checkForAlerts(job *slurm.Job, liveMetrics *JobLiveMetr
 			Recommendations: []string{"Monitor for memory pressure", "Check for memory leaks"},
 		})
 	}
-	
+
 	// Check efficiency alerts
 	if liveMetrics.InstantOverallEfficiency < thresholds.EfficiencyLow {
 		alerts = append(alerts, &PerformanceAlert{
@@ -864,7 +864,7 @@ func (l *LiveJobMonitor) checkForAlerts(job *slurm.Job, liveMetrics *JobLiveMetr
 			Recommendations: []string{"Review resource allocation", "Optimize job performance"},
 		})
 	}
-	
+
 	// Check health score alerts
 	if liveMetrics.HealthScore < thresholds.HealthScoreLow {
 		alerts = append(alerts, &PerformanceAlert{
@@ -878,7 +878,7 @@ func (l *LiveJobMonitor) checkForAlerts(job *slurm.Job, liveMetrics *JobLiveMetr
 			Recommendations: liveMetrics.Recommendations,
 		})
 	}
-	
+
 	// Process alerts
 	for _, alert := range alerts {
 		l.processAlert(job, alert)
@@ -888,16 +888,16 @@ func (l *LiveJobMonitor) checkForAlerts(job *slurm.Job, liveMetrics *JobLiveMetr
 // processAlert processes a performance alert
 func (l *LiveJobMonitor) processAlert(job *slurm.Job, alert *PerformanceAlert) {
 	alert.AlertID = fmt.Sprintf("%s-%s-%d", alert.JobID, alert.AlertType, time.Now().Unix())
-	
+
 	// Update metrics
 	// TODO: job field names are not compatible with current slurm-client version
 	labels := []string{alert.JobID, "unknown_user", "unknown_account", "unknown_partition"}
 	alertLabels := append(labels, alert.AlertType)
 	severityLabels := append(alertLabels, alert.Severity)
-	
+
 	l.metrics.ActiveAlerts.WithLabelValues(alertLabels...).Inc()
 	l.metrics.AlertsGenerated.WithLabelValues(severityLabels...).Inc()
-	
+
 	// Send to alert channels if streaming is enabled
 	l.streamingMu.RLock()
 	if l.streamingActive {
@@ -912,7 +912,7 @@ func (l *LiveJobMonitor) processAlert(job *slurm.Job, alert *PerformanceAlert) {
 		}
 	}
 	l.streamingMu.RUnlock()
-	
+
 	l.logger.Info("Performance alert generated",
 		"job_id", alert.JobID,
 		"alert_type", alert.AlertType,
@@ -925,9 +925,9 @@ func (l *LiveJobMonitor) processAlert(job *slurm.Job, alert *PerformanceAlert) {
 func (l *LiveJobMonitor) cleanOldLiveData() {
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	
+
 	cutoff := time.Now().Add(-l.config.DataRetentionPeriod)
-	
+
 	for jobID, data := range l.liveData {
 		if data.Timestamp.Before(cutoff) {
 			delete(l.liveData, jobID)
@@ -939,7 +939,7 @@ func (l *LiveJobMonitor) cleanOldLiveData() {
 func (l *LiveJobMonitor) GetLiveData(jobID string) (*JobLiveMetrics, bool) {
 	l.mu.RLock()
 	defer l.mu.RUnlock()
-	
+
 	data, exists := l.liveData[jobID]
 	return data, exists
 }
@@ -948,7 +948,7 @@ func (l *LiveJobMonitor) GetLiveData(jobID string) (*JobLiveMetrics, bool) {
 func (l *LiveJobMonitor) GetAllLiveData() map[string]*JobLiveMetrics {
 	l.mu.RLock()
 	defer l.mu.RUnlock()
-	
+
 	result := make(map[string]*JobLiveMetrics)
 	for k, v := range l.liveData {
 		result[k] = v
@@ -960,11 +960,11 @@ func (l *LiveJobMonitor) GetAllLiveData() map[string]*JobLiveMetrics {
 func (l *LiveJobMonitor) StartStreaming(jobID string) <-chan *PerformanceAlert {
 	l.streamingMu.Lock()
 	defer l.streamingMu.Unlock()
-	
+
 	channel := make(chan *PerformanceAlert, l.config.StreamingBufferSize)
 	l.alertChannels[jobID] = channel
 	l.streamingActive = true
-	
+
 	return channel
 }
 
@@ -972,12 +972,12 @@ func (l *LiveJobMonitor) StartStreaming(jobID string) <-chan *PerformanceAlert {
 func (l *LiveJobMonitor) StopStreaming(jobID string) {
 	l.streamingMu.Lock()
 	defer l.streamingMu.Unlock()
-	
+
 	if channel, exists := l.alertChannels[jobID]; exists {
 		close(channel)
 		delete(l.alertChannels, jobID)
 	}
-	
+
 	if len(l.alertChannels) == 0 {
 		l.streamingActive = false
 	}
@@ -989,7 +989,7 @@ func (l *LiveJobMonitor) GetMonitoringStats() map[string]interface{} {
 	l.streamingMu.RLock()
 	defer l.mu.RUnlock()
 	defer l.streamingMu.RUnlock()
-	
+
 	return map[string]interface{}{
 		"monitored_jobs":    len(l.liveData),
 		"active_streams":    len(l.alertChannels),

@@ -23,7 +23,7 @@ groups:
           description: |
             More than 25% of jobs are failing in partition {{ $labels.partition }} on cluster {{ $labels.cluster_name }}.
             Failure rate: {{ $value | humanizePercentage }}
-            
+
             Investigate common failure reasons and system health.
           runbook_url: https://wiki.example.com/runbooks/slurm-job-failures
           dashboard_url: https://grafana.example.com/d/slurm-jobs?var-partition={{ $labels.partition }}
@@ -44,7 +44,7 @@ groups:
           description: |
             User {{ $labels.user }} has had {{ $value }} job failures in critical partitions in the last hour.
             Cluster: {{ $labels.cluster_name }}
-            
+
             This may indicate issues with user's workflow or system resources.
           runbook_url: https://wiki.example.com/runbooks/slurm-critical-job-failures
 
@@ -64,7 +64,7 @@ groups:
           summary: "Large job queue backlog in partition {{ $labels.partition }}"
           description: |
             Partition {{ $labels.partition }} has {{ $value }} pending jobs on cluster {{ $labels.cluster_name }}.
-            
+
             This indicates insufficient resources or scheduling issues.
             Consider adding nodes or reviewing job priorities.
           runbook_url: https://wiki.example.com/runbooks/slurm-queue-backlog
@@ -72,7 +72,7 @@ groups:
       # Queue wait times
       - alert: SLURMExcessiveQueueWaitTime
         expr: |
-          histogram_quantile(0.95, 
+          histogram_quantile(0.95,
             sum by (cluster_name, partition, le) (
               rate(slurm_job_queue_time_seconds_bucket[1h])
             )
@@ -88,7 +88,7 @@ groups:
             95% of jobs are waiting more than 24 hours in queue for partition {{ $labels.partition }}.
             P95 wait time: {{ $value | humanizeDuration }}
             Cluster: {{ $labels.cluster_name }}
-            
+
             Review resource allocation and job priorities.
           runbook_url: https://wiki.example.com/runbooks/slurm-queue-wait-time
 
@@ -111,7 +111,7 @@ groups:
             No jobs have started in partition {{ $labels.partition }} for 30 minutes despite pending jobs.
             Pending jobs: {{ $value }}
             Cluster: {{ $labels.cluster_name }}
-            
+
             This indicates a scheduling or resource availability problem.
           runbook_url: https://wiki.example.com/runbooks/slurm-queue-stalled
           pagerduty_key: slurm-queue-stalled
@@ -120,8 +120,8 @@ groups:
       - alert: SLURMPriorityInversion
         expr: |
           avg by (cluster_name, partition) (
-            slurm_job_queue_time_seconds{qos="normal"} 
-            > 
+            slurm_job_queue_time_seconds{qos="normal"}
+            >
             slurm_job_queue_time_seconds{qos="high"}
           ) > 0.8
         for: 1h
@@ -134,7 +134,7 @@ groups:
           description: |
             Normal priority jobs are experiencing longer wait times than high priority jobs.
             This suggests scheduler configuration issues.
-            
+
             Cluster: {{ $labels.cluster_name }}
             Partition: {{ $labels.partition }}
           runbook_url: https://wiki.example.com/runbooks/slurm-priority-inversion
@@ -159,7 +159,7 @@ groups:
           summary: "Large resource allocation by job {{ $labels.job_name }}"
           description: |
             Job {{ $labels.job_name }} by user {{ $labels.user }} is using significant resources.
-            
+
             This is informational - verify the allocation is justified.
             Cluster: {{ $labels.cluster_name }}
           runbook_url: https://wiki.example.com/runbooks/slurm-resource-usage
@@ -182,7 +182,7 @@ groups:
           description: |
             Jobs by user {{ $labels.user }} in partition {{ $labels.partition }} show low efficiency.
             Efficiency ratio: {{ $value | humanizePercentage }}
-            
+
             Consider job optimization or resource reduction.
           runbook_url: https://wiki.example.com/runbooks/slurm-job-efficiency
 
@@ -201,6 +201,6 @@ groups:
             Job {{ $labels.job_name }} (ID: {{ $labels.job_id }}) has been running for over 7 days.
             Runtime: {{ $value | humanizeDuration }}
             User: {{ $labels.user }}
-            
+
             Verify this is expected behavior.
           runbook_url: https://wiki.example.com/runbooks/slurm-runaway-jobs

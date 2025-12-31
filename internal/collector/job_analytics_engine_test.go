@@ -67,7 +67,7 @@ func TestNewJobAnalyticsEngine(t *testing.T) {
 			assert.NotNil(t, engine.efficiencyCalc)
 			assert.NotNil(t, engine.analyticsData)
 			assert.NotNil(t, engine.wasteAnalysis)
-			
+
 			if tt.config == nil {
 				assert.Equal(t, 30*time.Second, engine.config.AnalysisInterval)
 				assert.Equal(t, 100, engine.config.MaxJobsPerAnalysis)
@@ -128,7 +128,7 @@ func TestJobAnalyticsEngine_PerformJobAnalytics(t *testing.T) {
 	// Setup mock expectations
 	now := time.Now()
 	startTime := now.Add(-2 * time.Hour)
-	
+
 	testJob := &slurm.Job{
 		JobID:      "analytics-123",
 		Name:       "analytics-test-job",
@@ -216,7 +216,7 @@ func TestJobAnalyticsEngine_ResourceUtilizationAnalysis(t *testing.T) {
 
 	now := time.Now()
 	startTime := now.Add(-1 * time.Hour)
-	
+
 	testJob := &slurm.Job{
 		JobID:      "resource-456",
 		Name:       "resource-test-job",
@@ -301,7 +301,7 @@ func TestJobAnalyticsEngine_WasteAnalysis(t *testing.T) {
 
 	now := time.Now()
 	startTime := now.Add(-30 * time.Minute)
-	
+
 	// Test job with potential waste
 	testJob := &slurm.Job{
 		JobID:      "waste-789",
@@ -419,7 +419,7 @@ func TestJobAnalyticsEngine_SpecificWasteAnalysis(t *testing.T) {
 	require.NoError(t, err)
 
 	now := time.Now()
-	
+
 	tests := []struct {
 		name             string
 		cpuAllocated     float64
@@ -583,7 +583,7 @@ func TestJobAnalyticsEngine_CostAnalysis(t *testing.T) {
 
 	now := time.Now()
 	startTime := now.Add(-2 * time.Hour)
-	
+
 	testJob := &slurm.Job{
 		JobID:      "cost-123",
 		CPUs:       4,
@@ -799,7 +799,7 @@ func TestJobAnalyticsEngine_ResourceAnalysisMethods(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			analysis := engine.analyzeResource("cpu", tt.allocated, tt.used, tt.wallTime)
-			
+
 			assert.Equal(t, "cpu", analysis.ResourceType)
 			assert.Equal(t, tt.allocated, analysis.AllocatedAmount)
 			assert.Equal(t, tt.used, analysis.AverageUsage)
@@ -952,11 +952,11 @@ func TestJobAnalyticsEngine_ScoreCalculations(t *testing.T) {
 			efficiency := &EfficiencyAnalysisResult{
 				OverallEfficiency: tt.efficiencyScore,
 			}
-			
+
 			waste := &WasteAnalysisResult{
 				TotalWasteScore: tt.wasteScore,
 			}
-			
+
 			performance := &PerformanceAnalyticsResult{}
 
 			// Calculate overall score

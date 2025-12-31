@@ -17,23 +17,23 @@ type AccountCollector struct {
 	logger          *slog.Logger
 	config          *AccountConfig
 	metrics         *AccountMetrics
-	
+
 	// Account data storage
 	accountHierarchy    *AccountHierarchy
 	accountQuotas       map[string]*AccountQuota
 	userAccounts        map[string]*UserAccountAssociation
-	
+
 	// Analysis engines
 	hierarchyAnalyzer   *HierarchyAnalyzer
 	quotaAnalyzer       *QuotaAnalyzer
 	accessValidator     *AccountAccessValidator
 	usageAnalyzer       *AccountUsageAnalyzer
 	costAnalyzer        *AccountCostAnalyzer
-	
+
 	// QoS and reservation management
 	qosManager          *QoSManager
 	reservationManager  *ReservationManager
-	
+
 	lastCollection      time.Time
 	mu                  sync.RWMutex
 }
@@ -43,45 +43,45 @@ type AccountConfig struct {
 	CollectionInterval       time.Duration
 	AccountRetention         time.Duration
 	QuotaRetention          time.Duration
-	
+
 	// Account monitoring
 	EnableHierarchyMonitoring bool
 	EnableQuotaTracking      bool
 	EnableAccessValidation   bool
 	EnableUsageAnalysis      bool
 	EnableCostTracking       bool
-	
+
 	// QoS monitoring
 	EnableQoSMonitoring      bool
 	EnableQoSViolationTracking bool
 	QoSViolationThreshold    float64
-	
+
 	// Reservation monitoring
 	EnableReservationMonitoring bool
 	ReservationUtilizationTracking bool
-	
+
 	// Analysis parameters
 	UsagePatternWindow       time.Duration
 	AnomalyDetectionWindow   time.Duration
 	CostCalculationPeriod    time.Duration
-	
+
 	// Compliance monitoring
 	EnableComplianceMonitoring bool
 	ComplianceCheckInterval   time.Duration
 	QuotaWarningThreshold     float64 // Warn when usage exceeds this percentage of quota
 	QuotaCriticalThreshold    float64 // Critical alert when usage exceeds this percentage
-	
+
 	// Performance optimization
 	EnablePerformanceBenchmarking bool
 	BenchmarkingInterval         time.Duration
 	OptimizationRecommendations  bool
-	
+
 	// Data processing
 	MaxAccountsPerCollection     int
 	MaxUsersPerCollection        int
 	EnableParallelProcessing     bool
 	MaxConcurrentAnalyses        int
-	
+
 	// Reporting
 	GenerateReports              bool
 	ReportInterval               time.Duration
@@ -95,7 +95,7 @@ type AccountConfig struct {
 type AccountUsage struct {
 	AccountName       string
 	Timestamp         time.Time
-	
+
 	// Resource usage
 	CPUHours          float64
 	MemoryMBHours     float64
@@ -103,24 +103,24 @@ type AccountUsage struct {
 	NodeHours         float64
 	StorageGB         float64
 	NetworkGBTransfer float64
-	
+
 	// Job statistics
 	JobsSubmitted     int64
 	JobsCompleted     int64
 	JobsFailed        int64
 	JobsCanceled      int64
-	
+
 	// Time-based usage
 	PeakUsage         float64
 	OffPeakUsage      float64
 	WeekendUsage      float64
-	
+
 	// Cost metrics
 	EstimatedCost     float64
 	BudgetConsumed    float64
 	CostPerJob        float64
 	CostEfficiency    float64
-	
+
 	// Efficiency metrics
 	ResourceEfficiency float64
 	WasteRatio        float64
@@ -144,12 +144,12 @@ type ResourceLimit struct {
 	UtilizationRatio  float64
 	LimitType         string // "absolute", "percentage", "shared"
 	TimeWindow        time.Duration
-	
+
 	// Violation tracking
 	ViolationCount    int
 	LastViolation     *time.Time
 	ViolationHistory  []*LimitViolation
-	
+
 	// Limit effectiveness
 	EffectivenessScore float64
 	OptimalLimit      *float64
@@ -177,12 +177,12 @@ type QuotaStatus struct {
 	UsedValue         float64
 	AvailableValue    float64
 	UtilizationRatio  float64
-	
+
 	// Quota effectiveness
 	UtilizationTrend  string // "increasing", "decreasing", "stable"
 	PredictedExhaustion *time.Time
 	RecommendedQuota  *float64
-	
+
 	// Alert status
 	WarningTriggered  bool
 	CriticalTriggered bool
@@ -194,26 +194,26 @@ type QuotaStatus struct {
 type AccountQuota struct {
 	AccountName       string
 	LastUpdated       time.Time
-	
+
 	// Quota definitions
 	CPUQuota          *QuotaDefinition
 	MemoryQuota       *QuotaDefinition
 	GPUQuota          *QuotaDefinition
 	StorageQuota      *QuotaDefinition
 	JobQuota          *QuotaDefinition
-	
+
 	// Quota enforcement
 	EnforcementLevel  string // "soft", "hard", "advisory"
 	GracePeriod       time.Duration
 	ViolationPolicy   string
-	
+
 	// Usage tracking
 	QuotaUsage        map[string]*QuotaUsageTracking
-	
+
 	// Budget and cost
 	BudgetQuota       *BudgetQuota
 	CostTracking      *CostTracking
-	
+
 	// Compliance status
 	ComplianceStatus  *QuotaCompliance
 	LastCompliance    time.Time
@@ -226,17 +226,17 @@ type QuotaDefinition struct {
 	Unit              string
 	TimeWindow        time.Duration
 	ResetCycle        string // "daily", "weekly", "monthly", "yearly", "never"
-	
+
 	// Quota inheritance
 	InheritFromParent bool
 	ParentMultiplier  float64
-	
+
 	// Dynamic adjustment
 	AutoAdjust        bool
 	AdjustmentFactor  float64
 	MinQuota          float64
 	MaxQuota          float64
-	
+
 	// Validity
 	EffectiveDate     time.Time
 	ExpirationDate    *time.Time
@@ -248,13 +248,13 @@ type QuotaUsageTracking struct {
 	ResourceType      string
 	CurrentPeriod     *UsagePeriod
 	PreviousPeriods   []*UsagePeriod
-	
+
 	// Usage patterns
 	UsagePattern      string // "steady", "burst", "cyclical", "random"
 	PeakUsageTime     time.Time
 	PeakUsageValue    float64
 	AverageUsage      float64
-	
+
 	// Predictions
 	PredictedUsage    float64
 	PredictedPeak     float64
@@ -281,11 +281,11 @@ type BudgetQuota struct {
 	SpentAmount       float64
 	RemainingAmount   float64
 	BurnRate          float64 // Spending rate per day
-	
+
 	// Budget alerts
 	BudgetAlerts      []*BudgetAlert
 	LastAlert         *time.Time
-	
+
 	// Forecasting
 	ProjectedSpending float64
 	BudgetExhaustion  *time.Time
@@ -308,7 +308,7 @@ type BudgetAlert struct {
 type CostTracking struct {
 	AccountName       string
 	TrackingPeriod    time.Duration
-	
+
 	// Cost breakdown
 	CPUCost           float64
 	MemoryCost        float64
@@ -316,13 +316,13 @@ type CostTracking struct {
 	StorageCost       float64
 	NetworkCost       float64
 	TotalCost         float64
-	
+
 	// Cost trends
 	CostTrend         string // "increasing", "decreasing", "stable"
 	CostPerJob        float64
 	CostPerUser       float64
 	CostEfficiency    float64
-	
+
 	// Optimization
 	WasteCost         float64
 	OptimizationPotential float64
@@ -333,12 +333,12 @@ type CostTracking struct {
 type QuotaCompliance struct {
 	OverallCompliance float64 // Overall compliance score (0-1)
 	ResourceCompliance map[string]float64 // Compliance per resource
-	
+
 	// Violations
 	ActiveViolations  []*QuotaViolation
 	ViolationHistory  []*QuotaViolation
 	ViolationTrend    string
-	
+
 	// Compliance trending
 	ComplianceTrend   string // "improving", "degrading", "stable"
 	LastImprovement   *time.Time
@@ -353,20 +353,20 @@ type UserAccountAssociation struct {
 	PrimaryAccount    string
 	AllAccounts       []string
 	LastUpdated       time.Time
-	
+
 	// Access permissions
 	AccessLevel       string // "user", "admin", "manager", "operator"
 	Permissions       []string
 	AccessRestrictions []string
-	
+
 	// Usage across accounts
 	AccountUsage      map[string]*AccountUserUsage
 	TotalUsage        *UserTotalUsage
-	
+
 	// Validation status
 	ValidationStatus  *AccessValidation
 	LastValidation    time.Time
-	
+
 	// Account switching
 	AccountSwitchHistory []*AccountSwitch
 	PreferredAccount  string
@@ -399,17 +399,17 @@ type AccessValidation struct {
 	ValidationTime    time.Time
 	IsValid           bool
 	ValidationScore   float64
-	
+
 	// Validation details
 	AccessChecks      []*AccessCheck
 	PermissionChecks  []*PermissionCheck
 	PolicyChecks      []*PolicyCheck
-	
+
 	// Issues found
 	AccessIssues      []string
 	SecurityConcerns  []string
 	PolicyViolations  []string
-	
+
 	// Recommendations
 	Recommendations   []string
 	RequiredActions   []string
@@ -464,13 +464,13 @@ type AccountValidation struct {
 	ValidationTime    time.Time
 	IsValid           bool
 	ValidationScore   float64
-	
+
 	// Validation categories
 	StructuralValidation *StructuralValidation
 	DataValidation      *DataValidation
 	PolicyValidation    *PolicyValidation
 	SecurityValidation  *SecurityValidation
-	
+
 	// Issues and recommendations
 	ValidationIssues    []string
 	CriticalIssues      []string
@@ -560,20 +560,20 @@ type HierarchyAnalysisResult struct {
 	StructuralScore     float64 // Structural integrity score (0-1)
 	BalanceScore        float64 // Balance across hierarchy (0-1)
 	UtilizationScore    float64 // Resource utilization score (0-1)
-	
+
 	// Detailed analysis
 	StructuralIssues    []string
 	BalanceIssues       []string
 	UtilizationIssues   []string
 	Recommendations     []*HierarchyRecommendation
-	
+
 	// Metrics
 	TotalAccounts       int
 	MaxDepth            int
 	AverageDepth        float64
 	OrphanedAccounts    int
 	CircularReferences  int
-	
+
 	// Quality indicators
 	DataQuality         float64
 	AnalysisConfidence  float64
@@ -597,16 +597,16 @@ type HierarchyRecommendation struct {
 	Description         string
 	ExpectedImpact      float64
 	ImplementationEffort string
-	
+
 	// Specific actions
 	StructuralChanges   []string
 	PolicyChanges       []string
 	ConfigurationChanges []string
-	
+
 	// Supporting data
 	AffectedAccounts    []string
 	SupportingMetrics   map[string]float64
-	
+
 	// Validation
 	Confidence          float64
 	RiskAssessment      string
@@ -624,21 +624,21 @@ type QuotaAnalyzer struct {
 type QuotaAnalysisResult struct {
 	AccountName         string
 	AnalysisTime        time.Time
-	
+
 	// Overall quota health
 	QuotaHealthScore    float64 // Overall quota health (0-1)
 	UtilizationScore    float64 // How well quotas are utilized (0-1)
 	EfficiencyScore     float64 // Quota efficiency score (0-1)
 	ComplianceScore     float64 // Quota compliance score (0-1)
-	
+
 	// Resource-specific analysis
 	ResourceAnalysis    map[string]*ResourceQuotaAnalysis
-	
+
 	// Violations and issues
 	ActiveViolations    []*QuotaViolation
 	PotentialIssues     []string
 	Recommendations     []*QuotaRecommendation
-	
+
 	// Trends and predictions
 	UsageTrends         map[string]string
 	PredictedExhaustion map[string]*time.Time
@@ -651,18 +651,18 @@ type ResourceQuotaAnalysis struct {
 	CurrentQuota        float64
 	CurrentUsage        float64
 	UtilizationRatio    float64
-	
+
 	// Usage patterns
 	UsagePattern        string
 	PeakUsage           float64
 	AverageUsage        float64
 	UsageVariability    float64
-	
+
 	// Effectiveness
 	QuotaEffectiveness  float64
 	WasteRatio          float64
 	OptimalQuota        float64
-	
+
 	// Predictions
 	PredictedUsage      float64
 	ExhaustionRisk      float64
@@ -708,17 +708,17 @@ type ValidationResult struct {
 	ValidationTime      time.Time
 	IsAuthorized        bool
 	AuthorizationLevel  string
-	
+
 	// Validation details
 	AccessChecks        []*AccessCheckResult
 	PolicyChecks        []*PolicyCheckResult
 	PermissionChecks    []*PermissionCheckResult
-	
+
 	// Issues and recommendations
 	AccessIssues        []string
 	SecurityConcerns    []string
 	Recommendations     []string
-	
+
 	// Metadata
 	ValidationQuality   float64
 	Confidence          float64
@@ -768,12 +768,12 @@ type AccessPolicy struct {
 	PolicyType          string
 	IsActive            bool
 	Priority            int
-	
+
 	// Policy rules
 	Rules               []*PolicyRule
 	Conditions          []*PolicyCondition
 	Actions             []*PolicyAction
-	
+
 	// Metadata
 	CreatedAt           time.Time
 	CreatedBy           string
@@ -823,26 +823,26 @@ type UsageAnalysisResult struct {
 	AccountName         string
 	AnalysisTime        time.Time
 	AnalysisPeriod      time.Duration
-	
+
 	// Usage patterns
 	UsagePattern        *UsagePattern
 	ResourcePatterns    map[string]*ResourceUsagePattern
 	TemporalPatterns    *TemporalPattern
-	
+
 	// Anomalies
 	DetectedAnomalies   []*UsageAnomaly
 	AnomalyScore        float64
 	RiskLevel           string
-	
+
 	// Efficiency analysis
 	EfficiencyScore     float64
 	WasteAnalysis       *WasteAnalysis
 	OptimizationOpportunities []*OptimizationOpportunity
-	
+
 	// Predictions
 	UsageForecast       *UsageForecast
 	ResourceDemand      map[string]*DemandForecast
-	
+
 	// Quality metrics
 	DataQuality         float64
 	AnalysisConfidence  float64
@@ -869,19 +869,19 @@ type UsageAnomaly struct {
 	ResourceType        string
 	Severity            string
 	Confidence          float64
-	
+
 	// Anomaly details
 	ExpectedValue       float64
 	ActualValue         float64
 	Deviation           float64
 	Duration            time.Duration
-	
+
 	// Context and impact
 	Context             map[string]interface{}
 	Impact              string
 	PossibleCauses      []string
 	RecommendedActions  []string
-	
+
 	// Resolution
 	IsResolved          bool
 	Resolution          string
@@ -919,13 +919,13 @@ type UsageForecast struct {
 	ForecastHorizon     time.Duration
 	ForecastMethod      string
 	Confidence          float64
-	
+
 	// Forecasted values
 	ForecastedUsage     []float64
 	ConfidenceIntervals []ConfidenceInterval
 	SeasonalAdjustments []float64
 	TrendComponents     []float64
-	
+
 	// Forecast accuracy
 	HistoricalAccuracy  float64
 	ModelQuality        float64
@@ -988,36 +988,36 @@ type CostAnalysisResult struct {
 	AccountName         string
 	AnalysisTime        time.Time
 	AnalysisPeriod      time.Duration
-	
+
 	// Cost breakdown
 	TotalCost           float64
 	CostByResource      map[string]float64
 	CostByTime          map[string]float64
 	CostByUser          map[string]float64
-	
+
 	// Cost efficiency
 	CostEfficiency      float64
 	CostPerJob          float64
 	CostPerCPUHour      float64
 	CostPerUser         float64
-	
+
 	// Budget analysis
 	BudgetUtilization   float64
 	BudgetRemaining     float64
 	BurnRate            float64
 	ProjectedSpending   float64
 	BudgetExhaustion    *time.Time
-	
+
 	// Cost trends
 	CostTrend           string
 	CostGrowthRate      float64
 	SeasonalCostPattern *SeasonalityInfo
-	
+
 	// Optimization
 	CostWaste           float64
 	OptimizationPotential float64
 	CostReductions      []*CostReductionOpportunity
-	
+
 	// Quality metrics
 	DataQuality         float64
 	AnalysisConfidence  float64
@@ -1028,28 +1028,28 @@ type BudgetTrackingResult struct {
 	AccountName         string
 	BudgetPeriod        string
 	TrackingTime        time.Time
-	
+
 	// Budget status
 	AllocatedBudget     float64
 	SpentAmount         float64
 	RemainingBudget     float64
 	UtilizationRatio    float64
-	
+
 	// Spending patterns
 	SpendingRate        float64
 	SpendingTrend       string
 	SpendingVariability float64
-	
+
 	// Projections
 	ProjectedSpending   float64
 	ExhaustionDate      *time.Time
 	RecommendedBudget   float64
-	
+
 	// Alerts and notifications
 	ActiveAlerts        []*BudgetAlert
 	AlertHistory        []*BudgetAlert
 	NextAlert           *time.Time
-	
+
 	// Performance
 	BudgetEfficiency    float64
 	CostOptimization    float64
@@ -1084,7 +1084,7 @@ type QoSManager struct {
 type QoSLimits struct {
 	QoSName             string
 	Description         string
-	
+
 	// Resource limits
 	MaxCPUs             *int64
 	MaxMemoryMB         *int64
@@ -1092,29 +1092,29 @@ type QoSLimits struct {
 	MaxNodes            *int64
 	MaxJobs             *int64
 	MaxSubmitJobs       *int64
-	
+
 	// Time limits
 	MaxWallTime         *time.Duration
 	MaxJobTime          *time.Duration
-	
+
 	// Priority settings
 	Priority            int64
 	PriorityMultiplier  float64
-	
+
 	// Usage limits
 	GrpCPUs             *int64
 	GrpMemoryMB         *int64
 	GrpJobs             *int64
-	
+
 	// Enforcement
 	EnforcementLevel    string // "strict", "relaxed", "advisory"
 	GracePeriod         time.Duration
-	
+
 	// Validity
 	EffectiveDate       time.Time
 	ExpirationDate      *time.Time
 	IsActive            bool
-	
+
 	// Metadata
 	CreatedAt           time.Time
 	CreatedBy           string
@@ -1140,25 +1140,25 @@ type QoSViolation struct {
 	ViolationType       string // "max_cpu", "max_memory", "max_jobs", "max_walltime"
 	Timestamp           time.Time
 	Duration            time.Duration
-	
+
 	// Violation details
 	LimitValue          interface{}
 	ActualValue         interface{}
 	ExcessAmount        interface{}
 	Severity            string
-	
+
 	// Context
 	JobID               string
 	UserName            string
 	AccountName         string
 	PartitionName       string
-	
+
 	// Impact and resolution
 	ImpactAssessment    string
 	Resolution          string
 	ResolvedAt          *time.Time
 	ResolvedBy          string
-	
+
 	// Prevention
 	PreventionMeasures  []string
 	RecurrenceRisk      float64
@@ -1177,54 +1177,54 @@ type ReservationUtilization struct {
 	ReservationName     string
 	AccountName         string
 	Description         string
-	
+
 	// Reservation details
 	StartTime           time.Time
 	EndTime             time.Time
 	Duration            time.Duration
 	IsActive            bool
-	
+
 	// Resource allocation
 	AllocatedCPUs       int64
 	AllocatedMemoryMB   int64
 	AllocatedGPUs       int64
 	AllocatedNodes      []string
-	
+
 	// Utilization metrics
 	CPUUtilization      float64
 	MemoryUtilization   float64
 	GPUUtilization      float64
 	NodeUtilization     float64
 	OverallUtilization  float64
-	
+
 	// Job statistics
 	JobsRun             int64
 	JobsQueued          int64
 	JobsCompleted       int64
 	JobsFailed          int64
-	
+
 	// Efficiency metrics
 	ResourceEfficiency  float64
 	TimeEfficiency      float64
 	CostEfficiency      float64
 	WasteRatio          float64
-	
+
 	// Usage patterns
 	UtilizationPattern  string
 	PeakUtilization     float64
 	AverageUtilization  float64
 	UtilizationVariance float64
-	
+
 	// Performance
 	ThroughputScore     float64
 	LatencyScore        float64
 	QualityScore        float64
-	
+
 	// Optimization
 	OptimizationScore   float64
 	WasteReduction      float64
 	Recommendations     []string
-	
+
 	// Quality and metadata
 	DataQuality         float64
 	LastUpdated         time.Time
@@ -1251,56 +1251,56 @@ type AccountMetrics struct {
 	AccountHierarchyBalance        *prometheus.GaugeVec
 	AccountUtilization             *prometheus.GaugeVec
 	AccountEfficiency              *prometheus.GaugeVec
-	
+
 	// Quota metrics
 	AccountQuotaUtilization        *prometheus.GaugeVec
 	AccountQuotaRemaining          *prometheus.GaugeVec
 	QuotaViolations                *prometheus.GaugeVec
 	QuotaViolationDuration         *prometheus.GaugeVec
 	QuotaEffectiveness             *prometheus.GaugeVec
-	
+
 	// User association metrics
 	AccountUserCount               *prometheus.GaugeVec
 	AccountActiveUsers             *prometheus.GaugeVec
 	UserAccountSwitches            *prometheus.CounterVec
-	
+
 	// Usage pattern metrics
 	AccountUsagePattern            *prometheus.GaugeVec
 	AccountResourceEfficiency      *prometheus.GaugeVec
 	AccountWasteRatio              *prometheus.GaugeVec
-	
+
 	// Cost and budget metrics
 	AccountTotalCost               *prometheus.GaugeVec
 	AccountBudgetUtilization       *prometheus.GaugeVec
 	AccountBurnRate                *prometheus.GaugeVec
 	CostOptimizationPotential      *prometheus.GaugeVec
-	
+
 	// QoS metrics
 	QoSViolations                  *prometheus.GaugeVec
 	QoSViolationSeverity          *prometheus.GaugeVec
 	QoSLimitUtilization           *prometheus.GaugeVec
-	
+
 	// Reservation metrics
 	ReservationUtilization         *prometheus.GaugeVec
 	ReservationEfficiency          *prometheus.GaugeVec
 	ReservationWaste               *prometheus.GaugeVec
-	
+
 	// Compliance and validation metrics
 	AccountComplianceScore         *prometheus.GaugeVec
 	AccessValidationResults        *prometheus.GaugeVec
 	PolicyViolations               *prometheus.GaugeVec
 	SecurityScore                  *prometheus.GaugeVec
-	
+
 	// Anomaly detection metrics
 	UsageAnomalies                 *prometheus.GaugeVec
 	AnomalyScore                   *prometheus.GaugeVec
 	AnomalyResolution              *prometheus.CounterVec
-	
+
 	// Performance benchmarking metrics
 	AccountPerformanceScore        *prometheus.GaugeVec
 	BenchmarkRank                  *prometheus.GaugeVec
 	PerformanceImprovement         *prometheus.GaugeVec
-	
+
 	// Collection metrics
 	AccountCollectionDuration      *prometheus.HistogramVec
 	AccountCollectionErrors        *prometheus.CounterVec
@@ -1343,28 +1343,28 @@ func NewAccountCollector(client slurm.SlurmClient, logger *slog.Logger, config *
 			ReportRetention:             30 * 24 * time.Hour,
 		}
 	}
-	
+
 	hierarchyAnalyzer := &HierarchyAnalyzer{
 		config:          config,
 		logger:          logger,
 		analysisResults: make(map[string]*HierarchyAnalysisResult),
 		structuralMetrics: &StructuralMetrics{},
 	}
-	
+
 	quotaAnalyzer := &QuotaAnalyzer{
 		config:        config,
 		logger:        logger,
 		quotaAnalysis: make(map[string]*QuotaAnalysisResult),
 		usagePatterns: make(map[string]*UsagePattern),
 	}
-	
+
 	accessValidator := &AccountAccessValidator{
 		config:            config,
 		logger:            logger,
 		validationResults: make(map[string]*ValidationResult),
 		accessPolicies:    make(map[string]*AccessPolicy),
 	}
-	
+
 	usageAnalyzer := &AccountUsageAnalyzer{
 		config:        config,
 		logger:        logger,
@@ -1376,28 +1376,28 @@ func NewAccountCollector(client slurm.SlurmClient, logger *slog.Logger, config *
 			anomalyHistory:  make(map[string][]*UsageAnomaly),
 		},
 	}
-	
+
 	costAnalyzer := &AccountCostAnalyzer{
 		config:         config,
 		logger:         logger,
 		costAnalysis:   make(map[string]*CostAnalysisResult),
 		budgetTracking: make(map[string]*BudgetTrackingResult),
 	}
-	
+
 	qosManager := &QoSManager{
 		config:        config,
 		logger:        logger,
 		qosLimits:     make(map[string]*QoSLimits),
 		qosViolations: make(map[string]*QoSViolationList),
 	}
-	
+
 	reservationManager := &ReservationManager{
 		config:             config,
 		logger:             logger,
 		reservations:       make(map[string]*ReservationUtilization),
 		utilizationHistory: make(map[string][]*UtilizationSnapshot),
 	}
-	
+
 	return &AccountCollector{
 		slurmClient:        client,
 		logger:             logger,
@@ -1741,12 +1741,12 @@ func (a *AccountCollector) Describe(ch chan<- *prometheus.Desc) {
 // Collect implements the prometheus.Collector interface
 func (a *AccountCollector) Collect(ch chan<- prometheus.Metric) {
 	ctx := context.Background()
-	
+
 	if err := a.collectAccountMetrics(ctx); err != nil {
 		a.logger.Error("Failed to collect account metrics", "error", err)
 		a.metrics.AccountCollectionErrors.WithLabelValues("collect", "collection_error").Inc()
 	}
-	
+
 	a.metrics.AccountCount.Collect(ch)
 	a.metrics.AccountHierarchyDepth.Collect(ch)
 	a.metrics.AccountHierarchyBalance.Collect(ch)
@@ -1794,57 +1794,57 @@ func (a *AccountCollector) collectAccountMetrics(ctx context.Context) error {
 	defer func() {
 		a.metrics.AccountCollectionDuration.WithLabelValues("collect_all").Observe(time.Since(startTime).Seconds())
 	}()
-	
+
 	// Collect account hierarchy
 	if err := a.collectAccountHierarchy(ctx); err != nil {
 		return fmt.Errorf("account hierarchy collection failed: %w", err)
 	}
-	
+
 	// Collect account quotas
 	if err := a.collectAccountQuotas(ctx); err != nil {
 		return fmt.Errorf("account quota collection failed: %w", err)
 	}
-	
+
 	// Collect user-account associations
 	if err := a.collectUserAccountAssociations(ctx); err != nil {
 		return fmt.Errorf("user-account association collection failed: %w", err)
 	}
-	
+
 	// Analyze hierarchy
 	if err := a.analyzeHierarchy(ctx); err != nil {
 		return fmt.Errorf("hierarchy analysis failed: %w", err)
 	}
-	
+
 	// Analyze quotas
 	if err := a.analyzeQuotas(ctx); err != nil {
 		return fmt.Errorf("quota analysis failed: %w", err)
 	}
-	
+
 	// Validate access
 	if err := a.validateAccess(ctx); err != nil {
 		return fmt.Errorf("access validation failed: %w", err)
 	}
-	
+
 	// Analyze usage patterns
 	if err := a.analyzeUsagePatterns(ctx); err != nil {
 		return fmt.Errorf("usage pattern analysis failed: %w", err)
 	}
-	
+
 	// Analyze costs
 	if err := a.analyzeCosts(ctx); err != nil {
 		return fmt.Errorf("cost analysis failed: %w", err)
 	}
-	
+
 	// Monitor QoS
 	if err := a.monitorQoS(ctx); err != nil {
 		return fmt.Errorf("QoS monitoring failed: %w", err)
 	}
-	
+
 	// Monitor reservations
 	if err := a.monitorReservations(ctx); err != nil {
 		return fmt.Errorf("reservation monitoring failed: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -1854,7 +1854,7 @@ func (a *AccountCollector) collectAccountHierarchy(ctx context.Context) error {
 	defer func() {
 		a.metrics.AccountCollectionDuration.WithLabelValues("collect_hierarchy").Observe(time.Since(startTime).Seconds())
 	}()
-	
+
 	// Simplified hierarchy collection - in reality this would use AccountManager.GetFairShareHierarchy()
 	// Create a simplified hierarchy for demonstration
 	hierarchy := &AccountHierarchy{
@@ -1870,7 +1870,7 @@ func (a *AccountCollector) collectAccountHierarchy(ctx context.Context) error {
 		DataCompleteness:  0.90,
 		DataConsistency:   0.92,
 	}
-	
+
 	// Create sample account nodes
 	rootAccount := &AccountNode{
 		AccountName:       "root",
@@ -1883,7 +1883,7 @@ func (a *AccountCollector) collectAccountHierarchy(ctx context.Context) error {
 		DirectUsers:       0,
 		UserCount:         0,
 	}
-	
+
 	// Add child accounts
 	for i := 1; i <= 5; i++ {
 		accountName := fmt.Sprintf("account%d", i)
@@ -1899,21 +1899,21 @@ func (a *AccountCollector) collectAccountHierarchy(ctx context.Context) error {
 			DirectUsers:       2,
 			UserCount:         2,
 		}
-		
+
 		rootAccount.Children = append(rootAccount.Children, childAccount)
 		hierarchy.AccountMap[accountName] = childAccount
 		hierarchy.TotalAccounts++
 	}
-	
+
 	hierarchy.RootAccounts = []*AccountNode{rootAccount}
 	hierarchy.AccountMap["root"] = rootAccount
 	hierarchy.TotalAccounts++
-	
+
 	a.accountHierarchy = hierarchy
-	
+
 	// Update metrics
 	a.updateHierarchyMetrics(hierarchy)
-	
+
 	return nil
 }
 
@@ -1923,27 +1923,27 @@ func (a *AccountCollector) updateHierarchyMetrics(hierarchy *AccountHierarchy) {
 	a.metrics.AccountCount.WithLabelValues("default", "all").Set(float64(hierarchy.TotalAccounts))
 	a.metrics.AccountHierarchyDepth.WithLabelValues("default").Set(float64(hierarchy.MaxDepth))
 	a.metrics.AccountHierarchyBalance.WithLabelValues("default").Set(hierarchy.BalanceScore)
-	
+
 	// Account-specific metrics
 	for _, account := range hierarchy.AccountMap {
 		labels := []string{account.AccountName, account.Parent}
-		
+
 		a.metrics.AccountUserCount.WithLabelValues(append(labels, "total")...).Set(float64(account.UserCount))
 		a.metrics.AccountActiveUsers.WithLabelValues(labels...).Set(float64(account.ActiveUserCount))
-		
+
 		if account.CurrentUsage != nil {
 			// Resource utilization metrics
 			a.metrics.AccountUtilization.WithLabelValues(append(labels, "cpu")...).Set(account.CurrentUsage.CPUHours / 1000.0)
 			a.metrics.AccountUtilization.WithLabelValues(append(labels, "memory")...).Set(account.CurrentUsage.MemoryMBHours / 10000.0)
-			
+
 			// Efficiency metrics
 			a.metrics.AccountResourceEfficiency.WithLabelValues(append(labels, "overall")...).Set(account.CurrentUsage.ResourceEfficiency)
 			a.metrics.AccountWasteRatio.WithLabelValues(append(labels, "overall")...).Set(account.CurrentUsage.WasteRatio)
-			
+
 			// Cost metrics
 			a.metrics.AccountTotalCost.WithLabelValues(account.AccountName, "total", "USD").Set(account.CurrentUsage.EstimatedCost)
 		}
-		
+
 		// Data quality
 		a.metrics.AccountDataQuality.WithLabelValues("hierarchy", account.AccountName).Set(account.DataQuality)
 	}
@@ -1973,13 +1973,13 @@ func (a *AccountCollector) collectAccountQuotas(ctx context.Context) error {
 			EnforcementLevel: "soft",
 			GracePeriod:      24 * time.Hour,
 		}
-		
+
 		a.accountQuotas[accountName] = quota
-		
+
 		// Update quota metrics
 		a.updateQuotaMetrics(accountName, quota)
 	}
-	
+
 	return nil
 }
 
@@ -1989,7 +1989,7 @@ func (a *AccountCollector) updateQuotaMetrics(accountName string, quota *Account
 		a.metrics.AccountQuotaRemaining.WithLabelValues(accountName, "cpu", "soft").Set(250.0) // Simulated remaining
 		a.metrics.QuotaEffectiveness.WithLabelValues(accountName, "cpu").Set(0.85)
 	}
-	
+
 	if quota.MemoryQuota != nil {
 		a.metrics.AccountQuotaUtilization.WithLabelValues(accountName, "memory", "soft").Set(0.68)
 		a.metrics.AccountQuotaRemaining.WithLabelValues(accountName, "memory", "soft").Set(3200.0)
@@ -2010,7 +2010,7 @@ func (a *AccountCollector) collectUserAccountAssociations(ctx context.Context) e
 				AccessLevel:    "user",
 				Permissions:    []string{"submit", "view"},
 			}
-			
+
 			a.userAccounts[userName] = association
 		}
 	}
@@ -2031,7 +2031,7 @@ func (a *AccountCollector) analyzeHierarchy(ctx context.Context) error {
 		DataQuality:        0.90,
 		AnalysisConfidence: 0.95,
 	}
-	
+
 	a.hierarchyAnalyzer.analysisResults["default"] = result
 	return nil
 }
@@ -2053,14 +2053,14 @@ func (a *AccountCollector) validateAccess(ctx context.Context) error {
 			ValidationQuality:  0.95,
 			Confidence:         0.90,
 		}
-		
+
 		a.accessValidator.validationResults[userName] = result
-		
+
 		// Update validation metrics
 		a.metrics.AccessValidationResults.WithLabelValues(userName, association.PrimaryAccount, "authorization").Set(1)
 		a.metrics.AccountComplianceScore.WithLabelValues(association.PrimaryAccount, "access").Set(0.95)
 	}
-	
+
 	return nil
 }
 

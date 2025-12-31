@@ -6,8 +6,8 @@ groups:
       - alert: HighCPUUtilization
         expr: |
           (
-            slurm_cluster_cpus_total{state="allocated"} 
-            / 
+            slurm_cluster_cpus_total{state="allocated"}
+            /
             slurm_cluster_cpus_total{state="total"}
           ) > 0.90
         for: 30m
@@ -27,8 +27,8 @@ groups:
       - alert: HighMemoryUtilization
         expr: |
           (
-            slurm_cluster_memory_total_bytes{state="allocated"} 
-            / 
+            slurm_cluster_memory_total_bytes{state="allocated"}
+            /
             slurm_cluster_memory_total_bytes{state="total"}
           ) > 0.85
         for: 30m
@@ -46,8 +46,8 @@ groups:
       - alert: GPUShortage
         expr: |
           (
-            sum(slurm_node_gpus_allocated) 
-            / 
+            sum(slurm_node_gpus_allocated)
+            /
             sum(slurm_node_gpus_total)
           ) > 0.95
         for: 1h
@@ -79,7 +79,7 @@ groups:
 
       - alert: LongJobWaitTimes
         expr: |
-          histogram_quantile(0.90, 
+          histogram_quantile(0.90,
             rate(slurm_job_wait_time_seconds_bucket[1h])
           ) > 14400  # 4 hours
         for: 30m
@@ -95,8 +95,8 @@ groups:
 
       - alert: JobBacklogGrowing
         expr: |
-          predict_linear(slurm_cluster_jobs_total{state="pending"}[2h], 3600) 
-          > 
+          predict_linear(slurm_cluster_jobs_total{state="pending"}[2h], 3600)
+          >
           slurm_cluster_jobs_total{state="pending"} * 1.5
         for: 30m
         labels:
@@ -143,8 +143,8 @@ groups:
       - alert: NodeMemoryPressure
         expr: |
           (
-            slurm_node_memory_allocated_bytes 
-            / 
+            slurm_node_memory_allocated_bytes
+            /
             slurm_node_memory_total_bytes
           ) > 0.95
         for: 30m
@@ -176,7 +176,7 @@ groups:
       # Performance Degradation
       - alert: SchedulerSlowdown
         expr: |
-          histogram_quantile(0.95, 
+          histogram_quantile(0.95,
             rate(slurm_scheduler_cycle_duration_seconds_bucket[10m])
           ) > 10
         for: 20m
@@ -193,8 +193,8 @@ groups:
 
       - alert: BackfillIneffective
         expr: |
-          rate(slurm_backfill_jobs_total[1h]) < 1 
-          and 
+          rate(slurm_backfill_jobs_total[1h]) < 1
+          and
           slurm_cluster_jobs_total{state="pending"} > 100
         for: 2h
         labels:
@@ -209,7 +209,7 @@ groups:
 
       - alert: LowJobEfficiency
         expr: |
-          histogram_quantile(0.50, 
+          histogram_quantile(0.50,
             rate(slurm_job_efficiency_percentage_bucket[2h])
           ) < 50
         for: 4h
@@ -229,8 +229,8 @@ groups:
       - alert: AccountApproachingQuota
         expr: |
           (
-            slurm_account_usage_cpu_hours 
-            / 
+            slurm_account_usage_cpu_hours
+            /
             slurm_account_quota_cpu_hours
           ) > 0.80
         for: 1h
@@ -248,8 +248,8 @@ groups:
 
       - alert: UserExcessiveResourceUse
         expr: |
-          slurm_user_cpus_allocated > 1000 
-          or 
+          slurm_user_cpus_allocated > 1000
+          or
           slurm_user_memory_allocated_bytes > 10*1024^4  # 10TB
         for: 4h
         labels:
@@ -267,8 +267,8 @@ groups:
       # API and Exporter Health
       - alert: HighAPIErrorRate
         expr: |
-          rate(slurm_exporter_api_requests_total{status!~"2.."}[5m]) 
-          / 
+          rate(slurm_exporter_api_requests_total{status!~"2.."}[5m])
+          /
           rate(slurm_exporter_api_requests_total[5m]) > 0.05
         for: 15m
         labels:

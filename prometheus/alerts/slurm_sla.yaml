@@ -25,7 +25,7 @@ groups:
             High priority jobs are waiting more than 1 hour to start in partition {{ $labels.partition }}.
             P95 wait time: {{ $value | humanizeDuration }}
             Cluster: {{ $labels.cluster_name }}
-            
+
             SLA target: < 1 hour for high priority jobs
           runbook_url: https://wiki.example.com/runbooks/slurm-sla-job-start
           sla_dashboard: https://grafana.example.com/d/slurm-sla
@@ -46,7 +46,7 @@ groups:
             SLURM exporter availability has dropped below 99% over the last hour.
             Current availability: {{ $value | humanizePercentage }}
             Instance: {{ $labels.instance }}
-            
+
             SLA target: 99% availability
           runbook_url: https://wiki.example.com/runbooks/slurm-sla-availability
           pagerduty_key: slurm-availability-sla
@@ -70,7 +70,7 @@ groups:
           description: |
             Less than 95% of compute nodes are available on cluster {{ $labels.cluster_name }}.
             Current availability: {{ $value | humanizePercentage }}
-            
+
             SLA target: 95% compute node availability
           runbook_url: https://wiki.example.com/runbooks/slurm-sla-compute
 
@@ -96,7 +96,7 @@ groups:
             The {{ $labels.collector }} collector is taking more than 30 seconds to collect metrics.
             P99 duration: {{ $value | humanizeDuration }}
             Cluster: {{ $labels.cluster_name }}
-            
+
             This may impact metric freshness and accuracy.
           runbook_url: https://wiki.example.com/runbooks/slurm-collector-performance
 
@@ -115,7 +115,7 @@ groups:
             Metric cardinality has exceeded 100,000 unique series.
             Current cardinality: {{ $value }}
             Instance: {{ $labels.instance }}
-            
+
             High cardinality impacts Prometheus performance and storage.
           runbook_url: https://wiki.example.com/runbooks/slurm-metric-cardinality
 
@@ -140,7 +140,7 @@ groups:
             SLURM API is showing elevated error rates or latency.
             Endpoint: {{ $labels.endpoint }}
             Cluster: {{ $labels.cluster_name }}
-            
+
             This impacts all SLURM operations and job submissions.
           runbook_url: https://wiki.example.com/runbooks/slurm-api-performance
 
@@ -159,7 +159,7 @@ groups:
             SLURM database query latency is elevated.
             P99 latency: {{ $value | humanizeDuration }}
             Query type: {{ $labels.query_type }}
-            
+
             This impacts job accounting and historical queries.
           runbook_url: https://wiki.example.com/runbooks/slurm-db-performance
 
@@ -181,7 +181,7 @@ groups:
             Prometheus is receiving out-of-order samples from SLURM exporter.
             Out of order samples: {{ $value }}
             Instance: {{ $labels.instance }}
-            
+
             This indicates time synchronization or collection issues.
           runbook_url: https://wiki.example.com/runbooks/slurm-metric-quality
 

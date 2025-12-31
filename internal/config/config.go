@@ -157,7 +157,7 @@ type FilterConfig struct {
 	ExcludeQoS        []string `yaml:"exclude_qos"`
 	JobStates         []string `yaml:"job_states"`
 	NodeStates        []string `yaml:"node_states"`
-	
+
 	// Metric filters
 	Metrics MetricFilterConfig `yaml:"metrics"`
 }
@@ -168,7 +168,7 @@ type MetricFilterConfig struct {
 	EnableAll      bool     `yaml:"enable_all"`
 	IncludeMetrics []string `yaml:"include_metrics"`
 	ExcludeMetrics []string `yaml:"exclude_metrics"`
-	
+
 	// Metric-specific configurations
 	OnlyInfo           bool `yaml:"only_info"`            // Only collect info metrics
 	OnlyCounters       bool `yaml:"only_counters"`        // Only collect counter metrics

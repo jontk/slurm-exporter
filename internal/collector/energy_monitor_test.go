@@ -66,7 +66,7 @@ func TestNewEnergyMonitor(t *testing.T) {
 			assert.NotNil(t, monitor.clusterEnergy)
 			assert.NotNil(t, monitor.carbonCalculator)
 			assert.NotNil(t, monitor.efficiencyTracker)
-			
+
 			if tt.config == nil {
 				assert.Equal(t, 60*time.Second, monitor.config.MonitoringInterval)
 				assert.Equal(t, 100, monitor.config.MaxJobsPerCollection)
@@ -129,7 +129,7 @@ func TestEnergyMonitor_CollectEnergyMetrics(t *testing.T) {
 	now := time.Now()
 	startTime := now.Add(-3 * time.Hour)
 	endTime := now.Add(-30 * time.Minute)
-	
+
 	testJob := &slurm.Job{
 		JobID:      "energy-123",
 		Name:       "energy-test-job",
@@ -238,7 +238,7 @@ func TestEnergyMonitor_EnergyCalculations(t *testing.T) {
 	now := time.Now()
 	startTime := now.Add(-2 * time.Hour)
 	endTime := now.Add(-10 * time.Minute)
-	
+
 	testJob := &slurm.Job{
 		JobID:      "calc-456",
 		Name:       "calculation-job",
@@ -265,7 +265,7 @@ func TestEnergyMonitor_EnergyCalculations(t *testing.T) {
 
 	// Test individual energy components
 	runtimeHours := expectedRuntimeHours
-	
+
 	// Test CPU energy calculation
 	cpuEnergy := monitor.calculateCPUEnergy(testJob, runtimeHours)
 	expectedCPUEnergy := 4.0 * 20.0 * runtimeHours * monitor.estimateCPUUtilization(testJob)
@@ -283,7 +283,7 @@ func TestEnergyMonitor_EnergyCalculations(t *testing.T) {
 	// Test storage and network energy
 	storageEnergy := monitor.calculateStorageEnergy(testJob, runtimeHours)
 	assert.Greater(t, storageEnergy, 0.0)
-	
+
 	networkEnergy := monitor.calculateNetworkEnergy(testJob, runtimeHours)
 	assert.Greater(t, networkEnergy, 0.0)
 
@@ -292,7 +292,7 @@ func TestEnergyMonitor_EnergyCalculations(t *testing.T) {
 	computeEnergy := cpuEnergy + memoryEnergy + gpuEnergy
 	coolingEnergy := computeEnergy * 0.3
 	expectedTotalEnergy := basePower + computeEnergy + storageEnergy + networkEnergy + coolingEnergy
-	
+
 	assert.InDelta(t, expectedTotalEnergy, energyData.TotalEnergyWh, expectedTotalEnergy*0.1)
 
 	// Test power calculations
@@ -325,7 +325,7 @@ func TestEnergyMonitor_CarbonFootprintCalculation(t *testing.T) {
 
 	now := time.Now()
 	startTime := now.Add(-1 * time.Hour)
-	
+
 	testJob := &slurm.Job{
 		JobID:      "carbon-789",
 		Name:       "carbon-job",
@@ -358,7 +358,7 @@ func TestEnergyMonitor_CarbonFootprintCalculation(t *testing.T) {
 	regionalFactor := monitor.carbonCalculator.regionalFactors["US"]
 	timeFactor := monitor.carbonCalculator.timeFactors[now.Hour()]
 	adjustedCO2 := expectedCO2 * regionalFactor * timeFactor
-	
+
 	assert.InDelta(t, adjustedCO2, carbonData.TotalCO2grams, adjustedCO2*0.1)
 
 	// Test per-unit calculations
@@ -506,7 +506,7 @@ func TestEnergyMonitor_EfficiencyTracking(t *testing.T) {
 	// Test initial efficiency tracking
 	tracker.trackEnergyEfficiency(jobID, 0.7)
 	assert.Contains(t, tracker.efficiencyData, jobID)
-	
+
 	trend := tracker.efficiencyData[jobID]
 	assert.Equal(t, jobID, trend.JobID)
 	assert.Len(t, trend.Timestamps, 1)
@@ -971,10 +971,10 @@ func TestEnergyMonitor_EfficiencyScoreCalculations(t *testing.T) {
 			}
 
 			efficiency := monitor.calculatePowerEfficiency(testJob, tt.totalEnergy, tt.runtimeHours)
-			
+
 			assert.GreaterOrEqual(t, efficiency, 0.0, "Efficiency should be non-negative")
 			assert.LessOrEqual(t, efficiency, 1.0, "Efficiency should not exceed 1.0")
-			
+
 			if tt.runtimeHours > 0 {
 				assert.InDelta(t, tt.expectedEfficiency, efficiency, 0.3, "Efficiency should be within expected range")
 			} else {

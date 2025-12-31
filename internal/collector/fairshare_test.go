@@ -123,9 +123,9 @@ func TestFairShareCollector_PriorityWeights(t *testing.T) {
 	assert.Equal(t, 0.05, weights.PartitionWeight)
 	assert.Equal(t, 0.03, weights.AssocWeight)
 	assert.Equal(t, 0.02, weights.JobSizeWeight)
-	
+
 	// Test that weights sum to approximately 1.0
-	total := weights.AgeWeight + weights.FairShareWeight + weights.QoSWeight + 
+	total := weights.AgeWeight + weights.FairShareWeight + weights.QoSWeight +
 		weights.PartitionWeight + weights.AssocWeight + weights.JobSizeWeight
 	assert.InDelta(t, 1.0, total, 0.01)
 }
@@ -269,7 +269,7 @@ func TestFairShareCollector_collectUserFairShares(t *testing.T) {
 	userKey := "testuser_testaccount"
 	fairShare, exists := collector.userFairShares[userKey]
 	require.True(t, exists)
-	
+
 	assert.Equal(t, "testuser", fairShare.UserName)
 	assert.Equal(t, "testaccount", fairShare.Account)
 	assert.Greater(t, fairShare.FairShareFactor, 0.0)
@@ -433,7 +433,7 @@ func TestJobPriorityFactors_DataStructure(t *testing.T) {
 	now := time.Now()
 	submitTime := now.Add(-2 * time.Hour)
 	predictedStart := now.Add(30 * time.Minute)
-	
+
 	priority := &JobPriorityFactors{
 		JobID:               "12345",
 		UserName:            "testuser",
@@ -486,7 +486,7 @@ func TestFairShareViolationDetector_analyzeViolations(t *testing.T) {
 	config := &FairShareConfig{
 		ViolationThreshold: 0.2,
 	}
-	
+
 	detector := &FairShareViolationDetector{
 		config:     config,
 		violations: make(map[string]*FairShareViolation),
@@ -521,14 +521,14 @@ func TestFairShareViolationDetector_analyzeViolations(t *testing.T) {
 
 	// Should detect one violation
 	assert.Len(t, detector.violations, 1)
-	
+
 	// Find the violation
 	var violation *FairShareViolation
 	for _, v := range detector.violations {
 		violation = v
 		break
 	}
-	
+
 	require.NotNil(t, violation)
 	assert.Equal(t, "user1", violation.UserName)
 	assert.Equal(t, "account1", violation.Account)

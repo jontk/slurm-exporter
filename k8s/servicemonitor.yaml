@@ -65,7 +65,7 @@ spec:
       annotations:
         summary: "SLURM Exporter is down"
         description: "SLURM Exporter has been down for more than 1 minute."
-    
+
     - alert: SlurmExporterHighMemoryUsage
       expr: container_memory_usage_bytes{pod=~"slurm-exporter.*"} / container_spec_memory_limit_bytes > 0.8
       for: 5m
@@ -74,7 +74,7 @@ spec:
       annotations:
         summary: "SLURM Exporter high memory usage"
         description: "SLURM Exporter memory usage is above 80% for more than 5 minutes."
-    
+
     - alert: SlurmExporterHighCPUUsage
       expr: rate(container_cpu_usage_seconds_total{pod=~"slurm-exporter.*"}[5m]) / container_spec_cpu_quota * 100 > 80
       for: 5m
@@ -83,7 +83,7 @@ spec:
       annotations:
         summary: "SLURM Exporter high CPU usage"
         description: "SLURM Exporter CPU usage is above 80% for more than 5 minutes."
-    
+
     # SLURM cluster alerts
     - alert: SlurmAPIConnectionFailed
       expr: slurm_exporter_slurm_api_requests_total{status="error"} > 0
@@ -93,7 +93,7 @@ spec:
       annotations:
         summary: "SLURM API connection failed"
         description: "Failed to connect to SLURM API for more than 2 minutes."
-    
+
     - alert: SlurmClusterHighUtilization
       expr: slurm_cluster_utilization_percent > 90
       for: 10m
@@ -102,7 +102,7 @@ spec:
       annotations:
         summary: "SLURM cluster high utilization"
         description: "SLURM cluster utilization is above 90% for more than 10 minutes."
-    
+
     - alert: SlurmNodesDown
       expr: slurm_nodes_total{state="down"} > 0
       for: 5m
@@ -111,7 +111,7 @@ spec:
       annotations:
         summary: "SLURM nodes are down"
         description: "{{ $value }} SLURM nodes are in down state."
-    
+
     - alert: SlurmJobsStuckInQueue
       expr: slurm_jobs_total{state="pending"} > 100
       for: 30m
