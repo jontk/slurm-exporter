@@ -77,16 +77,11 @@ func (pc *ProfiledCollector) Collect(ctx context.Context, ch chan<- prometheus.M
 	// Log collection results
 	if err != nil {
 		pc.logger.WithError(err).Error("Collection failed")
-		op.profile.Metadata["error"] = err.Error()
-		op.profile.Metadata["status"] = "failed"
+		// Metadata will be added when profile is saved
 	} else {
 		pc.logger.WithField("duration", op.Duration()).Debug("Collection completed")
-		op.profile.Metadata["status"] = "success"
+		// Metadata will be added when profile is saved
 	}
-
-	// Add collector metadata
-	op.profile.Metadata["collector_type"] = fmt.Sprintf("%T", pc.collector)
-	op.profile.Metadata["enabled"] = pc.collector.IsEnabled()
 
 	op.PhaseEnd("post_collection")
 

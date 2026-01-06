@@ -107,19 +107,26 @@ type AuthConfig struct {
 
 // CollectorsConfig holds configuration for metric collectors.
 type CollectorsConfig struct {
-	Global       GlobalCollectorConfig `yaml:"global"`
-	Cluster      CollectorConfig       `yaml:"cluster"`
-	Nodes        CollectorConfig       `yaml:"nodes"`
-	Jobs         CollectorConfig       `yaml:"jobs"`
-	Users        CollectorConfig       `yaml:"users"`
-	Accounts     CollectorConfig       `yaml:"accounts"`
-	Associations CollectorConfig       `yaml:"associations"`
-	Partitions   CollectorConfig       `yaml:"partitions"`
-	Performance  CollectorConfig       `yaml:"performance"`
-	System       CollectorConfig       `yaml:"system"`
-	QoS          CollectorConfig       `yaml:"qos"`
-	Reservations CollectorConfig       `yaml:"reservations"`
-	Degradation  DegradationConfig     `yaml:"degradation"`
+	Global             GlobalCollectorConfig `yaml:"global"`
+	Cluster            CollectorConfig       `yaml:"cluster"`
+	Nodes              CollectorConfig       `yaml:"nodes"`
+	Jobs               CollectorConfig       `yaml:"jobs"`
+	Users              CollectorConfig       `yaml:"users"`
+	Accounts           CollectorConfig       `yaml:"accounts"`
+	Associations       CollectorConfig       `yaml:"associations"`
+	Partitions         CollectorConfig       `yaml:"partitions"`
+	Performance        CollectorConfig       `yaml:"performance"`
+	System             CollectorConfig       `yaml:"system"`
+	QoS                CollectorConfig       `yaml:"qos"`
+	Reservations       CollectorConfig       `yaml:"reservations"`
+	Licenses           CollectorConfig       `yaml:"licenses"`
+	Shares             CollectorConfig       `yaml:"shares"`
+	Diagnostics        CollectorConfig       `yaml:"diagnostics"`
+	TRES               CollectorConfig       `yaml:"tres"`
+	WCKeys             CollectorConfig       `yaml:"wckeys"`
+	Clusters           CollectorConfig       `yaml:"clusters"`
+	Degradation        DegradationConfig     `yaml:"degradation"`
+	CollectionTimeout  time.Duration         `yaml:"collection_timeout"`
 }
 
 // GlobalCollectorConfig holds global collector settings.
@@ -455,6 +462,73 @@ func Default() *Config {
 					MaxRetryDelay: 60 * time.Second,
 				},
 			},
+			Licenses: CollectorConfig{
+				Enabled:  true,
+				Interval: 60 * time.Second,
+				Timeout:  10 * time.Second,
+				ErrorHandling: ErrorHandlingConfig{
+					MaxRetries:    3,
+					RetryDelay:    5 * time.Second,
+					BackoffFactor: 2.0,
+					MaxRetryDelay: 60 * time.Second,
+				},
+			},
+			Shares: CollectorConfig{
+				Enabled:  true,
+				Interval: 120 * time.Second, // Less frequent as fairshare changes slowly
+				Timeout:  10 * time.Second,
+				ErrorHandling: ErrorHandlingConfig{
+					MaxRetries:    3,
+					RetryDelay:    5 * time.Second,
+					BackoffFactor: 2.0,
+					MaxRetryDelay: 60 * time.Second,
+				},
+			},
+			Diagnostics: CollectorConfig{
+				Enabled:  true,
+				Interval: 30 * time.Second,
+				Timeout:  10 * time.Second,
+				ErrorHandling: ErrorHandlingConfig{
+					MaxRetries:    3,
+					RetryDelay:    5 * time.Second,
+					BackoffFactor: 2.0,
+					MaxRetryDelay: 60 * time.Second,
+				},
+			},
+			TRES: CollectorConfig{
+				Enabled:  true,
+				Interval: 60 * time.Second,
+				Timeout:  10 * time.Second,
+				ErrorHandling: ErrorHandlingConfig{
+					MaxRetries:    3,
+					RetryDelay:    5 * time.Second,
+					BackoffFactor: 2.0,
+					MaxRetryDelay: 60 * time.Second,
+				},
+			},
+			WCKeys: CollectorConfig{
+				Enabled:  false, // Disabled by default as not all clusters use WCKeys
+				Interval: 300 * time.Second, // 5 minutes
+				Timeout:  10 * time.Second,
+				ErrorHandling: ErrorHandlingConfig{
+					MaxRetries:    3,
+					RetryDelay:    5 * time.Second,
+					BackoffFactor: 2.0,
+					MaxRetryDelay: 60 * time.Second,
+				},
+			},
+			Clusters: CollectorConfig{
+				Enabled:  true,
+				Interval: 300 * time.Second, // 5 minutes - cluster info changes rarely
+				Timeout:  10 * time.Second,
+				ErrorHandling: ErrorHandlingConfig{
+					MaxRetries:    3,
+					RetryDelay:    5 * time.Second,
+					BackoffFactor: 2.0,
+					MaxRetryDelay: 60 * time.Second,
+				},
+			},
+			CollectionTimeout: 30 * time.Second,
 			Degradation: DegradationConfig{
 				Enabled:          true,
 				MaxFailures:      3,

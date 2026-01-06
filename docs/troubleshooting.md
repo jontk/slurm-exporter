@@ -1,9 +1,529 @@
-# Troubleshooting Guide
+# SLURM Exporter Troubleshooting Guide
 
-This guide covers common issues encountered when deploying and operating the SLURM exporter, along with step-by-step solutions.
+This comprehensive troubleshooting guide provides decision trees and solutions for common issues with the SLURM Exporter.
+
+## 🚀 Quick Health Check
+
+Before diving into specific issues, run this quick health check:
+
+```bash
+# Check exporter health
+curl http://localhost:8080/health
+
+# Check metrics endpoint
+curl http://localhost:8080/metrics | head -20
+
+# Check debug endpoints
+curl http://localhost:8080/debug/collectors
+curl http://localhost:8080/debug/health
+```
+
+## 📊 Issue Decision Tree
+
+### 1. Exporter Won't Start
+
+```mermaid
+graph TD
+    A[Exporter Won't Start] --> B{Config file exists?}
+    B -->|No| C[Create config.yaml from example]
+    B -->|Yes| D{Config syntax valid?}
+    D -->|No| E[Fix YAML syntax errors]
+    D -->|Yes| F{SLURM connection works?}
+    F -->|No| G[Check SLURM connectivity]
+    F -->|Yes| H{Port available?}
+    H -->|No| I[Change port or kill process]
+    H -->|Yes| J[Check logs for specific error]
+```
+
+#### Solutions:
+
+**Config Issues:**
+```bash
+# Validate config syntax
+go run cmd/validate-config/main.go config.yaml
+
+# Use minimal config for testing
+cat > minimal-config.yaml << EOF
+slurm:
+  endpoint: "http://your-slurm-server:6820"
+  auth:
+    type: "token"
+    token: "your-token"
+collectors:
+  - jobs_simple
+  - nodes_simple
+EOF
+```
+
+**SLURM Connectivity:**
+```bash
+# Test SLURM API directly
+curl -H "X-SLURM-USER-TOKEN: your-token" \
+     http://your-slurm-server:6820/slurm/v0.0.40/diag
+
+# Check network connectivity
+telnet your-slurm-server 6820
+```
+
+**Port Conflicts:**
+```bash
+# Find process using port
+sudo lsof -i :8080
+sudo netstat -tulpn | grep :8080
+
+# Kill conflicting process
+sudo kill -9 <PID>
+```
+
+### 2. No Metrics Available
+
+```mermaid
+graph TD
+    A[No Metrics at /metrics] --> B{HTTP 200 response?}
+    B -->|No| C[Check exporter logs]
+    B -->|Yes| D{Any metrics returned?}
+    D -->|No| E{Collectors enabled?}
+    E -->|No| F[Enable collectors in config]
+    E -->|Yes| G{SLURM API returning data?}
+    G -->|No| H[Check SLURM API health]
+    G -->|Yes| I[Check collector logs]
+```
+
+#### Solutions:
+
+**Empty Metrics Response:**
+```bash
+# Check enabled collectors
+curl http://localhost:8080/debug/collectors
+
+# Enable basic collectors
+cat >> config.yaml << EOF
+collectors:
+  - cluster_simple
+  - jobs_simple
+  - nodes_simple
+  - partitions_simple
+EOF
+```
+
+**SLURM API Issues:**
+```bash
+# Test specific endpoints
+curl -H "X-SLURM-USER-TOKEN: $TOKEN" \
+     $SLURM_ENDPOINT/slurm/v0.0.40/jobs
+
+curl -H "X-SLURM-USER-TOKEN: $TOKEN" \
+     $SLURM_ENDPOINT/slurm/v0.0.40/nodes
+```
+
+### 3. Metrics Outdated/Stale
+
+```mermaid
+graph TD
+    A[Metrics Stale] --> B{Collection interval appropriate?}
+    B -->|Too long| C[Reduce collection_interval]
+    B -->|OK| D{Circuit breaker open?}
+    D -->|Yes| E[Check SLURM API health]
+    D -->|No| F{Caching issues?}
+    F -->|Yes| G[Clear cache or adjust TTL]
+    F -->|No| H[Check collector performance]
+```
+
+#### Solutions:
+
+**Adjust Collection Interval:**
+```yaml
+# config.yaml
+performance:
+  collection_interval: "30s"  # Reduce from default 60s
+  
+# For high-frequency monitoring
+performance:
+  collection_interval: "10s"
+  cache:
+    enabled: true
+    base_ttl: "15s"
+```
+
+**Circuit Breaker Issues:**
+```bash
+# Check circuit breaker status
+curl http://localhost:8080/debug/health | jq '.circuit_breaker'
+
+# Reset if stuck open
+curl -X POST http://localhost:8080/debug/circuit-breaker/reset
+```
+
+**Cache Management:**
+```bash
+# Check cache stats
+curl http://localhost:8080/debug/cache
+
+# Clear cache
+curl -X POST http://localhost:8080/debug/cache/clear
+```
+
+### 4. High Memory Usage
+
+```mermaid
+graph TD
+    A[High Memory Usage] --> B{Memory growing over time?}
+    B -->|Yes| C[Memory leak - check collectors]
+    B -->|No| D{High cardinality metrics?}
+    D -->|Yes| E[Enable metric filtering]
+    D -->|No| F{Large cluster?}
+    F -->|Yes| G[Optimize collection settings]
+    F -->|No| H[Profile memory usage]
+```
+
+#### Solutions:
+
+**Enable Metric Filtering:**
+```yaml
+# config.yaml
+filtering:
+  enabled: true
+  max_cardinality: 10000
+  patterns:
+    jobs:
+      exclude_users: ["test_*", "temp_*"]
+      exclude_partitions: ["debug"]
+    nodes:
+      exclude_states: ["unknown"]
+```
+
+**Optimize for Large Clusters:**
+```yaml
+performance:
+  collection_interval: "60s"
+  batch_processing:
+    enabled: true
+    batch_size: 100
+  cache:
+    enabled: true
+    base_ttl: "120s"
+```
+
+**Memory Profiling:**
+```bash
+# Enable profiling
+curl http://localhost:8080/debug/pprof/heap > heap.prof
+go tool pprof heap.prof
+
+# Check memory stats
+curl http://localhost:8080/debug/memory
+```
+
+### 5. Slow Performance
+
+```mermaid
+graph TD
+    A[Slow Performance] --> B{SLURM API slow?}
+    B -->|Yes| C[Optimize API calls]
+    B -->|No| D{Many collectors enabled?}
+    D -->|Yes| E[Disable unnecessary collectors]
+    D -->|No| F{High cardinality?}
+    F -->|Yes| G[Enable filtering/sampling]
+    F -->|No| H[Profile CPU usage]
+```
+
+#### Solutions:
+
+**Optimize API Calls:**
+```yaml
+# config.yaml
+slurm:
+  timeout: "10s"
+  retry_attempts: 2
+  
+performance:
+  batch_processing:
+    enabled: true
+    batch_size: 50
+  connection_pool:
+    max_connections: 5
+```
+
+**Selective Collectors:**
+```yaml
+# Disable heavy collectors for large clusters
+collectors:
+  - cluster_simple      # Lightweight cluster info
+  - jobs_simple        # Basic job metrics only
+  - nodes_simple       # Basic node metrics only
+  # - job_performance  # Disable detailed job metrics
+  # - job_analytics    # Disable analytics
+```
+
+**Performance Profiling:**
+```bash
+# CPU profiling
+curl http://localhost:8080/debug/pprof/profile > cpu.prof
+go tool pprof cpu.prof
+
+# Collection performance
+curl http://localhost:8080/debug/collectors | jq '.performance'
+```
+
+## 🔧 Common Configuration Issues
+
+### Authentication Problems
+
+**Token Authentication:**
+```yaml
+slurm:
+  auth:
+    type: "token"
+    token: "your-slurm-user-token"
+    # Token should have appropriate SLURM permissions
+```
+
+**JWT Authentication:**
+```yaml
+slurm:
+  auth:
+    type: "jwt"
+    jwt:
+      key_file: "/path/to/jwt.key"
+      user: "slurm-exporter"
+```
+
+**Certificate Authentication:**
+```yaml
+slurm:
+  auth:
+    type: "certificate"
+    certificate:
+      cert_file: "/path/to/client.crt"
+      key_file: "/path/to/client.key"
+      ca_file: "/path/to/ca.crt"
+```
+
+### Network Configuration
+
+**Firewall Issues:**
+```bash
+# Check if SLURM port is accessible
+telnet slurm-server 6820
+
+# For Kubernetes
+kubectl exec -it slurm-exporter-pod -- telnet slurm-server 6820
+```
+
+**DNS Resolution:**
+```bash
+# Test DNS resolution
+nslookup slurm-server
+
+# Use IP address if DNS fails
+slurm:
+  endpoint: "http://10.0.1.100:6820"
+```
+
+## 📈 Monitoring the Exporter
+
+### Health Monitoring
+
+```bash
+# Comprehensive health check
+curl http://localhost:8080/debug/health | jq '.'
+
+# Example healthy response:
+{
+  "status": "healthy",
+  "slurm_api": "connected",
+  "collectors": {
+    "enabled": 5,
+    "healthy": 5,
+    "errors": 0
+  },
+  "memory": {
+    "usage_mb": 45,
+    "gc_cycles": 12
+  },
+  "circuit_breaker": "closed"
+}
+```
+
+### Performance Monitoring
+
+```bash
+# Collection performance
+curl http://localhost:8080/debug/collectors | jq '.performance'
+
+# Cache effectiveness
+curl http://localhost:8080/debug/cache | jq '.stats'
+
+# Connection pool status
+curl http://localhost:8080/debug/connections
+```
+
+## 🚨 Emergency Procedures
+
+### Exporter Stuck/Unresponsive
+
+```bash
+# Graceful restart
+curl -X POST http://localhost:8080/debug/restart
+
+# Force restart (last resort)
+sudo systemctl restart slurm-exporter
+
+# Or for containers
+docker restart slurm-exporter
+kubectl rollout restart deployment/slurm-exporter
+```
+
+### SLURM API Overload
+
+```bash
+# Enable circuit breaker protection
+curl -X POST http://localhost:8080/debug/circuit-breaker/enable
+
+# Reduce collection frequency
+curl -X POST http://localhost:8080/debug/config/collection-interval/300s
+
+# Disable heavy collectors temporarily
+curl -X POST http://localhost:8080/debug/collectors/disable/job_analytics
+```
+
+### High Resource Usage
+
+```bash
+# Enable emergency mode (minimal collectors only)
+curl -X POST http://localhost:8080/debug/emergency-mode/enable
+
+# Clear all caches
+curl -X POST http://localhost:8080/debug/cache/clear
+
+# Force garbage collection
+curl -X POST http://localhost:8080/debug/gc
+```
+
+## 📝 Log Analysis
+
+### Common Log Patterns
+
+**Authentication Errors:**
+```
+ERROR: SLURM API authentication failed: invalid token
+```
+**Solution:** Verify token is valid and has correct permissions
+
+**Connection Timeouts:**
+```
+ERROR: timeout connecting to SLURM API after 30s
+```
+**Solution:** Increase timeout or check network connectivity
+
+**Circuit Breaker Activation:**
+```
+WARN: Circuit breaker opened due to repeated failures
+```
+**Solution:** Check SLURM API health, will auto-recover when healthy
+
+**Memory Warnings:**
+```
+WARN: High memory usage detected: 512MB
+```
+**Solution:** Enable filtering or reduce collection frequency
+
+### Enabling Debug Logging
+
+```yaml
+# config.yaml
+logging:
+  level: "debug"
+  format: "json"
+  output: "/var/log/slurm-exporter.log"
+
+# Or via environment
+export LOG_LEVEL=debug
+export LOG_FORMAT=json
+```
+
+## 🔍 Advanced Debugging
+
+### Request Tracing
+
+```yaml
+# Enable OpenTelemetry tracing
+tracing:
+  enabled: true
+  endpoint: "http://jaeger:14268/api/traces"
+  sample_rate: 0.1  # 10% sampling for production
+```
+
+### Profiling Production Issues
+
+```bash
+# CPU profile for 30 seconds
+curl "http://localhost:8080/debug/pprof/profile?seconds=30" > cpu.prof
+
+# Memory heap dump
+curl http://localhost:8080/debug/pprof/heap > heap.prof
+
+# Goroutine analysis
+curl http://localhost:8080/debug/pprof/goroutine > goroutines.prof
+```
+
+### Custom Diagnostics
+
+```bash
+# Generate diagnostic report
+curl http://localhost:8080/debug/diagnostic-report > diagnostic.json
+
+# Example report includes:
+# - Configuration summary
+# - Collector status
+# - Performance metrics
+# - Recent errors
+# - System information
+```
+
+## 🆘 Getting Help
+
+### Before Reporting Issues
+
+1. **Collect diagnostic information:**
+   ```bash
+   curl http://localhost:8080/debug/diagnostic-report > diagnostic.json
+   ```
+
+2. **Check logs for errors:**
+   ```bash
+   journalctl -u slurm-exporter -n 100
+   # or
+   docker logs slurm-exporter --tail 100
+   ```
+
+3. **Test SLURM API directly:**
+   ```bash
+   curl -H "X-SLURM-USER-TOKEN: $TOKEN" $SLURM_ENDPOINT/slurm/v0.0.40/diag
+   ```
+
+### Reporting Bugs
+
+Include in your bug report:
+- Diagnostic report (`diagnostic.json`)
+- Relevant log excerpts
+- Configuration file (with secrets redacted)
+- SLURM version and cluster size
+- Exporter version and deployment method
+
+### Community Resources
+
+- **GitHub Issues:** https://github.com/your-org/slurm-exporter/issues
+- **Documentation:** https://slurm-exporter.readthedocs.io
+- **Discussions:** https://github.com/your-org/slurm-exporter/discussions
+
+---
+
+*This troubleshooting guide is automatically updated with new scenarios. For the latest version, see the online documentation.*
 
 ## Table of Contents
 
+- [Legacy Documentation](#legacy-documentation)
 - [Connection Issues](#connection-issues)
 - [Authentication Problems](#authentication-problems)
 - [Performance Issues](#performance-issues)
@@ -13,6 +533,8 @@ This guide covers common issues encountered when deploying and operating the SLU
 - [Resource Constraints](#resource-constraints)
 - [Monitoring and Alerting Issues](#monitoring-and-alerting-issues)
 - [Debugging Tools](#debugging-tools)
+
+## Legacy Documentation
 
 ## Connection Issues
 

@@ -1,0 +1,436 @@
+name: Security Scanning
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+env:
+  GO_VERSION: '1.21'
+
+jobs:
+  # Static Application Security Testing
+  sast:
+    name: Static Security Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+
+      # Gosec - Go security checker
+      - name: Run Gosec Security Scanner
+        uses: securecodewarrior/github-action-gosec@master
+        with:
+          args: '-fmt sarif -out gosec-results.sarif ./...'
+
+      - name: Upload Gosec results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: gosec-results.sarif
+          category: gosec
+
+      # Nancy - Vulnerability scanner for Go dependencies
+      - name: Install Nancy
+        run: go install github.com/sonatypecommunity/nancy@latest
+
+      - name: Run Nancy vulnerability scan
+        run: |
+          go list -json -deps ./... | nancy sleuth --output=json > nancy-results.json || true
+          
+          # Convert to human readable format
+          if [ -s nancy-results.json ]; then
+            echo "## 🔍 Dependency Vulnerabilities Found" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            go list -json -deps ./... | nancy sleuth || true
+          else
+            echo "✅ No dependency vulnerabilities found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      # StaticCheck - Go static analysis
+      - name: Install StaticCheck
+        run: go install honnef.co/go/tools/cmd/staticcheck@latest
+
+      - name: Run StaticCheck
+        run: |
+          staticcheck -f sarif ./... > staticcheck-results.sarif || true
+          
+          if [ -s staticcheck-results.sarif ]; then
+            echo "## ⚠️ Static Analysis Issues Found" >> $GITHUB_STEP_SUMMARY
+            staticcheck ./... || true
+          else
+            echo "✅ No static analysis issues found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload StaticCheck results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: staticcheck-results.sarif
+          category: staticcheck
+
+      # Upload security scan artifacts
+      - name: Upload security scan results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: security-scan-results
+          path: |
+            gosec-results.sarif
+            nancy-results.json
+            staticcheck-results.sarif
+          retention-days: 30
+
+  # Container Security Scanning
+  container-security:
+    name: Container Security Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build container for scanning
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true
+          tags: slurm-exporter:security-scan
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Trivy - Container vulnerability scanner
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'slurm-exporter:security-scan'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy
+
+      # Grype - Additional container scanner
+      - name: Install Grype
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+
+      - name: Run Grype container scan
+        run: |
+          grype slurm-exporter:security-scan -o json > grype-results.json || true
+          grype slurm-exporter:security-scan -o table || true
+
+      - name: Upload container scan artifacts
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: container-security-results
+          path: |
+            trivy-results.sarif
+            grype-results.json
+          retention-days: 30
+
+  # Dependency License Scanning
+  license-scan:
+    name: License Compliance Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      # go-licenses - License detection
+      - name: Install go-licenses
+        run: go install github.com/google/go-licenses@latest
+
+      - name: Check licenses
+        run: |
+          echo "## 📄 License Compliance Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Generate license report
+          go-licenses report ./... > license-report.txt || true
+          
+          # Check for forbidden licenses
+          FORBIDDEN_LICENSES="GPL-2.0 GPL-3.0 AGPL-1.0 AGPL-3.0"
+          
+          echo "### Dependencies and Licenses:" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          head -20 license-report.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          
+          # Check for license violations
+          for license in $FORBIDDEN_LICENSES; do
+            if grep -q "$license" license-report.txt; then
+              echo "❌ Found forbidden license: $license" >> $GITHUB_STEP_SUMMARY
+              exit 1
+            fi
+          done
+          
+          echo "✅ No forbidden licenses detected" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload license report
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: license-report
+          path: license-report.txt
+          retention-days: 90
+
+  # Secret Scanning
+  secret-scan:
+    name: Secret Detection
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # TruffleHog - Secret scanner
+      - name: Run TruffleHog secret scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: main
+          head: HEAD
+          extra_args: --debug --only-verified
+
+      # GitLeaks - Additional secret scanner
+      - name: Install GitLeaks
+        run: |
+          wget -O gitleaks.tar.gz https://github.com/zricethezav/gitleaks/releases/latest/download/gitleaks_8.18.0_linux_x64.tar.gz
+          tar -xzf gitleaks.tar.gz
+          chmod +x gitleaks
+          sudo mv gitleaks /usr/local/bin/
+
+      - name: Run GitLeaks scan
+        run: |
+          gitleaks detect --source . --report gitleaks-report.json || true
+          
+          if [ -s gitleaks-report.json ]; then
+            echo "## 🔐 Secret Detection Results" >> $GITHUB_STEP_SUMMARY
+            echo "❌ Potential secrets detected! Check the artifacts for details." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No secrets detected" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload secret scan results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: secret-scan-results
+          path: gitleaks-report.json
+          retention-days: 30
+
+  # Security Policy Compliance
+  security-policy:
+    name: Security Policy Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check security policy compliance
+        run: |
+          echo "## 🛡️ Security Policy Compliance" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Check for required security files
+          REQUIRED_FILES="SECURITY.md .github/workflows/security.yml"
+          OPTIONAL_FILES="CODE_OF_CONDUCT.md CONTRIBUTING.md"
+          
+          echo "### Required Security Files:" >> $GITHUB_STEP_SUMMARY
+          for file in $REQUIRED_FILES; do
+            if [ -f "$file" ]; then
+              echo "✅ $file" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ $file (missing)" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Recommended Files:" >> $GITHUB_STEP_SUMMARY
+          for file in $OPTIONAL_FILES; do
+            if [ -f "$file" ]; then
+              echo "✅ $file" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "⚠️ $file (recommended)" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+          
+          # Check Dockerfile security best practices
+          if [ -f "Dockerfile" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Dockerfile Security:" >> $GITHUB_STEP_SUMMARY
+            
+            # Check for non-root user
+            if grep -q "USER.*[^0]" Dockerfile; then
+              echo "✅ Non-root user configured" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "⚠️ Consider using non-root user" >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            # Check for secrets in Dockerfile
+            if grep -i -E "(password|secret|key|token)" Dockerfile; then
+              echo "❌ Potential secrets in Dockerfile" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "✅ No obvious secrets in Dockerfile" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+
+  # Aggregate security report
+  security-report:
+    name: Security Report
+    runs-on: ubuntu-latest
+    needs: [sast, container-security, license-scan, secret-scan, security-policy]
+    if: always()
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Download all security artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: security-artifacts
+
+      - name: Generate security summary
+        run: |
+          echo "# 🔒 Security Scan Summary" >> security-summary.md
+          echo "" >> security-summary.md
+          echo "**Scan Date:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> security-summary.md
+          echo "**Repository:** ${{ github.repository }}" >> security-summary.md
+          echo "**Branch:** ${{ github.ref_name }}" >> security-summary.md
+          echo "**Commit:** ${{ github.sha }}" >> security-summary.md
+          echo "" >> security-summary.md
+          
+          # Scan results summary
+          echo "## Scan Results" >> security-summary.md
+          echo "" >> security-summary.md
+          echo "| Scan Type | Status | Details |" >> security-summary.md
+          echo "|-----------|--------|---------|" >> security-summary.md
+          echo "| Static Analysis (SAST) | ${{ needs.sast.result == 'success' && '✅ Pass' || '❌ Issues Found' }} | Gosec, StaticCheck, Nancy |" >> security-summary.md
+          echo "| Container Security | ${{ needs.container-security.result == 'success' && '✅ Pass' || '❌ Vulnerabilities Found' }} | Trivy, Grype |" >> security-summary.md
+          echo "| License Compliance | ${{ needs.license-scan.result == 'success' && '✅ Pass' || '❌ License Issues' }} | Dependency licenses |" >> security-summary.md
+          echo "| Secret Detection | ${{ needs.secret-scan.result == 'success' && '✅ Pass' || '❌ Secrets Found' }} | TruffleHog, GitLeaks |" >> security-summary.md
+          echo "| Security Policy | ${{ needs.security-policy.result == 'success' && '✅ Pass' || '⚠️ Policy Issues' }} | Security files and practices |" >> security-summary.md
+          echo "" >> security-summary.md
+          
+          # Add recommendations
+          echo "## 🎯 Recommendations" >> security-summary.md
+          echo "" >> security-summary.md
+          
+          if [ "${{ needs.sast.result }}" != "success" ]; then
+            echo "- 🔍 **Review static analysis findings** - Check SARIF files for code security issues" >> security-summary.md
+          fi
+          
+          if [ "${{ needs.container-security.result }}" != "success" ]; then
+            echo "- 🐳 **Update container dependencies** - Vulnerable packages detected in container image" >> security-summary.md
+          fi
+          
+          if [ "${{ needs.license-scan.result }}" != "success" ]; then
+            echo "- 📄 **Review license compliance** - Check for incompatible or forbidden licenses" >> security-summary.md
+          fi
+          
+          if [ "${{ needs.secret-scan.result }}" != "success" ]; then
+            echo "- 🔐 **Remove detected secrets** - Rotate any exposed credentials and remove from history" >> security-summary.md
+          fi
+          
+          echo "" >> security-summary.md
+          echo "## 📚 Resources" >> security-summary.md
+          echo "" >> security-summary.md
+          echo "- [Security Policy](SECURITY.md)" >> security-summary.md
+          echo "- [OWASP Go Security Guide](https://owasp.org/www-project-go-secure-coding-practices-guide/)" >> security-summary.md
+          echo "- [Container Security Best Practices](https://owasp.org/www-project-docker-top-10/)" >> security-summary.md
+
+      - name: Upload security summary
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-summary
+          path: security-summary.md
+          retention-days: 90
+
+      # Run comprehensive security audit
+      - name: Run security audit script
+        run: |
+          chmod +x scripts/security-audit.sh
+          ./scripts/security-audit.sh || true
+          
+          # Check if audit found critical issues
+          if [ -f security-audit-*/SECURITY_AUDIT_REPORT.md ]; then
+            echo "Security audit completed - check results"
+            echo "SECURITY_AUDIT_AVAILABLE=true" >> $GITHUB_ENV
+          fi
+
+      - name: Upload security audit results
+        if: env.SECURITY_AUDIT_AVAILABLE == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-audit-results
+          path: security-audit-*
+          retention-days: 30
+
+      # Create GitHub issue for security failures (only on main branch)
+      - name: Create security issue
+        if: |
+          github.ref == 'refs/heads/main' && 
+          (needs.sast.result == 'failure' || 
+           needs.container-security.result == 'failure' || 
+           needs.secret-scan.result == 'failure')
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('security-summary.md', 'utf8');
+            
+            // Add security audit info if available
+            let auditInfo = '';
+            if (process.env.SECURITY_AUDIT_AVAILABLE === 'true') {
+              auditInfo = '\n\n## 🔍 Security Audit\n\nA comprehensive security audit was run. Check the workflow artifacts for detailed results.\n\n';
+            }
+            
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Security Issues Detected - ${new Date().toISOString().split('T')[0]}`,
+              body: `${summary}${auditInfo}\n\n---\n*This issue was automatically created by the security scanning workflow.*\n\n### 📋 Next Steps\n- [ ] Review security scan results\n- [ ] Address critical and high-priority findings\n- [ ] Update dependencies with known vulnerabilities\n- [ ] Run security audit script locally for detailed analysis\n\n### 🔗 Resources\n- [Security Policy](SECURITY.md)\n- [Security Configuration Guide](docs/security-configuration.md)\n- [Security Audit Script](scripts/security-audit.sh)`,
+              labels: ['security', 'automated', 'priority-high']
+            });

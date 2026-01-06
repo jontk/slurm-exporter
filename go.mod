@@ -6,6 +6,8 @@ replace github.com/jontk/slurm-client => ../slurm-client-stable
 
 require (
 	github.com/fsnotify/fsnotify v1.9.0
+	github.com/golang/mock v1.6.0
+	github.com/gorilla/mux v1.8.1
 	github.com/jontk/slurm-client v0.0.0-00010101000000-000000000000
 	github.com/prometheus/client_golang v1.22.0
 	github.com/prometheus/client_model v0.6.1
@@ -13,7 +15,6 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/otel v1.32.0
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.32.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.32.0
 	go.opentelemetry.io/otel/sdk v1.32.0
 	go.opentelemetry.io/otel/trace v1.32.0
@@ -54,6 +55,7 @@ require (
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.32.0 // indirect
 	go.opentelemetry.io/otel/metric v1.32.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.3.1 // indirect
 	golang.org/x/net v0.33.0 // indirect

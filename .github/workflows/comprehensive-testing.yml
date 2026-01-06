@@ -1,0 +1,533 @@
+name: Comprehensive Testing & Quality Assurance
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+  schedule:
+    # Run comprehensive tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+env:
+  GO_VERSION: '1.21'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Unit Tests with multiple Go versions
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: ['1.21', '1.22']
+        platform: [ubuntu-latest, windows-latest, macos-latest]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Go ${{ matrix.go-version }}
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ matrix.go-version }}
+        
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-${{ matrix.go-version }}-
+          
+    - name: Install dependencies
+      run: go mod download
+      
+    - name: Generate mocks
+      run: |
+        go install github.com/golang/mock/mockgen@latest
+        go generate ./...
+        
+    - name: Run unit tests
+      run: |
+        go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+        go tool cover -html=coverage.out -o coverage.html
+        
+    - name: Check test coverage
+      run: |
+        COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
+        echo "Coverage: $COVERAGE%"
+        if (( $(echo "$COVERAGE < 90.0" | bc -l) )); then
+          echo "❌ Coverage below 90%: $COVERAGE%"
+          exit 1
+        fi
+        echo "✅ Coverage target met: $COVERAGE%"
+        
+    - name: Upload coverage to Codecov
+      if: matrix.platform == 'ubuntu-latest' && matrix.go-version == '1.21'
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.out
+        flags: unittests
+        name: codecov-umbrella
+        
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results-${{ matrix.platform }}-go${{ matrix.go-version }}
+        path: |
+          coverage.out
+          coverage.html
+
+  # Integration Tests
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      slurm:
+        image: slurm/slurm:latest
+        options: >-
+          --health-cmd "sinfo"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6820:6820
+          
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum') }}
+        
+    - name: Install dependencies
+      run: go mod download
+      
+    - name: Wait for SLURM to be ready
+      run: |
+        timeout 300 bash -c 'until curl -f http://localhost:6820/slurm/v0.0.39/ping; do sleep 5; done'
+        
+    - name: Run integration tests
+      env:
+        INTEGRATION_TEST: "true"
+        SLURM_API_URL: "http://localhost:6820"
+        SLURM_AUTH_TOKEN: ${{ secrets.SLURM_TEST_TOKEN || 'test-token' }}
+      run: |
+        go test -v -tags=integration ./test/integration/...
+        
+    - name: Upload integration test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: integration-test-results
+        path: test-results.xml
+
+  # End-to-End Tests
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        
+    - name: Create Kind cluster
+      uses: helm/kind-action@v1.8.0
+      with:
+        cluster_name: slurm-exporter-e2e
+        
+    - name: Install kubectl
+      uses: azure/setup-kubectl@v3
+      
+    - name: Install Helm
+      uses: azure/setup-helm@v3
+      
+    - name: Deploy test infrastructure
+      run: |
+        # Deploy Prometheus
+        helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+        helm install prometheus prometheus-community/kube-prometheus-stack \
+          --namespace monitoring --create-namespace --wait
+          
+        # Deploy SLURM simulator
+        kubectl apply -f test/e2e/manifests/slurm-simulator.yaml
+        kubectl wait --for=condition=ready pod -l app=slurm-simulator --timeout=300s
+        
+    - name: Build and deploy exporter
+      run: |
+        # Build image
+        docker build -t slurm-exporter:test .
+        
+        # Load into Kind
+        kind load docker-image slurm-exporter:test --name slurm-exporter-e2e
+        
+        # Deploy
+        helm upgrade --install slurm-exporter ./charts/slurm-exporter \
+          --set image.tag=test \
+          --set slurm.url=http://slurm-simulator:6820 \
+          --namespace default --wait
+          
+    - name: Run E2E tests
+      run: |
+        go test -v -tags=e2e ./test/e2e/...
+        
+    - name: Collect logs on failure
+      if: failure()
+      run: |
+        kubectl get pods --all-namespaces
+        kubectl describe pods -l app.kubernetes.io/name=slurm-exporter
+        kubectl logs -l app.kubernetes.io/name=slurm-exporter --tail=100
+
+  # Performance Benchmarks
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum') }}
+        
+    - name: Install dependencies
+      run: go mod download
+      
+    - name: Run benchmarks
+      run: |
+        go test -bench=. -benchmem -run=^$ ./test/benchmark/... | tee bench.txt
+        
+    - name: Store benchmark results
+      uses: benchmark-action/github-action-benchmark@v1
+      with:
+        tool: 'go'
+        output-file-path: bench.txt
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        auto-push: true
+        alert-threshold: '110%'
+        comment-on-alert: true
+        fail-on-alert: true
+        
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v3
+      with:
+        name: benchmark-results
+        path: bench.txt
+
+  # Security Tests
+  security-tests:
+    name: Security Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        
+    - name: Run Gosec security scanner
+      uses: securecodewarrior/github-action-gosec@master
+      with:
+        args: '-fmt json -out gosec.json ./...'
+        
+    - name: Run Nancy vulnerability scanner
+      run: |
+        go list -json -deps ./... | nancy sleuth
+        
+    - name: Run Trivy filesystem scan
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        severity: 'CRITICAL,HIGH,MEDIUM'
+        
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+        
+    - name: Run security tests
+      run: |
+        go test -v ./test/security/...
+        
+    - name: Upload security test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-test-results
+        path: |
+          gosec.json
+          trivy-results.sarif
+
+  # Load Testing
+  load-tests:
+    name: Load Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || contains(github.event.pull_request.labels.*.name, 'performance')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        
+    - name: Install K6
+      run: |
+        sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+        echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+        sudo apt-get update
+        sudo apt-get install k6
+        
+    - name: Build test binary
+      run: |
+        go build -o slurm-exporter ./cmd/slurm-exporter
+        
+    - name: Start exporter
+      run: |
+        ./slurm-exporter --config.file=configs/dev-config.yaml &
+        sleep 5
+        
+    - name: Run load tests
+      run: |
+        k6 run test/load/metrics_load_test.js
+        k6 run test/load/debug_endpoints_load_test.js
+        
+    - name: Upload load test results
+      uses: actions/upload-artifact@v3
+      with:
+        name: load-test-results
+        path: load-test-results.json
+
+  # Mutation Testing
+  mutation-tests:
+    name: Mutation Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || contains(github.event.pull_request.labels.*.name, 'mutation-testing')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        
+    - name: Install go-mutesting
+      run: |
+        go install github.com/zimmski/go-mutesting/cmd/go-mutesting@latest
+        
+    - name: Run mutation tests
+      run: |
+        go-mutesting ./internal/collector/... --verbose
+        
+    - name: Check mutation score
+      run: |
+        MUTATION_SCORE=$(go-mutesting ./internal/collector/... | grep "Score:" | awk '{print $2}' | sed 's/%//')
+        echo "Mutation Score: $MUTATION_SCORE%"
+        if (( $(echo "$MUTATION_SCORE < 80.0" | bc -l) )); then
+          echo "⚠️ Mutation score below 80%: $MUTATION_SCORE%"
+        else
+          echo "✅ Mutation score target met: $MUTATION_SCORE%"
+        fi
+
+  # Code Quality Checks
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        
+    - name: Run golangci-lint
+      uses: golangci/golangci-lint-action@v3
+      with:
+        version: latest
+        args: --timeout=5m
+        
+    - name: Run gofmt check
+      run: |
+        if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
+          echo "❌ Go files not formatted:"
+          gofmt -s -l .
+          exit 1
+        fi
+        echo "✅ All Go files properly formatted"
+        
+    - name: Run go vet
+      run: go vet ./...
+      
+    - name: Run ineffassign
+      run: |
+        go install github.com/gordonklaus/ineffassign@latest
+        ineffassign ./...
+        
+    - name: Run misspell
+      run: |
+        go install github.com/client9/misspell/cmd/misspell@latest
+        misspell -error .
+        
+    - name: Check for TODO/FIXME comments
+      run: |
+        TODO_COUNT=$(grep -r "TODO\|FIXME" --include="*.go" . | wc -l)
+        echo "Found $TODO_COUNT TODO/FIXME comments"
+        if [ $TODO_COUNT -gt 10 ]; then
+          echo "⚠️ Too many TODO/FIXME comments: $TODO_COUNT"
+          grep -r "TODO\|FIXME" --include="*.go" .
+        fi
+
+  # Dependency Checks
+  dependency-checks:
+    name: Dependency Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        
+    - name: Check for vulnerabilities in dependencies
+      run: |
+        go install golang.org/x/vuln/cmd/govulncheck@latest
+        govulncheck ./...
+        
+    - name: Check for outdated dependencies
+      run: |
+        go list -u -m all
+        
+    - name: Verify go.mod is tidy
+      run: |
+        go mod tidy
+        if [ -n "$(git status --porcelain go.mod go.sum)" ]; then
+          echo "❌ go.mod/go.sum not tidy"
+          git diff go.mod go.sum
+          exit 1
+        fi
+        echo "✅ go.mod/go.sum are tidy"
+
+  # Test Result Summary
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests, e2e-tests, performance-tests, security-tests, code-quality, dependency-checks]
+    if: always()
+    
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+      
+    - name: Generate test report
+      run: |
+        echo "# Test Results Summary" > test-summary.md
+        echo "" >> test-summary.md
+        echo "## Status" >> test-summary.md
+        echo "- Unit Tests: ${{ needs.unit-tests.result }}" >> test-summary.md
+        echo "- Integration Tests: ${{ needs.integration-tests.result }}" >> test-summary.md
+        echo "- E2E Tests: ${{ needs.e2e-tests.result }}" >> test-summary.md
+        echo "- Performance Tests: ${{ needs.performance-tests.result }}" >> test-summary.md
+        echo "- Security Tests: ${{ needs.security-tests.result }}" >> test-summary.md
+        echo "- Code Quality: ${{ needs.code-quality.result }}" >> test-summary.md
+        echo "- Dependency Checks: ${{ needs.dependency-checks.result }}" >> test-summary.md
+        
+    - name: Upload test summary
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-summary
+        path: test-summary.md
+        
+    - name: Comment PR with test results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const summary = fs.readFileSync('test-summary.md', 'utf8');
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: summary
+          });
+
+  # Cleanup
+  cleanup:
+    name: Cleanup
+    runs-on: ubuntu-latest
+    needs: [test-summary]
+    if: always()
+    
+    steps:
+    - name: Delete old artifacts
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            run_id: context.runId,
+          });
+          
+          // Keep only the test summary and recent artifacts
+          const keepArtifacts = ['test-summary'];
+          const artifactsToDelete = artifacts.data.artifacts.filter(
+            artifact => !keepArtifacts.includes(artifact.name) && 
+                        Date.now() - new Date(artifact.created_at) > 7 * 24 * 60 * 60 * 1000
+          );
+          
+          for (const artifact of artifactsToDelete) {
+            await github.rest.actions.deleteArtifact({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              artifact_id: artifact.id,
+            });
+          }

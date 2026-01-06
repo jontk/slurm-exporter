@@ -1,6 +1,20 @@
 # SLURM Exporter Configuration Reference
 
-This document provides a comprehensive reference for all configuration options available in the SLURM Prometheus Exporter.
+This comprehensive guide covers all configuration options for SLURM Exporter, with examples and best practices for different deployment scenarios.
+
+## Quick Configuration
+
+**🚀 Use the Interactive Wizard:**
+```bash
+curl -s https://raw.githubusercontent.com/jontk/slurm-exporter/main/scripts/config-wizard.sh | bash
+```
+
+The configuration wizard will help you generate a production-ready configuration in under 2 minutes by:
+- Selecting your deployment type (Kubernetes, Docker, Binary)
+- Configuring SLURM API connection and authentication
+- Choosing appropriate collectors for your use case
+- Enabling advanced features based on your environment
+- Generating deployment instructions and files
 
 ## Table of Contents
 
@@ -9,10 +23,14 @@ This document provides a comprehensive reference for all configuration options a
 - [SLURM Connection Settings](#slurm-connection-settings)
 - [Authentication Options](#authentication-options)
 - [Collector Configuration](#collector-configuration)
+- [Performance Configuration](#performance-configuration)
+- [Observability Configuration](#observability-configuration)
+- [Debug Configuration](#debug-configuration)
 - [Logging Settings](#logging-settings)
 - [Advanced Configuration](#advanced-configuration)
 - [Environment Variables](#environment-variables)
 - [Configuration Examples](#configuration-examples)
+- [Configuration Hot Reload](#configuration-hot-reload)
 - [Best Practices](#best-practices)
 
 ## Configuration File Structure
@@ -683,6 +701,227 @@ collectors:
       priority: true
 ```
 
+## Performance Configuration
+
+### Intelligent Caching
+```yaml
+performance:
+  caching:
+    enabled: true
+    default_ttl: 5m
+    max_entries: 10000
+    cleanup_interval: 60s
+    
+    # Adaptive TTL based on data change patterns
+    adaptive_ttl:
+      enabled: true
+      min_ttl: 30s
+      max_ttl: 30m
+      change_threshold: 0.1             # 10% change triggers shorter TTL
+      variance_threshold: 0.05          # Variance threshold for stability
+      stability_factor: 0.9
+      extension_factor: 1.5
+      reduction_factor: 0.5
+    
+    # Per-collector cache settings
+    collectors:
+      jobs:
+        ttl: 60s
+        max_entries: 5000
+      nodes:
+        ttl: 300s
+        max_entries: 1000
+      partitions:
+        ttl: 600s
+        max_entries: 100
+```
+
+### Batch Processing
+```yaml
+performance:
+  batch_processing:
+    enabled: true
+    max_batch_size: 500
+    flush_interval: 5s
+    max_wait_time: 10s
+    
+    # Deduplication settings
+    deduplication:
+      enabled: true
+      window_size: 1000
+      
+    # Per-collector batch settings
+    collectors:
+      jobs:
+        batch_size: 1000
+        flush_interval: 3s
+      nodes:
+        batch_size: 200
+        flush_interval: 10s
+```
+
+### Memory Management
+```yaml
+performance:
+  memory:
+    max_heap_size: "512MB"
+    gc_target_percentage: 75
+    
+    # Cardinality limits
+    max_series: 100000
+    max_labels_per_series: 50
+    max_label_name_length: 64
+    max_label_value_length: 256
+    
+    # Connection pooling
+    max_idle_connections: 100
+    connection_lifetime: 30m
+    
+    # Memory profiling
+    profiling:
+      enabled: false
+      interval: 5m
+      threshold_mb: 100
+```
+
+## Observability Configuration
+
+### Circuit Breaker
+```yaml
+observability:
+  circuit_breaker:
+    enabled: true
+    failure_threshold: 10               # Failures to trigger open state
+    reset_timeout: 60s                  # Time before trying half-open
+    half_open_max_requests: 3           # Max requests in half-open state
+    
+    # Per-collector circuit breakers
+    collectors:
+      jobs:
+        failure_threshold: 5
+        reset_timeout: 30s
+      nodes:
+        failure_threshold: 10
+        reset_timeout: 120s
+```
+
+### Health Monitoring
+```yaml
+observability:
+  health_monitoring:
+    enabled: true
+    check_interval: 30s
+    unhealthy_threshold: 3              # Failures before marking unhealthy
+    
+    # Health checks
+    checks:
+      slurm_api:
+        enabled: true
+        timeout: 10s
+        critical: true                  # Failure marks entire service unhealthy
+      collectors:
+        enabled: true
+        timeout: 5s
+        critical: false
+      memory:
+        enabled: true
+        max_memory_mb: 1024
+        critical: true
+      
+    # Health endpoint configuration
+    endpoint:
+      path: "/health"
+      detailed: true                    # Include check details in response
+      authentication:
+        enabled: false
+```
+
+### OpenTelemetry Tracing
+```yaml
+observability:
+  tracing:
+    enabled: true
+    service_name: "slurm-exporter"
+    service_version: "1.0.0"
+    
+    # OTLP exporter
+    otlp:
+      endpoint: "http://jaeger:14268/api/traces"
+      headers:
+        authorization: "Bearer ${TRACING_TOKEN}"
+      timeout: 30s
+      
+    # Sampling configuration
+    sampling:
+      type: "ratio"                     # ratio, always, never
+      ratio: 0.1                        # 10% sampling
+      
+    # Resource attributes
+    resource:
+      attributes:
+        environment: "production"
+        cluster.name: "hpc-cluster-01"
+        datacenter: "us-west-2"
+```
+
+## Debug Configuration
+
+### Debug Endpoints
+```yaml
+debug:
+  endpoints:
+    enabled: true
+    path_prefix: "/debug"
+    
+    # Authentication for debug endpoints
+    authentication:
+      enabled: true
+      type: "token"                     # token, basic, none
+      token: "${DEBUG_TOKEN}"
+      
+    # Available endpoints
+    endpoints:
+      status: true                      # /debug/status
+      collectors: true                  # /debug/collectors
+      cache: true                      # /debug/cache
+      profiling: true                  # /debug/profiling
+      config: false                    # /debug/config (sensitive)
+      traces: true                     # /debug/traces
+      
+    # Output formats
+    formats:
+      json: true
+      html: true
+      prometheus: true
+```
+
+### Collection Profiling
+```yaml
+debug:
+  profiling:
+    enabled: true
+    
+    # CPU profiling
+    cpu_profile_duration: 30s
+    cpu_profile_rate: 100               # Hz
+    
+    # Memory profiling
+    memory_profile_interval: 5m
+    memory_profile_rate: 512            # KB
+    
+    # Goroutine profiling
+    goroutine_profile_enabled: true
+    block_profile_enabled: true
+    mutex_profile_enabled: true
+    
+    # Storage configuration
+    storage:
+      type: "file"                      # file, memory, s3
+      path: "/tmp/profiles"
+      max_profiles: 100
+      retention: "24h"
+```
+
 ## Logging Settings
 
 ### Basic Logging
@@ -1290,6 +1529,84 @@ logging:
    # Changed by: John Doe
    # Reason: Increased batch size for better performance
    ```
+
+## Configuration Hot Reload
+
+The exporter supports hot reloading of configuration without restart:
+
+### Reloading Configuration
+
+```bash
+# Send SIGHUP to reload configuration
+kill -HUP $(pidof slurm-exporter)
+
+# Or use the API endpoint (if debug endpoints enabled)
+curl -X POST http://localhost:8080/debug/config/reload
+
+# Check reload status
+curl http://localhost:8080/debug/config/status
+```
+
+### Hot-Reloadable Settings
+
+The following settings can be reloaded without restarting the exporter:
+
+**✅ Hot-Reloadable:**
+- Collector intervals and filters
+- Logging level and format
+- Cache TTL settings and size limits
+- Circuit breaker thresholds
+- Rate limiting rules
+- Debug endpoint settings
+- Health check configurations
+- Metrics collection options
+
+**❌ Non-Reloadable (Requires Restart):**
+- SLURM connection details (URL, authentication)
+- Server address and port
+- TLS configuration
+- Performance limits (memory, cardinality)
+- OpenTelemetry tracing configuration
+
+### Reload Configuration
+
+```yaml
+# Hot reload configuration
+hotReload:
+  # Enable configuration hot reload
+  enabled: true
+  
+  # Watch configuration file for changes
+  watchFile: true
+  
+  # Reload interval for file watching
+  watchInterval: 30s
+  
+  # Validation on reload
+  validateOnReload: true
+  
+  # Reload hooks
+  hooks:
+    preReload: "/usr/local/bin/pre-reload-hook.sh"
+    postReload: "/usr/local/bin/post-reload-hook.sh"
+```
+
+### Reload Events
+
+Monitor configuration reload events:
+
+```bash
+# Watch reload events in logs
+tail -f /var/log/slurm-exporter.log | grep "config.reload"
+
+# Get reload metrics
+curl http://localhost:8080/metrics | grep slurm_config_reload
+```
+
+Available reload metrics:
+- `slurm_config_reload_total` - Total number of reloads
+- `slurm_config_reload_errors_total` - Number of failed reloads
+- `slurm_config_reload_duration_seconds` - Time taken for reload
 
 ## Configuration Validation
 

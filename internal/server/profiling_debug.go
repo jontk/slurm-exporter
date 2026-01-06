@@ -9,7 +9,6 @@ import (
 	"io"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/jontk/slurm-exporter/internal/collector"

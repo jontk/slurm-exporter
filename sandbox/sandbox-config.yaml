@@ -1,0 +1,113 @@
+# SLURM Exporter Sandbox Configuration
+# Optimized for learning and experimentation
+
+# SLURM Connection
+slurm:
+  endpoint: "http://slurm-controller:6820"
+  timeout: "30s"
+  auth:
+    type: "none"  # Sandbox doesn't require authentication
+  retry_attempts: 3
+  retry_delay: "5s"
+
+# Server Configuration
+server:
+  listen_address: ":8080"
+  metrics_path: "/metrics"
+  health_path: "/health"
+  read_timeout: "30s"
+  write_timeout: "30s"
+
+# Collectors (all enabled for comprehensive learning)
+collectors:
+  - cluster_simple
+  - jobs_simple
+  - nodes_simple
+  - partitions_simple
+  - job_performance
+  - node_performance
+  - fairshare
+  - qos_limits
+  - reservation_utilization
+
+# Performance Settings (optimized for sandbox)
+performance:
+  collection_interval: "15s"  # Fast updates for interactive learning
+  batch_processing:
+    enabled: true
+    batch_size: 50
+    timeout: "10s"
+  cache:
+    enabled: true
+    base_ttl: "30s"
+    adaptive_ttl:
+      enabled: true
+      min_ttl: "10s"
+      max_ttl: "120s"
+      change_threshold: 0.1
+      reduction_factor: 0.5
+  connection_pool:
+    max_connections: 3
+    idle_timeout: "300s"
+
+# Filtering (loose for sandbox to show all data)
+filtering:
+  enabled: true
+  max_cardinality: 25000
+  patterns:
+    jobs:
+      max_jobs: 5000
+      include_users: ["*"]
+      include_states: ["*"]
+    nodes:
+      include_states: ["*"]
+    partitions:
+      include_all: true
+
+# Monitoring & Health
+monitoring:
+  health_check_interval: "10s"
+  circuit_breaker:
+    enabled: true
+    failure_threshold: 3
+    timeout: "30s"
+    half_open_max_calls: 2
+  profiling:
+    enabled: true
+    cpu_profile_duration: "30s"
+    memory_profile_rate: 4096
+
+# Logging (verbose for learning)
+logging:
+  level: "debug"
+  format: "json"
+  output: "stdout"
+  
+# Tracing (enabled for advanced tutorials)
+tracing:
+  enabled: true
+  endpoint: ""  # Will be set by tutorial
+  sample_rate: 1.0  # 100% sampling for sandbox
+  service_name: "slurm-exporter-sandbox"
+
+# Advanced Features
+advanced:
+  adaptive_collection:
+    enabled: true
+    activity_threshold: 0.5
+    idle_multiplier: 2.0
+    busy_multiplier: 0.5
+  smart_filtering:
+    enabled: true
+    learning_period: "5m"
+    confidence_threshold: 0.8
+  anomaly_detection:
+    enabled: true
+    sensitivity: 0.1
+    window_size: "10m"
+
+# Custom Labels (for sandbox identification)
+labels:
+  environment: "sandbox"
+  cluster_type: "learning"
+  version: "tutorial"

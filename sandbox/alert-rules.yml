@@ -1,0 +1,217 @@
+groups:
+  - name: slurm-exporter-sandbox
+    interval: 30s
+    rules:
+      # Basic Health Alerts
+      - alert: SlurmExporterDown
+        expr: up{job="slurm-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: slurm-exporter
+          tutorial: basic
+        annotations:
+          summary: "SLURM Exporter is down"
+          description: "SLURM Exporter has been down for more than 1 minute"
+          runbook_url: "http://tutorial-server/troubleshooting#exporter-down"
+
+      - alert: SlurmApiUnreachable
+        expr: slurm_exporter_slurm_api_up == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: slurm-api
+          tutorial: connectivity
+        annotations:
+          summary: "SLURM API is unreachable"
+          description: "Cannot connect to SLURM REST API for {{ $labels.cluster }}"
+          runbook_url: "http://tutorial-server/troubleshooting#api-unreachable"
+
+      # Collection Performance
+      - alert: SlowCollectionPerformance
+        expr: slurm_exporter_collection_duration_seconds > 30
+        for: 5m
+        labels:
+          severity: warning
+          component: performance
+          tutorial: optimization
+        annotations:
+          summary: "Slow metric collection detected"
+          description: "Collection duration is {{ $value }}s for collector {{ $labels.collector }}"
+          runbook_url: "http://tutorial-server/tutorials#performance-optimization"
+
+      - alert: HighCollectionErrors
+        expr: rate(slurm_exporter_collection_errors_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+          component: reliability
+          tutorial: troubleshooting
+        annotations:
+          summary: "High collection error rate"
+          description: "Error rate is {{ $value | humanizePercentage }} for collector {{ $labels.collector }}"
+
+      # Circuit Breaker
+      - alert: CircuitBreakerOpen
+        expr: slurm_exporter_circuit_breaker_state == 2
+        for: 1m
+        labels:
+          severity: warning
+          component: circuit-breaker
+          tutorial: reliability
+        annotations:
+          summary: "Circuit breaker is open"
+          description: "Circuit breaker for {{ $labels.endpoint }} is open, requests are being rejected"
+          runbook_url: "http://tutorial-server/troubleshooting#circuit-breaker"
+
+      # Memory Usage
+      - alert: HighMemoryUsage
+        expr: slurm_exporter_memory_usage_bytes > 500 * 1024 * 1024
+        for: 5m
+        labels:
+          severity: warning
+          component: performance
+          tutorial: optimization
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is {{ $value | humanizeBytes }}"
+          runbook_url: "http://tutorial-server/tutorials#memory-optimization"
+
+      # Cardinality Limits
+      - alert: HighMetricCardinality
+        expr: slurm_exporter_metric_cardinality > 20000
+        for: 5m
+        labels:
+          severity: warning
+          component: cardinality
+          tutorial: filtering
+        annotations:
+          summary: "High metric cardinality detected"
+          description: "Metric cardinality is {{ $value }} series"
+          runbook_url: "http://tutorial-server/tutorials#metric-filtering"
+
+  - name: slurm-cluster-sandbox
+    interval: 30s
+    rules:
+      # Job Queue Health
+      - alert: HighJobQueueDepth
+        expr: slurm_jobs_total{state="pending"} > 100
+        for: 5m
+        labels:
+          severity: warning
+          component: scheduling
+          tutorial: monitoring
+        annotations:
+          summary: "High job queue depth"
+          description: "{{ $value }} jobs are pending in cluster {{ $labels.cluster }}"
+          dashboard_url: "http://grafana:3000/d/slurm-job-analytics"
+
+      - alert: JobSubmissionStorm
+        expr: rate(slurm_jobs_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: info
+          component: scheduling
+          tutorial: analytics
+        annotations:
+          summary: "High job submission rate"
+          description: "Job submission rate is {{ $value | humanize }} jobs/sec"
+
+      # Node Health
+      - alert: NodesDown
+        expr: slurm_nodes_total{state="down"} > 0
+        for: 1m
+        labels:
+          severity: critical
+          component: infrastructure
+          tutorial: monitoring
+        annotations:
+          summary: "SLURM nodes are down"
+          description: "{{ $value }} nodes are down in cluster {{ $labels.cluster }}"
+          dashboard_url: "http://grafana:3000/d/slurm-node-health"
+
+      - alert: NodesDraining
+        expr: slurm_nodes_total{state="draining"} > 2
+        for: 5m
+        labels:
+          severity: warning
+          component: infrastructure
+          tutorial: capacity-planning
+        annotations:
+          summary: "Multiple nodes draining"
+          description: "{{ $value }} nodes are draining in cluster {{ $labels.cluster }}"
+
+      # Resource Utilization
+      - alert: LowClusterUtilization
+        expr: slurm_cluster_cpu_utilization_ratio < 0.3
+        for: 15m
+        labels:
+          severity: info
+          component: efficiency
+          tutorial: analytics
+        annotations:
+          summary: "Low cluster utilization"
+          description: "CPU utilization is {{ $value | humanizePercentage }} in cluster {{ $labels.cluster }}"
+
+      - alert: HighClusterUtilization
+        expr: slurm_cluster_cpu_utilization_ratio > 0.9
+        for: 10m
+        labels:
+          severity: warning
+          component: capacity
+          tutorial: capacity-planning
+        annotations:
+          summary: "High cluster utilization"
+          description: "CPU utilization is {{ $value | humanizePercentage }} in cluster {{ $labels.cluster }}"
+
+      # Fairshare Issues
+      - alert: FairshareImbalance
+        expr: abs(slurm_fairshare_effective_usage - slurm_fairshare_normalized_shares) > 0.3
+        for: 10m
+        labels:
+          severity: info
+          component: fairshare
+          tutorial: advanced-scheduling
+        annotations:
+          summary: "Fairshare imbalance detected"
+          description: "User {{ $labels.user }} has fairshare imbalance of {{ $value | humanizePercentage }}"
+
+  - name: tutorial-examples
+    interval: 30s
+    rules:
+      # Tutorial-specific alerts for learning
+      - alert: TutorialHighGPUDemand
+        expr: slurm_jobs_total{gres=~"gpu.*", state="pending"} > 5
+        for: 2m
+        labels:
+          severity: info
+          component: resources
+          tutorial: gpu-monitoring
+        annotations:
+          summary: "High GPU demand for tutorial"
+          description: "{{ $value }} GPU jobs are queued - perfect for GPU monitoring tutorial!"
+          tutorial_url: "http://tutorial-server/tutorials#gpu-monitoring"
+
+      - alert: TutorialJobFailures
+        expr: increase(slurm_jobs_total{state="failed"}[10m]) > 2
+        for: 1m
+        labels:
+          severity: info
+          component: reliability
+          tutorial: job-analysis
+        annotations:
+          summary: "Job failures detected - tutorial opportunity"
+          description: "{{ $value }} jobs failed recently - good for job failure analysis tutorial"
+          tutorial_url: "http://tutorial-server/tutorials#job-failure-analysis"
+
+      - alert: TutorialMemoryPressure
+        expr: slurm_partition_memory_utilization_ratio > 0.8
+        for: 5m
+        labels:
+          severity: info
+          component: capacity
+          tutorial: resource-management
+        annotations:
+          summary: "Memory pressure in partition"
+          description: "Partition {{ $labels.partition }} memory utilization: {{ $value | humanizePercentage }}"
+          tutorial_url: "http://tutorial-server/tutorials#memory-management"

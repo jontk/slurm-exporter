@@ -1,0 +1,51 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "alert-rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # SLURM Exporter (main target)
+  - job_name: 'slurm-exporter'
+    static_configs:
+      - targets: ['slurm-exporter:8080']
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    honor_labels: true
+    honor_timestamps: true
+
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Node Exporter (system metrics)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+  # Alertmanager
+  - job_name: 'alertmanager'
+    static_configs:
+      - targets: ['alertmanager:9093']
+
+  # Grafana
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['grafana:3000']
+
+  # SLURM Controller (if it exposes metrics)
+  - job_name: 'slurm-controller'
+    static_configs:
+      - targets: ['slurm-controller:6820']
+    metrics_path: /metrics
+    scrape_interval: 30s
+    scrape_timeout: 10s

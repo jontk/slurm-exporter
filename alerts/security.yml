@@ -1,0 +1,383 @@
+groups:
+  - name: slurm-exporter-security
+    interval: 30s
+    rules:
+      # Authentication & Authorization Alerts
+      - alert: HighAuthenticationFailureRate
+        expr: rate(slurm_exporter_auth_failures_total[5m]) > 0.5
+        for: 2m
+        labels:
+          severity: warning
+          component: security
+          category: authentication
+        annotations:
+          summary: "High authentication failure rate detected"
+          description: "Authentication failure rate is {{ $value | humanizePercentage }} for instance {{ $labels.instance }}"
+          runbook_url: "https://github.com/jontk/slurm-exporter/blob/main/docs/runbooks/security.md#auth-failures"
+          dashboard_url: "https://grafana.example.com/d/security/slurm-exporter-security"
+
+      - alert: SuspiciousAuthenticationPattern
+        expr: increase(slurm_exporter_auth_failures_total[10m]) > 20
+        for: 1m
+        labels:
+          severity: critical
+          component: security
+          category: authentication
+        annotations:
+          summary: "Suspicious authentication pattern detected"
+          description: "{{ $value }} authentication failures in 10 minutes for {{ $labels.instance }}"
+          runbook_url: "https://github.com/jontk/slurm-exporter/blob/main/docs/runbooks/security.md#suspicious-auth"
+
+      - alert: UnauthorizedAccessAttempt
+        expr: rate(slurm_exporter_unauthorized_requests_total[5m]) > 0.1
+        for: 1m
+        labels:
+          severity: warning
+          component: security
+          category: authorization
+        annotations:
+          summary: "Unauthorized access attempts detected"
+          description: "{{ $value | humanize }} unauthorized requests per second from {{ $labels.source_ip }}"
+
+      # TLS & Encryption Alerts
+      - alert: TLSCertificateExpiringSoon
+        expr: (slurm_exporter_tls_cert_expiry_timestamp - time()) / 86400 < 30
+        for: 5m
+        labels:
+          severity: warning
+          component: security
+          category: encryption
+        annotations:
+          summary: "TLS certificate expiring soon"
+          description: "TLS certificate for {{ $labels.instance }} expires in {{ $value | humanizeDuration }} days"
+          runbook_url: "https://github.com/jontk/slurm-exporter/blob/main/docs/runbooks/security.md#cert-expiry"
+
+      - alert: TLSCertificateExpired
+        expr: slurm_exporter_tls_cert_expiry_timestamp - time() < 0
+        for: 0s
+        labels:
+          severity: critical
+          component: security
+          category: encryption
+        annotations:
+          summary: "TLS certificate has expired"
+          description: "TLS certificate for {{ $labels.instance }} expired {{ $value | humanizeDuration }} ago"
+
+      - alert: TLSHandshakeFailures
+        expr: rate(slurm_exporter_tls_handshake_errors_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+          component: security
+          category: encryption
+        annotations:
+          summary: "High TLS handshake failure rate"
+          description: "TLS handshake failure rate is {{ $value | humanize }}/sec for {{ $labels.instance }}"
+
+      - alert: InsecureConnectionAttempts
+        expr: rate(slurm_exporter_insecure_requests_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+          component: security
+          category: encryption
+        annotations:
+          summary: "Insecure connection attempts detected"
+          description: "{{ $value | humanize }} insecure HTTP requests per second to {{ $labels.instance }}"
+
+      # Rate Limiting & DoS Protection
+      - alert: RateLimitExceeded
+        expr: rate(slurm_exporter_rate_limit_exceeded_total[5m]) > 5
+        for: 1m
+        labels:
+          severity: warning
+          component: security
+          category: rate-limiting
+        annotations:
+          summary: "Rate limit frequently exceeded"
+          description: "Rate limit exceeded {{ $value | humanize }} times/sec for endpoint {{ $labels.endpoint }}"
+
+      - alert: SuspiciousTrafficPattern
+        expr: rate(slurm_exporter_requests_total[1m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+          component: security
+          category: traffic-analysis
+        annotations:
+          summary: "Suspicious traffic pattern detected"
+          description: "Unusually high request rate: {{ $value | humanize }}/sec to {{ $labels.instance }}"
+
+      - alert: PotentialDDoSAttack
+        expr: rate(slurm_exporter_requests_total[1m]) > 1000
+        for: 1m
+        labels:
+          severity: critical
+          component: security
+          category: ddos
+        annotations:
+          summary: "Potential DDoS attack detected"
+          description: "Extremely high request rate: {{ $value | humanize }}/sec to {{ $labels.instance }}"
+          runbook_url: "https://github.com/jontk/slurm-exporter/blob/main/docs/runbooks/security.md#ddos-response"
+
+      # Circuit Breaker & System Protection
+      - alert: CircuitBreakerOpen
+        expr: slurm_exporter_circuit_breaker_state == 2
+        for: 1m
+        labels:
+          severity: warning
+          component: security
+          category: circuit-breaker
+        annotations:
+          summary: "Circuit breaker is open"
+          description: "Circuit breaker for {{ $labels.endpoint }} is open, blocking requests"
+          runbook_url: "https://github.com/jontk/slurm-exporter/blob/main/docs/runbooks/security.md#circuit-breaker"
+
+      - alert: CircuitBreakerFlapping
+        expr: changes(slurm_exporter_circuit_breaker_state[10m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+          component: security
+          category: circuit-breaker
+        annotations:
+          summary: "Circuit breaker is flapping"
+          description: "Circuit breaker for {{ $labels.endpoint }} changed state {{ $value }} times in 10 minutes"
+
+      # Security Scanning Alerts
+      - alert: SecurityScanFailed
+        expr: slurm_exporter_security_scan_success == 0
+        for: 5m
+        labels:
+          severity: warning
+          component: security
+          category: scanning
+        annotations:
+          summary: "Security scan failed"
+          description: "Security scan of type {{ $labels.scan_type }} failed for {{ $labels.instance }}"
+
+      - alert: HighSeverityVulnerabilitiesDetected
+        expr: slurm_exporter_security_vulnerabilities{severity="critical"} > 0
+        for: 0s
+        labels:
+          severity: critical
+          component: security
+          category: vulnerabilities
+        annotations:
+          summary: "Critical vulnerabilities detected"
+          description: "{{ $value }} critical vulnerabilities found in {{ $labels.component }}"
+          runbook_url: "https://github.com/jontk/slurm-exporter/blob/main/docs/runbooks/security.md#vulnerabilities"
+
+      - alert: VulnerabilityCountIncreasing
+        expr: increase(slurm_exporter_security_vulnerabilities[1h]) > 5
+        for: 10m
+        labels:
+          severity: warning
+          component: security
+          category: vulnerabilities
+        annotations:
+          summary: "Vulnerability count increasing"
+          description: "{{ $value }} new vulnerabilities detected in the last hour"
+
+      # Compliance & Policy Alerts
+      - alert: SecurityPolicyViolation
+        expr: slurm_exporter_security_policy_violations_total > 0
+        for: 1m
+        labels:
+          severity: warning
+          component: security
+          category: compliance
+        annotations:
+          summary: "Security policy violation detected"
+          description: "{{ $value }} security policy violations for policy {{ $labels.policy }}"
+
+      - alert: UnauthorizedConfigurationChange
+        expr: increase(slurm_exporter_config_changes_total{authorized="false"}[5m]) > 0
+        for: 0s
+        labels:
+          severity: critical
+          component: security
+          category: configuration
+        annotations:
+          summary: "Unauthorized configuration change detected"
+          description: "Unauthorized configuration change detected on {{ $labels.instance }}"
+
+      # Data Protection Alerts
+      - alert: SensitiveDataExposure
+        expr: slurm_exporter_sensitive_data_exposure_total > 0
+        for: 0s
+        labels:
+          severity: critical
+          component: security
+          category: data-protection
+        annotations:
+          summary: "Sensitive data exposure detected"
+          description: "Potential sensitive data exposure in {{ $labels.component }}"
+          runbook_url: "https://github.com/jontk/slurm-exporter/blob/main/docs/runbooks/security.md#data-exposure"
+
+      - alert: UnencryptedDataTransmission
+        expr: rate(slurm_exporter_unencrypted_requests_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+          component: security
+          category: data-protection
+        annotations:
+          summary: "Unencrypted data transmission detected"
+          description: "{{ $value | humanize }} unencrypted requests per second to {{ $labels.instance }}"
+
+      # Audit & Logging Alerts
+      - alert: SecurityLogTampering
+        expr: slurm_exporter_security_log_tampering_detected > 0
+        for: 0s
+        labels:
+          severity: critical
+          component: security
+          category: audit
+        annotations:
+          summary: "Security log tampering detected"
+          description: "Potential security log tampering detected on {{ $labels.instance }}"
+
+      - alert: AuditLogFailure
+        expr: slurm_exporter_audit_log_failures_total > 0
+        for: 2m
+        labels:
+          severity: warning
+          component: security
+          category: audit
+        annotations:
+          summary: "Audit logging failures"
+          description: "{{ $value }} audit logging failures on {{ $labels.instance }}"
+
+      # Intrusion Detection
+      - alert: SuspiciousUserBehavior
+        expr: slurm_exporter_suspicious_user_activity_score > 80
+        for: 5m
+        labels:
+          severity: warning
+          component: security
+          category: intrusion-detection
+        annotations:
+          summary: "Suspicious user behavior detected"
+          description: "User {{ $labels.user }} has suspicious activity score of {{ $value }}"
+
+      - alert: AnomalousRequestPattern
+        expr: slurm_exporter_request_anomaly_score > 90
+        for: 2m
+        labels:
+          severity: warning
+          component: security
+          category: anomaly-detection
+        annotations:
+          summary: "Anomalous request pattern detected"
+          description: "Request pattern anomaly score is {{ $value }} for {{ $labels.endpoint }}"
+
+  - name: slurm-exporter-security-infrastructure
+    interval: 60s
+    rules:
+      # Infrastructure Security
+      - alert: SecurityServiceDown
+        expr: up{job="slurm-exporter-security"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: security
+          category: infrastructure
+        annotations:
+          summary: "Security service is down"
+          description: "Security monitoring service is down for {{ $labels.instance }}"
+
+      - alert: SecurityMetricsStale
+        expr: time() - slurm_exporter_security_last_scan_timestamp > 3600
+        for: 5m
+        labels:
+          severity: warning
+          component: security
+          category: monitoring
+        annotations:
+          summary: "Security metrics are stale"
+          description: "Security scan metrics are {{ $value | humanizeDuration }} old for {{ $labels.instance }}"
+
+      - alert: SecurityConfigurationDrift
+        expr: slurm_exporter_security_config_drift_detected > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: security
+          category: configuration
+        annotations:
+          summary: "Security configuration drift detected"
+          description: "Security configuration has drifted from baseline on {{ $labels.instance }}"
+
+      # Dependency Security
+      - alert: InsecureDependencyDetected
+        expr: slurm_exporter_insecure_dependencies_total > 0
+        for: 10m
+        labels:
+          severity: warning
+          component: security
+          category: dependencies
+        annotations:
+          summary: "Insecure dependencies detected"
+          description: "{{ $value }} insecure dependencies detected in {{ $labels.component }}"
+
+      - alert: OutdatedSecurityLibrary
+        expr: slurm_exporter_outdated_security_libraries_total > 0
+        for: 24h
+        labels:
+          severity: info
+          component: security
+          category: dependencies
+        annotations:
+          summary: "Outdated security libraries detected"
+          description: "{{ $value }} outdated security libraries need updating"
+
+  - name: slurm-exporter-security-compliance
+    interval: 300s
+    rules:
+      # Compliance Monitoring
+      - alert: ComplianceCheckFailed
+        expr: slurm_exporter_compliance_check_success{standard=~"SOC2|GDPR|HIPAA"} == 0
+        for: 15m
+        labels:
+          severity: warning
+          component: security
+          category: compliance
+        annotations:
+          summary: "Compliance check failed"
+          description: "Compliance check for {{ $labels.standard }} failed on {{ $labels.instance }}"
+
+      - alert: SecurityControlGap
+        expr: slurm_exporter_security_controls_implemented / slurm_exporter_security_controls_required < 0.9
+        for: 1h
+        labels:
+          severity: warning
+          component: security
+          category: compliance
+        annotations:
+          summary: "Security control gap detected"
+          description: "Only {{ $value | humanizePercentage }} of required security controls are implemented"
+
+      # Incident Response
+      - alert: SecurityIncidentDeclared
+        expr: slurm_exporter_security_incident_active > 0
+        for: 0s
+        labels:
+          severity: critical
+          component: security
+          category: incident-response
+        annotations:
+          summary: "Security incident declared"
+          description: "Active security incident {{ $labels.incident_id }} of type {{ $labels.incident_type }}"
+          runbook_url: "https://github.com/jontk/slurm-exporter/blob/main/docs/runbooks/security.md#incident-response"
+
+      - alert: SecurityIncidentEscalation
+        expr: slurm_exporter_security_incident_severity > 7
+        for: 0s
+        labels:
+          severity: critical
+          component: security
+          category: incident-response
+        annotations:
+          summary: "Security incident requires escalation"
+          description: "Security incident {{ $labels.incident_id }} has severity {{ $value }} and requires immediate escalation"

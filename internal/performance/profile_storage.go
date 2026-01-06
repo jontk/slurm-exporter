@@ -96,7 +96,6 @@ func (fs *FileProfileStorage) Save(profile *CollectorProfile) error {
 	}
 
 	// Save metadata
-	metadataFile := filepath.Join(profileDir, "metadata.json")
 	metadata := ProfileMetadata{
 		ID:            id,
 		CollectorName: profile.CollectorName,

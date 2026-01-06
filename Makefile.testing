@@ -1,0 +1,340 @@
+# Testing & Quality Assurance Makefile
+# This Makefile provides comprehensive testing commands for the SLURM Exporter
+
+.PHONY: test test-unit test-integration test-e2e test-security test-performance test-mutation \
+        test-coverage test-race test-bench test-load coverage-html \
+        test-all test-quick test-ci lint security-scan dependency-check \
+        generate-mocks clean-test-artifacts
+
+# Default Go settings
+GO := go
+GO_TEST := $(GO) test
+GO_BENCH := $(GO) test -bench=. -benchmem -run=^$$
+COVERAGE_FILE := coverage.out
+COVERAGE_HTML := coverage.html
+
+# Test directories
+UNIT_TEST_DIRS := ./internal/...
+INTEGRATION_TEST_DIRS := ./test/integration/...
+E2E_TEST_DIRS := ./test/e2e/...
+SECURITY_TEST_DIRS := ./test/security/...
+BENCHMARK_TEST_DIRS := ./test/benchmark/...
+
+# Coverage targets
+COVERAGE_TARGET := 90.0
+MUTATION_SCORE_TARGET := 80.0
+
+# Test flags
+TEST_FLAGS := -v -race
+INTEGRATION_TEST_FLAGS := -v -tags=integration
+E2E_TEST_FLAGS := -v -tags=e2e
+SECURITY_TEST_FLAGS := -v -tags=security
+BENCHMARK_FLAGS := -bench=. -benchmem -run=^$$
+
+# Tools
+GOLANGCI_LINT := golangci-lint
+GOSEC := gosec
+NANCY := nancy
+GOVULNCHECK := govulncheck
+GO_MUTESTING := go-mutesting
+MOCKGEN := mockgen
+K6 := k6
+
+# Help target
+help: ## Show this help message
+	@echo "Testing & Quality Assurance Commands:"
+	@echo ""
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-25s %s\n", $$1, $$2}'
+	@echo ""
+
+# Quick tests for development
+test-quick: test-unit ## Run quick unit tests
+	@echo "✅ Quick tests completed"
+
+# Comprehensive test suite
+test-all: generate-mocks test-unit test-integration test-security test-performance lint security-scan dependency-check ## Run all tests and checks
+	@echo "🎉 All tests and checks completed successfully!"
+
+# CI/CD test suite
+test-ci: generate-mocks test-unit test-coverage test-race lint security-scan dependency-check ## Run CI/CD test suite
+	@echo "✅ CI/CD test suite completed"
+
+# Unit Tests
+test-unit: ## Run unit tests
+	@echo "🧪 Running unit tests..."
+	@$(GO_TEST) $(TEST_FLAGS) $(UNIT_TEST_DIRS)
+
+test-race: ## Run unit tests with race detection
+	@echo "🏁 Running race condition tests..."
+	@$(GO_TEST) -race $(UNIT_TEST_DIRS)
+
+test-coverage: ## Run tests with coverage
+	@echo "📊 Running tests with coverage..."
+	@$(GO_TEST) -coverprofile=$(COVERAGE_FILE) -covermode=atomic $(UNIT_TEST_DIRS)
+	@$(call check_coverage)
+
+coverage-html: test-coverage ## Generate HTML coverage report
+	@echo "📈 Generating HTML coverage report..."
+	@$(GO) tool cover -html=$(COVERAGE_FILE) -o $(COVERAGE_HTML)
+	@echo "Coverage report available at: $(COVERAGE_HTML)"
+
+# Integration Tests
+test-integration: ## Run integration tests
+	@echo "🔗 Running integration tests..."
+	@INTEGRATION_TEST=true $(GO_TEST) $(INTEGRATION_TEST_FLAGS) $(INTEGRATION_TEST_DIRS)
+
+# End-to-End Tests
+test-e2e: ## Run end-to-end tests
+	@echo "🌐 Running end-to-end tests..."
+	@E2E_TEST=true $(GO_TEST) $(E2E_TEST_FLAGS) $(E2E_TEST_DIRS)
+
+# Security Tests
+test-security: ## Run security tests
+	@echo "🔒 Running security tests..."
+	@$(GO_TEST) $(SECURITY_TEST_FLAGS) $(SECURITY_TEST_DIRS)
+
+# Performance Tests
+test-performance: test-bench ## Run performance tests
+
+test-bench: ## Run benchmarks
+	@echo "⚡ Running benchmarks..."
+	@$(GO_BENCH) $(BENCHMARK_TEST_DIRS) | tee bench.txt
+
+# Load Testing
+test-load: ## Run load tests with K6
+	@echo "🚀 Running load tests..."
+	@if command -v $(K6) >/dev/null 2>&1; then \
+		$(K6) run test/load/metrics_load_test.js; \
+		$(K6) run test/load/debug_endpoints_load_test.js; \
+	else \
+		echo "⚠️  K6 not installed. Installing..."; \
+		curl https://github.com/grafana/k6/releases/download/v0.47.0/k6-v0.47.0-linux-amd64.tar.gz -L | tar xvz --strip-components 1; \
+		sudo mv k6 /usr/local/bin/; \
+		$(K6) run test/load/metrics_load_test.js; \
+	fi
+
+# Mutation Testing
+test-mutation: ## Run mutation tests
+	@echo "🧬 Running mutation tests..."
+	@if command -v $(GO_MUTESTING) >/dev/null 2>&1; then \
+		$(GO_MUTESTING) $(UNIT_TEST_DIRS) --verbose; \
+		$(call check_mutation_score); \
+	else \
+		echo "Installing go-mutesting..."; \
+		$(GO) install github.com/zimmski/go-mutesting/cmd/go-mutesting@latest; \
+		$(GO_MUTESTING) $(UNIT_TEST_DIRS) --verbose; \
+	fi
+
+# Code Quality
+lint: ## Run linting
+	@echo "🧹 Running linters..."
+	@if command -v $(GOLANGCI_LINT) >/dev/null 2>&1; then \
+		$(GOLANGCI_LINT) run --timeout=5m; \
+	else \
+		echo "Installing golangci-lint..."; \
+		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin; \
+		$(GOLANGCI_LINT) run --timeout=5m; \
+	fi
+	@$(call check_format)
+	@$(GO) vet ./...
+
+# Security Scanning
+security-scan: ## Run security scans
+	@echo "🛡️  Running security scans..."
+	@$(call run_gosec)
+	@$(call run_nancy)
+	@$(call run_govulncheck)
+
+# Dependency Checks
+dependency-check: ## Check dependencies
+	@echo "📦 Checking dependencies..."
+	@$(GO) mod verify
+	@$(GO) mod tidy
+	@$(call check_mod_tidy)
+	@$(call check_vulnerabilities)
+
+# Mock Generation
+generate-mocks: ## Generate test mocks
+	@echo "🎭 Generating mocks..."
+	@$(GO) generate ./...
+
+# Test Data Setup
+setup-test-data: ## Setup test data and fixtures
+	@echo "🗃️  Setting up test data..."
+	@mkdir -p test/fixtures
+	@mkdir -p test/tmp
+	@chmod 755 test/tmp
+
+# Clean up test artifacts
+clean-test-artifacts: ## Clean test artifacts
+	@echo "🧽 Cleaning test artifacts..."
+	@rm -f $(COVERAGE_FILE) $(COVERAGE_HTML) bench.txt
+	@rm -rf test/tmp/*
+	@$(GO) clean -testcache
+
+# Docker-based testing
+test-docker: ## Run tests in Docker
+	@echo "🐳 Running tests in Docker..."
+	@docker build -f Dockerfile.test -t slurm-exporter-test .
+	@docker run --rm slurm-exporter-test make test-ci
+
+# Parallel testing
+test-parallel: ## Run tests in parallel
+	@echo "⚡ Running tests in parallel..."
+	@$(GO_TEST) -parallel 4 $(TEST_FLAGS) $(UNIT_TEST_DIRS)
+
+# Test with different Go versions
+test-go-versions: ## Test with multiple Go versions
+	@echo "🔄 Testing with multiple Go versions..."
+	@for version in 1.21 1.22; do \
+		echo "Testing with Go $$version..."; \
+		docker run --rm -v $(PWD):/app -w /app golang:$$version make test-unit; \
+	done
+
+# Performance regression testing
+test-performance-regression: ## Check for performance regressions
+	@echo "📉 Checking for performance regressions..."
+	@if [ -f bench.baseline.txt ]; then \
+		$(GO_BENCH) $(BENCHMARK_TEST_DIRS) | tee bench.current.txt; \
+		benchcmp bench.baseline.txt bench.current.txt; \
+	else \
+		echo "No baseline found. Creating baseline..."; \
+		$(GO_BENCH) $(BENCHMARK_TEST_DIRS) | tee bench.baseline.txt; \
+	fi
+
+# Stress testing
+test-stress: ## Run stress tests
+	@echo "💪 Running stress tests..."
+	@$(GO_TEST) -test.cpu=1,2,4 -test.timeout=30m $(UNIT_TEST_DIRS)
+
+# Memory leak testing
+test-memory-leaks: ## Test for memory leaks
+	@echo "🧠 Testing for memory leaks..."
+	@$(GO_TEST) -memprofile=mem.prof -run=. $(UNIT_TEST_DIRS)
+	@$(GO) tool pprof -top mem.prof
+
+# Test specific package
+test-package: ## Test specific package (usage: make test-package PKG=./internal/collector)
+	@echo "📦 Testing package: $(PKG)"
+	@$(GO_TEST) $(TEST_FLAGS) $(PKG)
+
+# Test with verbose output
+test-verbose: ## Run tests with verbose output
+	@echo "📢 Running tests with verbose output..."
+	@$(GO_TEST) -v -count=1 $(UNIT_TEST_DIRS)
+
+# Test with short flag (skip long-running tests)
+test-short: ## Run tests with short flag
+	@echo "⚡ Running short tests..."
+	@$(GO_TEST) -short $(UNIT_TEST_DIRS)
+
+# Watch tests (requires entr)
+test-watch: ## Watch files and run tests on changes
+	@echo "👀 Watching for changes..."
+	@find . -name "*.go" | entr -c make test-unit
+
+# Helper functions
+define check_coverage
+	@echo "Checking coverage..."
+	@COVERAGE=$$($(GO) tool cover -func=$(COVERAGE_FILE) | grep total | awk '{print $$3}' | sed 's/%//'); \
+	echo "Coverage: $$COVERAGE%"; \
+	if [ $$(echo "$$COVERAGE < $(COVERAGE_TARGET)" | bc -l) -eq 1 ]; then \
+		echo "❌ Coverage below target: $$COVERAGE% < $(COVERAGE_TARGET)%"; \
+		exit 1; \
+	else \
+		echo "✅ Coverage target met: $$COVERAGE% >= $(COVERAGE_TARGET)%"; \
+	fi
+endef
+
+define check_mutation_score
+	@SCORE=$$($(GO_MUTESTING) $(UNIT_TEST_DIRS) | grep "Score:" | awk '{print $$2}' | sed 's/%//'); \
+	echo "Mutation Score: $$SCORE%"; \
+	if [ $$(echo "$$SCORE < $(MUTATION_SCORE_TARGET)" | bc -l) -eq 1 ]; then \
+		echo "⚠️  Mutation score below target: $$SCORE% < $(MUTATION_SCORE_TARGET)%"; \
+	else \
+		echo "✅ Mutation score target met: $$SCORE% >= $(MUTATION_SCORE_TARGET)%"; \
+	fi
+endef
+
+define check_format
+	@echo "Checking code format..."
+	@if [ "$$(gofmt -s -l . | wc -l)" -gt 0 ]; then \
+		echo "❌ Code not formatted:"; \
+		gofmt -s -l .; \
+		exit 1; \
+	else \
+		echo "✅ Code properly formatted"; \
+	fi
+endef
+
+define check_mod_tidy
+	@echo "Checking go.mod tidiness..."
+	@if [ -n "$$(git status --porcelain go.mod go.sum)" ]; then \
+		echo "❌ go.mod/go.sum not tidy"; \
+		git diff go.mod go.sum; \
+		exit 1; \
+	else \
+		echo "✅ go.mod/go.sum are tidy"; \
+	fi
+endef
+
+define run_gosec
+	@if command -v $(GOSEC) >/dev/null 2>&1; then \
+		$(GOSEC) -fmt json -out gosec.json ./...; \
+	else \
+		echo "Installing gosec..."; \
+		$(GO) install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest; \
+		$(GOSEC) -fmt json -out gosec.json ./...; \
+	fi
+endef
+
+define run_nancy
+	@if command -v $(NANCY) >/dev/null 2>&1; then \
+		$(GO) list -json -deps ./... | $(NANCY) sleuth; \
+	else \
+		echo "Installing nancy..."; \
+		$(GO) install github.com/sonatypecommunity/nancy@latest; \
+		$(GO) list -json -deps ./... | $(NANCY) sleuth; \
+	fi
+endef
+
+define run_govulncheck
+	@if command -v $(GOVULNCHECK) >/dev/null 2>&1; then \
+		$(GOVULNCHECK) ./...; \
+	else \
+		echo "Installing govulncheck..."; \
+		$(GO) install golang.org/x/vuln/cmd/govulncheck@latest; \
+		$(GOVULNCHECK) ./...; \
+	fi
+endef
+
+define check_vulnerabilities
+	@echo "Checking for vulnerabilities..."
+	@$(GOVULNCHECK) ./...
+endef
+
+# Test environment setup
+setup-test-env: ## Setup test environment
+	@echo "🔧 Setting up test environment..."
+	@$(GO) mod download
+	@$(MAKE) generate-mocks
+	@$(MAKE) setup-test-data
+
+# Test environment teardown
+teardown-test-env: ## Teardown test environment
+	@echo "🧹 Tearing down test environment..."
+	@$(MAKE) clean-test-artifacts
+	@docker system prune -f >/dev/null 2>&1 || true
+
+# Show test statistics
+test-stats: ## Show test statistics
+	@echo "📊 Test Statistics:"
+	@echo "  Total test files: $$(find . -name "*_test.go" | wc -l)"
+	@echo "  Unit test files: $$(find ./internal -name "*_test.go" | wc -l)"
+	@echo "  Integration test files: $$(find ./test/integration -name "*_test.go" 2>/dev/null | wc -l)"
+	@echo "  Security test files: $$(find ./test/security -name "*_test.go" 2>/dev/null | wc -l)"
+	@echo "  Benchmark files: $$(find ./test/benchmark -name "*_test.go" 2>/dev/null | wc -l)"
+	@echo "  Total lines of test code: $$(find . -name "*_test.go" -exec cat {} \; | wc -l)"
+
+# Include main Makefile if it exists
+-include Makefile

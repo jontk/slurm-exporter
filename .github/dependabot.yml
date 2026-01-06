@@ -1,0 +1,103 @@
+version: 2
+updates:
+  # Go dependency updates  
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "jontk"
+    assignees:
+      - "jontk"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "security"
+    # Security updates get higher priority
+    allow:
+      - dependency-type: "all"
+    # Group minor and patch updates
+    groups:
+      minor-and-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+      security-updates:
+        applies-to: security-updates
+        update-types:
+          - "patch"
+          - "minor"
+          - "major"
+    # Ignore specific dependencies if needed
+    ignore:
+      # Example: ignore major version updates for stable dependencies
+      - dependency-name: "github.com/prometheus/client_golang"
+        update-types: ["version-update:semver-major"]
+
+  # Docker dependency updates
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "jontk"
+    assignees:
+      - "jontk"
+    commit-message:
+      prefix: "docker"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "security"
+
+  # GitHub Actions dependency updates
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "jontk"
+    assignees:
+      - "jontk"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "ci"
+
+  # Helm chart dependency updates
+  - package-ecosystem: "git-submodule"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      day: "first-monday"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "jontk"
+    commit-message:
+      prefix: "helm"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "helm"

@@ -664,6 +664,63 @@ func (r *Registry) CreateCollectorsFromConfig(cfg *config.CollectorsConfig, clie
 		r.logger.Info("System collector registered successfully")
 	}
 
+	// Register new standalone operation collectors if enabled
+	// Note: These collectors may need to be added to the config structure
+	
+	// Licenses collector
+	if cfg.Licenses.Enabled {
+		collector := NewLicensesCollector(slurmClient, logger, cfg.CollectionTimeout)
+		if err := r.Register("licenses", collector); err != nil {
+			return fmt.Errorf("failed to register licenses collector: %w", err)
+		}
+		r.logger.Info("Licenses collector registered successfully")
+	}
+
+	// Shares collector (fairshare)
+	if cfg.Shares.Enabled {
+		collector := NewSharesCollector(slurmClient, logger, cfg.CollectionTimeout)
+		if err := r.Register("shares", collector); err != nil {
+			return fmt.Errorf("failed to register shares collector: %w", err)
+		}
+		r.logger.Info("Shares collector registered successfully")
+	}
+
+	// Diagnostics collector
+	if cfg.Diagnostics.Enabled {
+		collector := NewDiagnosticsCollector(slurmClient, logger, cfg.CollectionTimeout)
+		if err := r.Register("diagnostics", collector); err != nil {
+			return fmt.Errorf("failed to register diagnostics collector: %w", err)
+		}
+		r.logger.Info("Diagnostics collector registered successfully")
+	}
+
+	// TRES collector
+	if cfg.TRES.Enabled {
+		collector := NewTRESCollector(slurmClient, logger, cfg.CollectionTimeout)
+		if err := r.Register("tres", collector); err != nil {
+			return fmt.Errorf("failed to register TRES collector: %w", err)
+		}
+		r.logger.Info("TRES collector registered successfully")
+	}
+
+	// WCKeys collector
+	if cfg.WCKeys.Enabled {
+		collector := NewWCKeysCollector(slurmClient, logger, cfg.CollectionTimeout)
+		if err := r.Register("wckeys", collector); err != nil {
+			return fmt.Errorf("failed to register WCKeys collector: %w", err)
+		}
+		r.logger.Info("WCKeys collector registered successfully")
+	}
+
+	// Clusters collector
+	if cfg.Clusters.Enabled {
+		collector := NewClustersCollector(slurmClient, logger, cfg.CollectionTimeout)
+		if err := r.Register("clusters", collector); err != nil {
+			return fmt.Errorf("failed to register clusters collector: %w", err)
+		}
+		r.logger.Info("Clusters collector registered successfully")
+	}
+
 	r.logger.WithField("count", len(r.collectors)).Info("Collectors created and registered")
 	return nil
 }
