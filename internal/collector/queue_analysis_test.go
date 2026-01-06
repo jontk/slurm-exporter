@@ -16,45 +16,59 @@ type MockQueueAnalysisSLURMClient struct {
 	mock.Mock
 }
 
-func (m *MockQueueAnalysisSLURMClient) GetQueueAnalysis(ctx context.Context, partition string) (*QueueAnalysis, error) {
-	args := m.Called(ctx, partition)
-	return args.Get(0).(*QueueAnalysis), args.Error(1)
-}
-
-func (m *MockQueueAnalysisSLURMClient) GetQueuePositions(ctx context.Context, partition string) ([]*QueuePosition, error) {
-	args := m.Called(ctx, partition)
-	return args.Get(0).([]*QueuePosition), args.Error(1)
-}
-
-func (m *MockQueueAnalysisSLURMClient) GetQueueMovement(ctx context.Context, jobID string) (*QueueMovement, error) {
+func (m *MockQueueAnalysisSLURMClient) GetQueuePositionAnalysis(ctx context.Context, jobID string) (*QueuePositionAnalysis, error) {
 	args := m.Called(ctx, jobID)
-	return args.Get(0).(*QueueMovement), args.Error(1)
+	return args.Get(0).(*QueuePositionAnalysis), args.Error(1)
 }
 
-func (m *MockQueueAnalysisSLURMClient) PredictWaitTime(ctx context.Context, jobID string) (*WaitTimePrediction, error) {
+func (m *MockQueueAnalysisSLURMClient) GetQueueMetrics(ctx context.Context, partition string) (*QueueAnalysisMetrics, error) {
+	args := m.Called(ctx, partition)
+	return args.Get(0).(*QueueAnalysisMetrics), args.Error(1)
+}
+
+func (m *MockQueueAnalysisSLURMClient) GetQueueEfficiencyAnalysis(ctx context.Context, partition string) (*QueueEfficiencyAnalysis, error) {
+	args := m.Called(ctx, partition)
+	return args.Get(0).(*QueueEfficiencyAnalysis), args.Error(1)
+}
+
+func (m *MockQueueAnalysisSLURMClient) GetResourceQueueAnalysis(ctx context.Context, resourceType string) (*ResourceQueueAnalysis, error) {
+	args := m.Called(ctx, resourceType)
+	return args.Get(0).(*ResourceQueueAnalysis), args.Error(1)
+}
+
+func (m *MockQueueAnalysisSLURMClient) GetPriorityQueueAnalysis(ctx context.Context) (*PriorityQueueAnalysis, error) {
+	args := m.Called(ctx)
+	return args.Get(0).(*PriorityQueueAnalysis), args.Error(1)
+}
+
+func (m *MockQueueAnalysisSLURMClient) GetUserQueueExperience(ctx context.Context, userName string) (*UserQueueExperience, error) {
+	args := m.Called(ctx, userName)
+	return args.Get(0).(*UserQueueExperience), args.Error(1)
+}
+
+func (m *MockQueueAnalysisSLURMClient) GetQueueStateTransitions(ctx context.Context, period string) (*QueueStateTransitions, error) {
+	args := m.Called(ctx, period)
+	return args.Get(0).(*QueueStateTransitions), args.Error(1)
+}
+
+func (m *MockQueueAnalysisSLURMClient) ValidatePredictionModel(ctx context.Context) (*PredictionModelValidation, error) {
+	args := m.Called(ctx)
+	return args.Get(0).(*PredictionModelValidation), args.Error(1)
+}
+
+// Remove mock types that are not needed
+
+func (m *MockQueueAnalysisSLURMClient) PredictWaitTime(ctx context.Context, jobID string) (*QueueWaitTimePrediction, error) {
 	args := m.Called(ctx, jobID)
-	return args.Get(0).(*WaitTimePrediction), args.Error(1)
+	return args.Get(0).(*QueueWaitTimePrediction), args.Error(1)
 }
 
-func (m *MockQueueAnalysisSLURMClient) GetHistoricalWaitTimes(ctx context.Context, partition string, period string) (*HistoricalWaitTimes, error) {
-	args := m.Called(ctx, partition, period)
+func (m *MockQueueAnalysisSLURMClient) GetHistoricalWaitTimes(ctx context.Context, filters *WaitTimeFilters) (*HistoricalWaitTimes, error) {
+	args := m.Called(ctx, filters)
 	return args.Get(0).(*HistoricalWaitTimes), args.Error(1)
 }
 
-func (m *MockQueueAnalysisSLURMClient) GetQueueEfficiency(ctx context.Context, partition string) (*QueueEfficiency, error) {
-	args := m.Called(ctx, partition)
-	return args.Get(0).(*QueueEfficiency), args.Error(1)
-}
-
-func (m *MockQueueAnalysisSLURMClient) GetResourceBasedQueueAnalysis(ctx context.Context, resourceType string) (*ResourceBasedQueueAnalysis, error) {
-	args := m.Called(ctx, resourceType)
-	return args.Get(0).(*ResourceBasedQueueAnalysis), args.Error(1)
-}
-
-func (m *MockQueueAnalysisSLURMClient) GetPriorityBasedQueueAnalysis(ctx context.Context, partition string) (*PriorityBasedQueueAnalysis, error) {
-	args := m.Called(ctx, partition)
-	return args.Get(0).(*PriorityBasedQueueAnalysis), args.Error(1)
-}
+// Methods removed as they are duplicates
 
 func (m *MockQueueAnalysisSLURMClient) GetBackfillAnalysis(ctx context.Context, partition string) (*BackfillAnalysis, error) {
 	args := m.Called(ctx, partition)
@@ -433,8 +447,19 @@ func TestQueueAnalysisCollector_Collect_Success(t *testing.T) {
 func TestQueueAnalysisCollector_Collect_Error(t *testing.T) {
 	client := &MockQueueAnalysisSLURMClient{}
 
-	// Mock error response
-	client.On("GetQueueAnalysis", mock.Anything, mock.AnythingOfType("string")).Return((*QueueAnalysis)(nil), assert.AnError)
+	// Mock error response for key methods that the collector calls
+	client.On("GetQueueMetrics", mock.Anything, mock.AnythingOfType("string")).Return((*QueueAnalysisMetrics)(nil), assert.AnError)
+	client.On("GetQueuePositionAnalysis", mock.Anything, mock.AnythingOfType("string")).Return((*QueuePositionAnalysis)(nil), assert.AnError)
+	client.On("PredictWaitTime", mock.Anything, mock.AnythingOfType("string")).Return((*QueueWaitTimePrediction)(nil), assert.AnError)
+	client.On("GetHistoricalWaitTimes", mock.Anything, mock.Anything).Return((*HistoricalWaitTimes)(nil), assert.AnError)
+	client.On("GetQueueEfficiencyAnalysis", mock.Anything, mock.AnythingOfType("string")).Return((*QueueEfficiencyAnalysis)(nil), assert.AnError)
+	client.On("GetResourceQueueAnalysis", mock.Anything, mock.AnythingOfType("string")).Return((*ResourceQueueAnalysis)(nil), assert.AnError)
+	client.On("GetPriorityQueueAnalysis", mock.Anything).Return((*PriorityQueueAnalysis)(nil), assert.AnError)
+	client.On("GetUserQueueExperience", mock.Anything, mock.AnythingOfType("string")).Return((*UserQueueExperience)(nil), assert.AnError)
+	client.On("GetBackfillAnalysis", mock.Anything, mock.AnythingOfType("string")).Return((*BackfillAnalysis)(nil), assert.AnError)
+	client.On("GetQueueStateTransitions", mock.Anything, mock.AnythingOfType("string")).Return((*QueueStateTransitions)(nil), assert.AnError)
+	client.On("ValidatePredictionModel", mock.Anything).Return((*PredictionModelValidation)(nil), assert.AnError)
+	client.On("GetSystemLoadImpact", mock.Anything).Return((*SystemLoadImpact)(nil), assert.AnError)
 
 	collector := NewQueueAnalysisCollector(client)
 
@@ -460,28 +485,26 @@ func TestQueueAnalysisCollector_MetricValues(t *testing.T) {
 	client := &MockQueueAnalysisSLURMClient{}
 
 	// Create test data with known values
-	queueAnalysis := &QueueAnalysis{
-		Partition:       "test",
-		TotalJobs:      100,
-		QueuedJobs:     30,
-		AverageWaitTime: 3600.0,
-		QueueEfficiency: 0.85,
+	queueMetrics := &QueueAnalysisMetrics{
+		PartitionName:       "test",
+		TotalJobs:          100,
+		PendingJobs:        30,
+		RunningJobs:        70,
+		JobsPerHour:        2.5,
+		QueueHealth:        0.85,
 	}
 
-	queuePositions := []*QueuePosition{
-		{
-			JobID:         "test_job",
-			Partition:     "test",
-			QueuePosition: 5,
-			TimeInQueue:   1800.0,
-			PriorityScore: 1500.0,
-		},
+	queuePosition := &QueuePositionAnalysis{
+		JobID:           "test_job",
+		PartitionName:   "test",
+		CurrentPosition: 5,
+		TimeInQueue:     30 * time.Minute,
 	}
 
-	waitTimePrediction := &WaitTimePrediction{
-		JobID:                "test_job",
-		PredictedWaitTime:    2400.0,
-		PredictionConfidence: 0.85,
+	waitTimePrediction := &QueueWaitTimePrediction{
+		JobID:               "test_job",
+		PredictedWaitTime:   40 * time.Minute,
+		ConfidenceLevel:     0.85,
 	}
 
 	client.On("GetQueueAnalysis", mock.Anything, mock.AnythingOfType("string")).Return(queueAnalysis, nil)
@@ -552,9 +575,9 @@ func TestQueueAnalysisCollector_Integration(t *testing.T) {
 
 	// Test the collector with testutil
 	expected := `
-		# HELP slurm_queue_depth Number of jobs currently queued in each partition
+		# HELP slurm_queue_depth Current depth of job queue
 		# TYPE slurm_queue_depth gauge
-		slurm_queue_depth{partition="compute"} 25
+		slurm_queue_depth{partition="compute",queue_class="all",metric="pending"} 25
 	`
 
 	err := testutil.CollectAndCompare(collector, strings.NewReader(expected),
@@ -683,99 +706,78 @@ func TestQueueAnalysisCollector_QueueMovementAnalysis(t *testing.T) {
 }
 
 func setupQueueAnalysisMocks(client *MockQueueAnalysisSLURMClient) {
-	queueAnalysis := &QueueAnalysis{
-		Partition:        "compute",
-		TotalJobs:       100,
-		QueuedJobs:      25,
-		RunningJobs:     75,
-		AverageWaitTime: 2400.0,
-		QueueEfficiency: 0.85,
+	queueMetrics := &QueueAnalysisMetrics{
+		PartitionName:       "compute",
+		TotalJobs:          100,
+		PendingJobs:        25,
+		RunningJobs:        75,
+		JobsPerHour:        3.2,
+		QueueDepth:         25,
 	}
 
-	queuePositions := []*QueuePosition{
-		{
-			JobID:         "job1",
-			Partition:     "compute",
-			QueuePosition: 3,
-			TimeInQueue:   1200.0,
-			PriorityScore: 1800.0,
-		},
+	queuePosition := &QueuePositionAnalysis{
+		JobID:            "job1",
+		PartitionName:    "compute",
+		CurrentPosition:  3,
+		TimeInQueue:      20 * time.Minute,
 	}
 
-	queueMovement := &QueueMovement{
+	waitTimePrediction := &QueueWaitTimePrediction{
 		JobID:              "job1",
-		InitialPosition:    5,
-		CurrentPosition:    3,
-		TotalMovement:      2,
-		MovementVelocity:   0.6,
-		MovementTrend:      "improving",
-		PositionStability:  0.8,
-	}
-
-	waitTimePrediction := &WaitTimePrediction{
-		JobID:                "job1",
-		PredictedWaitTime:    1800.0,
-		PredictionConfidence: 0.82,
-		ModelAccuracy:        0.78,
+		PredictedWaitTime:  30 * time.Minute,
+		ConfidenceLevel:    0.82,
+		ModelAccuracy:      0.78,
 	}
 
 	historicalWaitTimes := &HistoricalWaitTimes{
-		Partition:       "compute",
 		AnalysisPeriod:  "7d",
-		AverageWaitTime: 2200.0,
+		MeanWaitTime:    2200.0,
 		MedianWaitTime:  1800.0,
 		P90WaitTime:     4800.0,
-		TotalSamples:    1000,
+		TotalJobs:       1000,
 	}
 
-	queueEfficiency := &QueueEfficiency{
-		Partition:           "compute",
-		ThroughputRate:      3.2,
-		QueueUtilization:    0.88,
-		ResourceEfficiency:  0.82,
-		SchedulingEfficiency: 0.85,
-		PerformanceRating:   "good",
+	queueEfficiency := &QueueEfficiencyAnalysis{
+		PartitionName:         "compute",
+		OverallEfficiency:     0.85,
+		ResourceEfficiency:    0.82,
+		SchedulingEfficiency:  0.85,
 	}
 
-	resourceAnalysis := &ResourceBasedQueueAnalysis{
+	resourceAnalysis := &ResourceQueueAnalysis{
 		ResourceType:      "cpu",
-		TotalDemand:       800.0,
-		AvailableCapacity: 1000.0,
-		UtilizationRate:   0.8,
-		QueuedDemand:      150.0,
+		TotalCapacity:     1000.0,
+		AvailableCapacity: 200.0,
+		CapacityUtilization: 0.8,
 	}
 
-	priorityAnalysis := &PriorityBasedQueueAnalysis{
-		Partition:      "compute",
-		AveragePriority: 1200.0,
-		MedianPriority: 1000.0,
-		PrioritySpread: 600.0,
-		FairnesScore:   0.75,
+	priorityAnalysis := &PriorityQueueAnalysis{
+		FairnessScore:   0.75,
 	}
 
 	backfillAnalysis := &BackfillAnalysis{
-		Partition:             "compute",
-		BackfillOpportunities: 15,
-		BackfillSuccessRate:   0.7,
+		PartitionName:         "compute",
+		TotalOpportunities:    15,
+		BackfillRate:          0.7,
 		BackfillEfficiency:    0.65,
-		BackfillJobCount:      10,
+		JobsBackfilled:        10,
 	}
 
 	systemLoadImpact := &SystemLoadImpact{
-		CurrentSystemLoad:  0.75,
-		LoadImpactOnQueues: 0.3,
-		LoadTrend:          "stable",
-		SystemStress:       0.25,
+		OverallSystemLoad:      0.75,
+		QueuePerformanceImpact: 0.3,
 	}
 
-	client.On("GetQueueAnalysis", mock.Anything, mock.AnythingOfType("string")).Return(queueAnalysis, nil)
-	client.On("GetQueuePositions", mock.Anything, mock.AnythingOfType("string")).Return(queuePositions, nil)
-	client.On("GetQueueMovement", mock.Anything, mock.AnythingOfType("string")).Return(queueMovement, nil)
+	client.On("GetQueueMetrics", mock.Anything, mock.AnythingOfType("string")).Return(queueMetrics, nil)
+	client.On("GetQueuePositionAnalysis", mock.Anything, mock.AnythingOfType("string")).Return(queuePosition, nil)
 	client.On("PredictWaitTime", mock.Anything, mock.AnythingOfType("string")).Return(waitTimePrediction, nil)
-	client.On("GetHistoricalWaitTimes", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(historicalWaitTimes, nil)
-	client.On("GetQueueEfficiency", mock.Anything, mock.AnythingOfType("string")).Return(queueEfficiency, nil)
-	client.On("GetResourceBasedQueueAnalysis", mock.Anything, mock.AnythingOfType("string")).Return(resourceAnalysis, nil)
-	client.On("GetPriorityBasedQueueAnalysis", mock.Anything, mock.AnythingOfType("string")).Return(priorityAnalysis, nil)
+	client.On("GetHistoricalWaitTimes", mock.Anything, mock.Anything).Return(historicalWaitTimes, nil)
+	client.On("GetQueueEfficiencyAnalysis", mock.Anything, mock.AnythingOfType("string")).Return(queueEfficiency, nil)
+	client.On("GetResourceQueueAnalysis", mock.Anything, mock.AnythingOfType("string")).Return(resourceAnalysis, nil)
+	client.On("GetPriorityQueueAnalysis", mock.Anything).Return(priorityAnalysis, nil)
+	client.On("GetUserQueueExperience", mock.Anything, mock.AnythingOfType("string")).Return(&UserQueueExperience{}, nil)
 	client.On("GetBackfillAnalysis", mock.Anything, mock.AnythingOfType("string")).Return(backfillAnalysis, nil)
+	client.On("GetQueueStateTransitions", mock.Anything, mock.AnythingOfType("string")).Return(&QueueStateTransitions{}, nil)
+	client.On("ValidatePredictionModel", mock.Anything).Return(&PredictionModelValidation{}, nil)
 	client.On("GetSystemLoadImpact", mock.Anything).Return(systemLoadImpact, nil)
 }

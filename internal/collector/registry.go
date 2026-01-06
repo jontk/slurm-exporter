@@ -310,18 +310,28 @@ func (ca *collectorAdapter) Collect(ch chan<- prometheus.Metric) {
 	// Create a wrapper channel to count metrics
 	metricsChan := make(chan prometheus.Metric, 1000)
 	var metricsCount int
+	done := make(chan struct{})
 
 	// Start a goroutine to forward metrics and count them
 	go func() {
+		defer close(done)
 		for metric := range metricsChan {
-			ch <- metric
-			metricsCount++
+			select {
+			case ch <- metric:
+				metricsCount++
+			case <-ctx.Done():
+				// Context cancelled, stop sending metrics
+				return
+			}
 		}
 	}()
 
 	// Collect metrics
 	err := ca.collector.Collect(ctx, metricsChan)
 	close(metricsChan)
+	
+	// Wait for the forwarding goroutine to finish
+	<-done
 
 	duration := time.Since(startTime)
 

@@ -116,7 +116,7 @@ func TestAccountHierarchyCollector_Collect_Success(t *testing.T) {
 			{
 				AccountName:    "root",
 				ParentAccount:  "",
-				ChildAccounts:  []string{"research", "engineering"},
+				ChildAccounts:  []*AccountNode{},
 				Level:          0,
 				UserCount:      100,
 				ActiveUsers:    80,
@@ -125,7 +125,7 @@ func TestAccountHierarchyCollector_Collect_Success(t *testing.T) {
 			{
 				AccountName:    "research",
 				ParentAccount:  "root",
-				ChildAccounts:  []string{"physics", "chemistry"},
+				ChildAccounts:  []*AccountNode{},
 				Level:          1,
 				UserCount:      50,
 				ActiveUsers:    45,
@@ -135,9 +135,7 @@ func TestAccountHierarchyCollector_Collect_Success(t *testing.T) {
 		TotalAccounts:     10,
 		MaxDepth:          3,
 		TotalUsers:        200,
-		TotalAssociations: 250,
 		HierarchyType:     "organizational",
-		ValidationStatus:  "valid",
 		OrganizationalUnits: map[string]*OrganizationalUnit{
 			"science": {
 				Name:          "science",
@@ -418,7 +416,7 @@ func TestAccountHierarchyCollector_MetricValues(t *testing.T) {
 		RootAccounts: []*AccountNode{
 			{
 				AccountName:   "root",
-				ChildAccounts: []string{"dept1", "dept2", "dept3"},
+				ChildAccounts: []*AccountNode{},
 				UserCount:     50,
 				ActiveUsers:   45,
 			},

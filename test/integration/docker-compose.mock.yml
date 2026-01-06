@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+  # Mock SLURM REST API server
+  mock-slurm:
+    build:
+      context: .
+      dockerfile: Dockerfile.mock-slurm
+    ports:
+      - "6820:6820"
+    environment:
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "curl", "-k", "-f", "https://localhost:6820/slurm/v0.0.43/ping", "-H", "X-SLURM-USER-TOKEN: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjI2NTQzMDU1NzksImlhdCI6MTc1NDMwNTU3OSwic3VuIjoicm9vdCJ9.ECpVcCqD1eXUk5-3LZLCDVDolvCJkhGNj24IvqwCkPs"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - slurm-test
+
+  # SLURM Exporter under test
+  slurm-exporter:
+    image: slurm-exporter:test
+    ports:
+      - "9341:9341"
+    volumes:
+      - ./mock-cluster-config.yaml:/etc/slurm-exporter/config.yaml:ro
+      - ./output/logs:/var/log/slurm-exporter
+    environment:
+      - SLURM_EXPORTER_SLURM_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjI2NTQzMDU1NzksImlhdCI6MTc1NDMwNTU3OSwic3VuIjoicm9vdCJ9.ECpVcCqD1eXUk5-3LZLCDVDolvCJkhGNj24IvqwCkPs
+    depends_on:
+      mock-slurm:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9341/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - slurm-test
+
+  # Jaeger for distributed tracing
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"
+      - "14268:14268"
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:16686"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - slurm-test
+
+  # Prometheus for metrics scraping
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus-mock.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=1h'
+      - '--web.enable-lifecycle'
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - slurm-test
+
+  # Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ../../dashboards:/var/lib/grafana/dashboards:ro
+      - ./grafana-datasources.yml:/etc/grafana/provisioning/datasources/prometheus.yml:ro
+      - ./grafana-dashboards.yml:/etc/grafana/provisioning/dashboards/slurm.yml:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - slurm-test
+
+networks:
+  slurm-test:
+    driver: bridge

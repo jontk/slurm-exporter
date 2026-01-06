@@ -1,0 +1,46 @@
+Source: slurm-exporter
+Section: admin
+Priority: optional
+Maintainer: SLURM Exporter Team <maintainers@slurm-exporter.io>
+Build-Depends: debhelper-compat (= 13), golang-1.21 | golang-go (>= 2:1.21), git, dh-systemd
+Standards-Version: 4.6.2
+Homepage: https://github.com/jontk/slurm-exporter
+Vcs-Git: https://github.com/jontk/slurm-exporter.git
+Vcs-Browser: https://github.com/jontk/slurm-exporter
+Rules-Requires-Root: no
+
+Package: slurm-exporter
+Architecture: any
+Depends: ${misc:Depends}, systemd, adduser
+Recommends: prometheus
+Suggests: grafana, slurm-wlm-basic-plugins
+Description: Prometheus exporter for SLURM workload manager metrics
+ SLURM Exporter is a comprehensive Prometheus exporter designed specifically
+ for SLURM (Simple Linux Utility for Resource Management) workload managers.
+ It provides detailed metrics about jobs, nodes, partitions, users, accounts,
+ fairshare policies, and quality of service (QoS) settings.
+ .
+ Key features include:
+  * Comprehensive SLURM metrics collection covering all cluster aspects
+  * Advanced job analytics engine with efficiency monitoring and waste detection
+  * High performance with intelligent caching and connection pooling
+  * Production-ready security hardening and audit compliance
+  * Native Kubernetes and container support with Helm charts
+  * Real-time bottleneck analysis and trend reporting
+  * Pre-built Grafana dashboards and Prometheus alerting rules
+ .
+ The exporter connects to the SLURM REST API to collect metrics and exposes
+ them in Prometheus format on an HTTP endpoint. It's designed for production
+ use in HPC clusters, research computing environments, and large-scale batch
+ processing systems.
+
+Package: slurm-exporter-dbg
+Architecture: any
+Section: debug
+Priority: optional
+Depends: slurm-exporter (= ${binary:Version}), ${misc:Depends}
+Description: Debug symbols for slurm-exporter
+ This package contains the debug symbols for slurm-exporter.
+ .
+ Debug symbols are useful for debugging crashes and performance issues
+ in production environments.

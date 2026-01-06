@@ -46,6 +46,11 @@ func (m *MockAccountQuotaSLURMClient) GetQuotaTrends(ctx context.Context, accoun
 	return args.Get(0).(*QuotaTrends), args.Error(1)
 }
 
+func (m *MockAccountQuotaSLURMClient) GetAccountQuotaTrends(ctx context.Context, accountName string, period string) (*QuotaTrends, error) {
+	args := m.Called(ctx, accountName, period)
+	return args.Get(0).(*QuotaTrends), args.Error(1)
+}
+
 func (m *MockAccountQuotaSLURMClient) GetQuotaAlerts(ctx context.Context, accountName string) (*QuotaAlerts, error) {
 	args := m.Called(ctx, accountName)
 	return args.Get(0).(*QuotaAlerts), args.Error(1)
@@ -71,9 +76,24 @@ func (m *MockAccountQuotaSLURMClient) GetQuotaRecommendations(ctx context.Contex
 	return args.Get(0).(*QuotaRecommendations), args.Error(1)
 }
 
+func (m *MockAccountQuotaSLURMClient) GetAccountQuotaRecommendations(ctx context.Context, accountName string) (*QuotaRecommendations, error) {
+	args := m.Called(ctx, accountName)
+	return args.Get(0).(*QuotaRecommendations), args.Error(1)
+}
+
 func (m *MockAccountQuotaSLURMClient) GetSystemQuotaSummary(ctx context.Context) (*SystemQuotaSummary, error) {
 	args := m.Called(ctx)
 	return args.Get(0).(*SystemQuotaSummary), args.Error(1)
+}
+
+func (m *MockAccountQuotaSLURMClient) GetAccountQuotaAlerts(ctx context.Context, accountName string) ([]*QuotaAlert, error) {
+	args := m.Called(ctx, accountName)
+	return args.Get(0).([]*QuotaAlert), args.Error(1)
+}
+
+func (m *MockAccountQuotaSLURMClient) GetAccountQuotaHistory(ctx context.Context, accountName string, period string) (*AccountQuotaHistory, error) {
+	args := m.Called(ctx, accountName, period)
+	return args.Get(0).(*AccountQuotaHistory), args.Error(1)
 }
 
 // Mock structures for missing types
@@ -89,10 +109,10 @@ func TestNewAccountQuotaCollector(t *testing.T) {
 
 	assert.NotNil(t, collector)
 	assert.Equal(t, client, collector.client)
-	assert.NotNil(t, collector.accountCPUQuotaLimit)
-	assert.NotNil(t, collector.accountMemoryQuotaLimit)
-	assert.NotNil(t, collector.accountStorageQuotaLimit)
-	assert.NotNil(t, collector.quotaViolationTotal)
+	assert.NotNil(t, collector.accountQuotaLimit)
+	assert.NotNil(t, collector.accountQuotaUsed)
+	assert.NotNil(t, collector.accountQuotaAvailable)
+	assert.NotNil(t, collector.accountQuotaViolations)
 }
 
 func TestAccountQuotaCollector_Describe(t *testing.T) {
@@ -120,79 +140,39 @@ func TestAccountQuotaCollector_Collect_Success(t *testing.T) {
 	// Mock account quotas
 	accountQuotas := &AccountQuotas{
 		AccountName: "research",
-		CPUQuota: ResourceQuota{
-			Limit:     10000,
-			Used:      7500,
-			Available: 2500,
-			Reserved:  500,
-			Percentage: 75.0,
+		CPUMinutes: &ResourceQuota{
+			Limit:           10000,
+			Used:            7500,
+			Available:       2500,
+			Reserved:        500,
+			UtilizationRate: 0.75,
 		},
-		MemoryQuota: ResourceQuota{
-			Limit:     102400, // 100GB
-			Used:      81920,  // 80GB
-			Available: 20480,  // 20GB
-			Reserved:  5120,   // 5GB
-			Percentage: 80.0,
+		MemoryGB: &ResourceQuota{
+			Limit:           102400, // 100GB
+			Used:            81920,  // 80GB
+			Available:       20480,  // 20GB
+			Reserved:        5120,   // 5GB
+			UtilizationRate: 0.80,
 		},
-		GPUQuota: ResourceQuota{
-			Limit:     100,
-			Used:      60,
-			Available: 40,
-			Reserved:  10,
-			Percentage: 60.0,
+		GPUHours: &ResourceQuota{
+			Limit:           100,
+			Used:            60,
+			Available:       40,
+			Reserved:        10,
+			UtilizationRate: 0.60,
 		},
-		StorageQuota: ResourceQuota{
-			Limit:     1048576, // 1TB
-			Used:      524288,  // 500GB
-			Available: 524288,  // 500GB
-			Reserved:  52428,   // 50GB
-			Percentage: 50.0,
+		StorageGB: &ResourceQuota{
+			Limit:           1048576, // 1TB
+			Used:            524288,  // 500GB
+			Available:       524288,  // 500GB
+			Reserved:        52428,   // 50GB
+			UtilizationRate: 0.50,
 		},
-		JobQuota: JobResourceQuota{
-			MaxJobs:        1000,
-			RunningJobs:    250,
-			PendingJobs:    150,
-			AvailableSlots: 600,
-			Percentage:     40.0,
+		MaxJobs: &LimitQuota{
+			Limit:   1000,
+			Current: 250,
+			Peak:    300,
 		},
-		QoSQuotas: map[string]ResourceQuota{
-			"high": {
-				Limit:      1000,
-				Used:       800,
-				Available:  200,
-				Percentage: 80.0,
-			},
-			"normal": {
-				Limit:      5000,
-				Used:       2500,
-				Available:  2500,
-				Percentage: 50.0,
-			},
-		},
-		PartitionQuotas: map[string]ResourceQuota{
-			"gpu": {
-				Limit:      50,
-				Used:       40,
-				Available:  10,
-				Percentage: 80.0,
-			},
-			"cpu": {
-				Limit:      1000,
-				Used:       600,
-				Available:  400,
-				Percentage: 60.0,
-			},
-		},
-		EffectiveFrom: time.Now().Add(-24 * time.Hour),
-		EffectiveTo:   time.Now().Add(30 * 24 * time.Hour),
-		LastModified:  time.Now().Add(-1 * time.Hour),
-		ModifiedBy:    "admin",
-		Enforced:      true,
-		SoftLimit:     true,
-		HardLimit:     false,
-		GracePeriod:   7 * 24 * time.Hour,
-		WarningLevel:  80.0,
-		CriticalLevel: 90.0,
 	}
 
 	// Mock quota usage
@@ -239,13 +219,11 @@ func TestAccountQuotaCollector_Collect_Success(t *testing.T) {
 	client.On("GetAccountQuotas", mock.Anything, "research").Return(accountQuotas, nil)
 	client.On("GetAccountQuotas", mock.Anything, "engineering").Return(&AccountQuotas{
 		AccountName: "engineering",
-		CPUQuota: ResourceQuota{
-			Limit:      5000,
-			Used:       2500,
-			Percentage: 50.0,
+		CPUMinutes: &ResourceQuota{
+			Limit:           5000,
+			Used:            2500,
+			UtilizationRate: 0.50,
 		},
-		QoSQuotas:       map[string]ResourceQuota{},
-		PartitionQuotas: map[string]ResourceQuota{},
 	}, nil)
 	client.On("GetQuotaUsage", mock.Anything, "research", "24h").Return(quotaUsage, nil)
 	client.On("GetQuotaViolations", mock.Anything, "research", "all").Return(quotaViolations, nil)

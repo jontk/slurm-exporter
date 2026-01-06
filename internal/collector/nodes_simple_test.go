@@ -136,7 +136,7 @@ func TestNodesSimpleCollector_StateMetrics(t *testing.T) {
 	stateCount := make(map[string]int)
 	for metric := range ch {
 		desc := metric.Desc()
-		if contains(desc.String(), "node_state") {
+		if nodeTestContains(desc.String(), "node_state") {
 			// In a real test, we would parse the labels
 			stateCount["found"]++
 		}
@@ -169,16 +169,16 @@ func TestNodesSimpleCollector_ResourceMetrics(t *testing.T) {
 	for metric := range ch {
 		desc := metric.Desc()
 		descStr := desc.String()
-		if contains(descStr, "cpu_total") {
+		if nodeTestContains(descStr, "cpu_total") {
 			metricTypes["cpu_total"] = true
 		}
-		if contains(descStr, "cpu_allocated") {
+		if nodeTestContains(descStr, "cpu_allocated") {
 			metricTypes["cpu_allocated"] = true
 		}
-		if contains(descStr, "memory_total") {
+		if nodeTestContains(descStr, "memory_total") {
 			metricTypes["memory_total"] = true
 		}
-		if contains(descStr, "memory_allocated") {
+		if nodeTestContains(descStr, "memory_allocated") {
 			metricTypes["memory_allocated"] = true
 		}
 	}
@@ -310,7 +310,7 @@ func TestNodesSimpleCollector_GPUNodes(t *testing.T) {
 	hasGPUMetrics := false
 	for metric := range ch {
 		desc := metric.Desc()
-		if contains(desc.String(), "gres") || contains(desc.String(), "gpu") {
+		if nodeTestContains(desc.String(), "gres") || nodeTestContains(desc.String(), "gpu") {
 			hasGPUMetrics = true
 			break
 		}
@@ -320,11 +320,11 @@ func TestNodesSimpleCollector_GPUNodes(t *testing.T) {
 }
 
 // Helper function
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > len(substr) && (s[0:len(substr)] == substr || s[len(s)-len(substr):] == substr || len(substr) > 0 && len(s) > len(substr) && findSubstring(s, substr)))
+func nodeTestContains(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || len(s) > len(substr) && (s[0:len(substr)] == substr || s[len(s)-len(substr):] == substr || len(substr) > 0 && len(s) > len(substr) && nodeFindSubstring(s, substr)))
 }
 
-func findSubstring(s, substr string) bool {
+func nodeFindSubstring(s, substr string) bool {
 	for i := 0; i <= len(s)-len(substr); i++ {
 		if s[i:i+len(substr)] == substr {
 			return true

@@ -1,0 +1,145 @@
+name: Deploy Documentation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'website/**'
+      - 'docs/**'
+      - '.github/workflows/docs.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'website/**'
+      - 'docs/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Prevent concurrent deployments
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Fetch full history for git-revision-date-localized plugin
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install mkdocs-material
+          pip install mkdocs-git-revision-date-localized-plugin
+          pip install mkdocs-git-committers-plugin-2
+          pip install mkdocs-minify-plugin
+          pip install mkdocs-social
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+
+      - name: Build documentation
+        run: |
+          cd website
+          mkdocs build --strict
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: website/site
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
+
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install mkdocs-material
+          pip install mkdocs-git-revision-date-localized-plugin
+          pip install mkdocs-git-committers-plugin-2
+          pip install mkdocs-minify-plugin
+          pip install mkdocs-social
+
+      - name: Validate documentation
+        run: |
+          cd website
+          # Check for broken links
+          mkdocs build --strict
+          
+          # Check for missing pages
+          python -c "
+          import yaml
+          with open('mkdocs.yml', 'r') as f:
+              config = yaml.safe_load(f)
+          
+          missing_files = []
+          def check_nav(nav, prefix='docs/'):
+              for item in nav:
+                  if isinstance(item, dict):
+                      for key, value in item.items():
+                          if isinstance(value, str) and value.endswith('.md'):
+                              file_path = prefix + value
+                              try:
+                                  with open(file_path, 'r'):
+                                      pass
+                              except FileNotFoundError:
+                                  missing_files.append(file_path)
+                          elif isinstance(value, list):
+                              check_nav(value, prefix)
+          
+          if 'nav' in config:
+              check_nav(config['nav'])
+          
+          if missing_files:
+              print('Missing documentation files:')
+              for f in missing_files:
+                  print(f'  - {f}')
+              exit(1)
+          else:
+              print('All documentation files exist!')
+          "
+
+      - name: Spell check
+        run: |
+          # Install aspell
+          sudo apt-get update
+          sudo apt-get install -y aspell aspell-en
+          
+          # Check spelling in markdown files
+          find website/docs -name "*.md" -exec aspell --mode=markdown --personal=website/.aspell.en.pws --dont-backup check {} \;

@@ -91,52 +91,7 @@ func (m *MockUserBehaviorAnalysisSLURMClient) GetTrainingRecommendations(ctx con
 	return args.Get(0).(*TrainingRecommendations), args.Error(1)
 }
 
-// Mock structures for missing types
-
-type FairShareOptimization struct {
-	OptimizationScore float64 `json:"optimization_score"`
-}
-
-type UserAdaptationMetrics struct {
-	AdaptationEffectiveness float64 `json:"adaptation_effectiveness"`
-}
-
-type UserComplianceAnalysis struct {
-	ComplianceScore float64 `json:"compliance_score"`
-}
-
-type UserEfficiencyTrends struct {
-	TrendDirection string  `json:"trend_direction"`
-	TrendScore     float64 `json:"trend_score"`
-}
-
-type UserBehaviorPrediction struct {
-	PredictionAccuracy float64 `json:"prediction_accuracy"`
-}
-
-type UserClusteringAnalysis struct {
-	ClusterAssignments map[string]string `json:"cluster_assignments"`
-}
-
-type BehavioralAnomalies struct {
-	AnomalyScore float64 `json:"anomaly_score"`
-}
-
-type UserLearningProgress struct {
-	LearningScore float64 `json:"learning_score"`
-}
-
-type PersonalizedRecommendations struct {
-	RecommendationEffectiveness float64 `json:"recommendation_effectiveness"`
-}
-
-type BehaviorOptimizationSuggestions struct {
-	OptimizationPotential float64 `json:"optimization_potential"`
-}
-
-type TrainingRecommendations struct {
-	TrainingEffectiveness float64 `json:"training_effectiveness"`
-}
+// Types are already defined in user_behavior_analysis.go
 
 func TestNewUserBehaviorAnalysisCollector(t *testing.T) {
 	client := &MockUserBehaviorAnalysisSLURMClient{}

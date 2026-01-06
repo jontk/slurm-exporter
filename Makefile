@@ -21,12 +21,12 @@ all: lint test build
 # Build the binary
 build:
 	@echo "Building $(BINARY_NAME)..."
-	go build $(LDFLAGS) -o bin/$(BINARY_NAME) .
+	go build $(LDFLAGS) -o bin/$(BINARY_NAME) ./cmd/slurm-exporter
 
 # Run the application
 run:
 	@echo "Running $(BINARY_NAME)..."
-	go run $(LDFLAGS) .
+	go run $(LDFLAGS) ./cmd/slurm-exporter
 
 # Run tests
 test:

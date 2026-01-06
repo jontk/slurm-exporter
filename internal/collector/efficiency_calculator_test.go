@@ -381,7 +381,7 @@ func TestEfficiencyCalculator_Recommendations(t *testing.T) {
 
 	found := false
 	for _, rec := range metrics.Recommendations {
-		if contains(rec, "reducing CPU allocation") {
+		if testContains(rec, "reducing CPU allocation") {
 			found = true
 			break
 		}
@@ -402,7 +402,7 @@ func TestEfficiencyCalculator_Recommendations(t *testing.T) {
 
 	found = false
 	for _, rec := range metrics.Recommendations {
-		if contains(rec, "increasing memory allocation") {
+		if testContains(rec, "increasing memory allocation") {
 			found = true
 			break
 		}
@@ -411,14 +411,14 @@ func TestEfficiencyCalculator_Recommendations(t *testing.T) {
 }
 
 // Helper function to check if a string contains a substring
-func contains(s, substr string) bool {
+func testContains(s, substr string) bool {
 	return len(s) >= len(substr) && (s == substr || len(substr) == 0 ||
 		(len(s) > len(substr) && (s[:len(substr)] == substr ||
 			s[len(s)-len(substr):] == substr ||
-			hasSubstring(s, substr))))
+			testHasSubstring(s, substr))))
 }
 
-func hasSubstring(s, substr string) bool {
+func testHasSubstring(s, substr string) bool {
 	for i := 0; i <= len(s)-len(substr); i++ {
 		if s[i:i+len(substr)] == substr {
 			return true

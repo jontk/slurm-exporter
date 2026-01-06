@@ -1,0 +1,15 @@
+# Logrotate configuration for SLURM Exporter
+/var/log/slurm-exporter/*.log {
+    daily
+    missingok
+    rotate 30
+    compress
+    delaycompress
+    notifempty
+    create 640 slurm-exporter slurm-exporter
+    postrotate
+        if systemctl is-active slurm-exporter >/dev/null 2>&1; then
+            systemctl reload slurm-exporter >/dev/null 2>&1 || true
+        fi
+    endscript
+}

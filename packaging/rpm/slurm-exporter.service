@@ -1,0 +1,68 @@
+[Unit]
+Description=SLURM Exporter
+Documentation=https://jontk.github.io/slurm-exporter
+Documentation=man:slurm-exporter(1)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=slurm-exporter
+Group=slurm-exporter
+ExecStart=/usr/bin/slurm-exporter --config.file=/etc/slurm-exporter/config.yaml
+ExecReload=/bin/kill -HUP $MAINPID
+
+# Process management
+Restart=always
+RestartSec=5
+TimeoutStopSec=20
+KillMode=mixed
+KillSignal=SIGTERM
+
+# Output to journal
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=slurm-exporter
+
+# Security settings
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+ReadWritePaths=/var/lib/slurm-exporter
+ReadWritePaths=/var/log/slurm-exporter
+
+# Capabilities
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+# System call filtering
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources @obsolete
+
+# Network
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+IPAccounting=yes
+
+# Namespaces
+PrivateUsers=yes
+PrivateDevices=yes
+ProtectClock=yes
+ProtectHostname=yes
+ProtectKernelLogs=yes
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+RemoveIPC=yes
+LockPersonality=yes
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=32768
+
+[Install]
+WantedBy=multi-user.target

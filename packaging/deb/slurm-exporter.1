@@ -1,0 +1,124 @@
+.TH SLURM-EXPORTER 1 "January 2024" "slurm-exporter 1.0.0" "User Commands"
+.SH NAME
+slurm-exporter \- Prometheus exporter for SLURM workload manager metrics
+.SH SYNOPSIS
+.B slurm-exporter
+[\fIOPTION\fR]...
+.SH DESCRIPTION
+SLURM Exporter is a comprehensive Prometheus exporter designed specifically for SLURM (Simple Linux Utility for Resource Management) workload managers. It provides detailed metrics about jobs, nodes, partitions, users, accounts, fairshare policies, and quality of service (QoS) settings.
+
+The exporter connects to the SLURM REST API to collect metrics and exposes them in Prometheus format on an HTTP endpoint. It includes advanced features like job analytics, efficiency monitoring, intelligent caching, and production-grade security hardening.
+
+.SH OPTIONS
+.TP
+.BR \-\-config.file =\fIFILE\fR
+Path to configuration file (default: /etc/slurm-exporter/config.yaml)
+.TP
+.BR \-\-slurm.host =\fIHOST\fR
+SLURM controller hostname or IP address
+.TP
+.BR \-\-slurm.port =\fIPORT\fR
+SLURM REST API port (default: 6820)
+.TP
+.BR \-\-slurm.token =\fITOKEN\fR
+JWT authentication token for SLURM REST API
+.TP
+.BR \-\-slurm.user =\fIUSER\fR
+Username for basic authentication
+.TP
+.BR \-\-slurm.password =\fIPASSWORD\fR
+Password for basic authentication
+.TP
+.BR \-\-web.listen\-address =\fIADDRESS\fR
+Address to listen on for HTTP requests (default: :9341)
+.TP
+.BR \-\-web.telemetry\-path =\fIPATH\fR
+Path under which to expose metrics (default: /metrics)
+.TP
+.BR \-\-web.config.file =\fIFILE\fR
+Path to web configuration file for TLS and authentication
+.TP
+.BR \-\-log.level =\fILEVEL\fR
+Log level: debug, info, warn, error (default: info)
+.TP
+.BR \-\-log.format =\fIFORMAT\fR
+Log format: json, logfmt (default: logfmt)
+.TP
+.BR \-\-collectors.enabled =\fICOLLECTORS\fR
+Comma-separated list of collectors to enable (default: jobs,nodes,partitions)
+.TP
+.BR \-\-collector.jobs.analytics
+Enable advanced job analytics and efficiency calculations
+.TP
+.BR \-\-collector.cache.ttl =\fIDURATION\fR
+Cache TTL for metric data (default: 5m)
+.TP
+.BR \-\-version
+Show version information and exit
+.TP
+.BR \-\-help
+Show help message and exit
+
+.SH CONFIGURATION
+The exporter can be configured using a YAML configuration file, command-line arguments, or environment variables. Configuration file options take precedence over command-line arguments, which take precedence over environment variables.
+
+.SS Configuration File
+The default configuration file location is \fI/etc/slurm-exporter/config.yaml\fR. The file uses YAML format and supports the following main sections:
+
+.TP
+.B slurm
+SLURM connection settings including host, port, authentication, and TLS configuration.
+.TP
+.B metrics
+Metric collection settings including enabled collectors, intervals, and filtering options.
+.TP
+.B performance
+Performance tuning options including caching, connection pooling, and batch processing.
+.TP
+.B server
+HTTP server settings including listen address, ports, and TLS configuration.
+.TP
+.B logging
+Logging configuration including level, format, and output destinations.
+
+.SS Environment Variables
+Configuration options can be set using environment variables with the prefix \fISLURM_EXPORTER_\fR. For example:
+.IP
+SLURM_EXPORTER_SLURM_HOST=slurm-controller.example.com
+.br
+SLURM_EXPORTER_SLURM_TOKEN=your-jwt-token
+.br
+SLURM_EXPORTER_LOG_LEVEL=debug
+
+.SH FILES
+.TP
+.I /etc/slurm-exporter/config.yaml
+Default configuration file
+.TP
+.I /var/lib/slurm-exporter/
+Data directory for cache and state files
+.TP
+.I /var/log/slurm-exporter/
+Log directory (when file logging is enabled)
+.TP
+.I /lib/systemd/system/slurm-exporter.service
+Systemd service file
+
+.SH SEE ALSO
+.BR prometheus (1),
+.BR sinfo (1),
+.BR squeue (1),
+.BR sacct (1),
+.BR scontrol (1)
+
+Project documentation: https://jontk.github.io/slurm-exporter
+
+.SH BUGS
+Report bugs to: https://github.com/jontk/slurm-exporter/issues
+
+.SH AUTHORS
+SLURM Exporter was written by the SLURM Exporter contributors.
+
+.SH COPYRIGHT
+Copyright \(co 2024 SLURM Exporter Contributors.
+This is free software; see the source for copying conditions. There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.

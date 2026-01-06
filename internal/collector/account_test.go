@@ -31,6 +31,12 @@ func (m *MockAccountSLURMClient) GetAccountQoS(ctx context.Context, accountName 
 	return args.Get(0).([]*QoSAssignment), args.Error(1)
 }
 
+// Mock types that are not yet defined in the main files
+type ReservationUsage struct{}
+type AccountUsageAnalysis struct{}
+type AccountCostAnalysis struct{}
+type AccountAccessValidation struct{}
+
 func (m *MockAccountSLURMClient) GetAccountReservations(ctx context.Context, accountName string) ([]*ReservationUsage, error) {
 	args := m.Called(ctx, accountName)
 	return args.Get(0).([]*ReservationUsage), args.Error(1)

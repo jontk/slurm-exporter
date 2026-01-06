@@ -16,24 +16,32 @@ type MockReservationUtilizationSLURMClient struct {
 	mock.Mock
 }
 
-func (m *MockReservationUtilizationSLURMClient) GetReservationUtilization(ctx context.Context, reservationName string) (*ReservationUtilization, error) {
+func (m *MockReservationUtilizationSLURMClient) GetReservationUtilization(ctx context.Context, reservationName string) (*ReservationUtilizationMetrics, error) {
 	args := m.Called(ctx, reservationName)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*ReservationUtilization), args.Error(1)
+	return args.Get(0).(*ReservationUtilizationMetrics), args.Error(1)
 }
 
-func (m *MockReservationUtilizationSLURMClient) ListReservations(ctx context.Context) ([]*ReservationInfo, error) {
-	args := m.Called(ctx)
+func (m *MockReservationUtilizationSLURMClient) GetReservationInfo(ctx context.Context, reservationName string) (*ReservationInfo, error) {
+	args := m.Called(ctx, reservationName)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]*ReservationInfo), args.Error(1)
+	return args.Get(0).(*ReservationInfo), args.Error(1)
 }
 
-func (m *MockReservationUtilizationSLURMClient) GetReservationStatistics(ctx context.Context, reservationName string) (*ReservationStatistics, error) {
-	args := m.Called(ctx, reservationName)
+func (m *MockReservationUtilizationSLURMClient) GetReservationList(ctx context.Context, filter *ReservationFilter) (*ReservationList, error) {
+	args := m.Called(ctx, filter)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*ReservationList), args.Error(1)
+}
+
+func (m *MockReservationUtilizationSLURMClient) GetReservationStatistics(ctx context.Context, reservationName string, period string) (*ReservationStatistics, error) {
+	args := m.Called(ctx, reservationName, period)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -48,37 +56,55 @@ func (m *MockReservationUtilizationSLURMClient) GetReservationEfficiency(ctx con
 	return args.Get(0).(*ReservationEfficiency), args.Error(1)
 }
 
-func (m *MockReservationUtilizationSLURMClient) GetReservationConflicts(ctx context.Context, reservationName string) ([]*ReservationConflict, error) {
-	args := m.Called(ctx, reservationName)
+func (m *MockReservationUtilizationSLURMClient) GetReservationConflicts(ctx context.Context) (*ReservationConflicts, error) {
+	args := m.Called(ctx)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]*ReservationConflict), args.Error(1)
+	return args.Get(0).(*ReservationConflicts), args.Error(1)
 }
 
-func (m *MockReservationUtilizationSLURMClient) GetReservationAlerts(ctx context.Context, reservationName string) ([]*ReservationAlert, error) {
-	args := m.Called(ctx, reservationName)
+func (m *MockReservationUtilizationSLURMClient) GetReservationAlerts(ctx context.Context, alertType string) (*ReservationAlerts, error) {
+	args := m.Called(ctx, alertType)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]*ReservationAlert), args.Error(1)
+	return args.Get(0).(*ReservationAlerts), args.Error(1)
 }
 
-func (m *MockReservationUtilizationSLURMClient) GetReservationTrends(ctx context.Context, reservationName string) (*ReservationTrends, error) {
-	args := m.Called(ctx, reservationName)
+func (m *MockReservationUtilizationSLURMClient) GetReservationTrends(ctx context.Context, reservationName string, period string) (*ReservationTrends, error) {
+	args := m.Called(ctx, reservationName, period)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*ReservationTrends), args.Error(1)
 }
 
-func (m *MockReservationUtilizationSLURMClient) GetReservationOverlaps(ctx context.Context, reservationName string) ([]*ReservationOverlap, error) {
+func (m *MockReservationUtilizationSLURMClient) GetReservationPredictions(ctx context.Context, reservationName string) (*ReservationPredictions, error) {
 	args := m.Called(ctx, reservationName)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]*ReservationOverlap), args.Error(1)
+	return args.Get(0).(*ReservationPredictions), args.Error(1)
 }
+
+func (m *MockReservationUtilizationSLURMClient) GetReservationAnalytics(ctx context.Context, reservationName string) (*ReservationAnalytics, error) {
+	args := m.Called(ctx, reservationName)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*ReservationAnalytics), args.Error(1)
+}
+
+func (m *MockReservationUtilizationSLURMClient) GetSystemReservationOverview(ctx context.Context) (*SystemReservationOverview, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*SystemReservationOverview), args.Error(1)
+}
+
+// Remove mock types that are no longer needed
 
 func (m *MockReservationUtilizationSLURMClient) GetReservationOptimization(ctx context.Context, reservationName string) (*ReservationOptimization, error) {
 	args := m.Called(ctx, reservationName)
@@ -88,29 +114,7 @@ func (m *MockReservationUtilizationSLURMClient) GetReservationOptimization(ctx c
 	return args.Get(0).(*ReservationOptimization), args.Error(1)
 }
 
-func (m *MockReservationUtilizationSLURMClient) GetReservationScheduling(ctx context.Context, reservationName string) (*ReservationScheduling, error) {
-	args := m.Called(ctx, reservationName)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*ReservationScheduling), args.Error(1)
-}
-
-func (m *MockReservationUtilizationSLURMClient) GetReservationCapacity(ctx context.Context, reservationName string) (*ReservationCapacity, error) {
-	args := m.Called(ctx, reservationName)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*ReservationCapacity), args.Error(1)
-}
-
-func (m *MockReservationUtilizationSLURMClient) GetReservationUsageHistory(ctx context.Context, reservationName string) ([]*ReservationUsageHistory, error) {
-	args := m.Called(ctx, reservationName)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]*ReservationUsageHistory), args.Error(1)
-}
+// Methods removed as they are not part of the interface
 
 func TestNewReservationUtilizationCollector(t *testing.T) {
 	client := &MockReservationUtilizationSLURMClient{}
@@ -208,162 +212,154 @@ func TestReservationUtilizationCollector_Collect_Success(t *testing.T) {
 
 	efficiency := &ReservationEfficiency{
 		ReservationName:        "gpu_reservation",
-		CPUEfficiency:          0.88,
-		MemoryEfficiency:       0.75,
-		GPUEfficiency:          0.92,
-		NetworkEfficiency:      0.68,
-		StorageEfficiency:      0.71,
 		OverallEfficiency:      0.85,
-		ResourceWastePercent:   0.15,
+		ResourceEfficiency:     0.78,
+		TimeEfficiency:         0.75,
+		EnergyEfficiency:       0.68,
+		CostEfficiency:         0.71,
 		OptimizationPotential:  0.12,
-		BottleneckResources:    []string{"memory", "network"},
-		OptimizationSuggestions: []string{"increase_memory", "optimize_network"},
+		EfficiencyBreakdown:    map[string]float64{"cpu": 0.88, "memory": 0.75, "gpu": 0.92},
 	}
 
-	conflicts := []*ReservationConflict{
-		{
-			ReservationName:      "gpu_reservation",
-			ConflictType:         "RESOURCE_OVERLAP",
-			ConflictDescription:  "GPU resources overlap with maintenance window",
-			ConflictSeverity:     "HIGH",
-			ConflictStartTime:    time.Now().Add(2 * time.Hour),
-			ConflictEndTime:      time.Now().Add(4 * time.Hour),
-			AffectedResources:    []string{"gpu01", "gpu02"},
-			ResolutionRequired:   true,
-			ResolutionSuggestion: "Reschedule maintenance or reduce reservation scope",
+	conflicts := &ReservationConflicts{
+		TotalConflicts:     5,
+		ActiveConflicts:    2,
+		ResolvedConflicts:  3,
+		Conflicts: []ReservationConflict{
+			{
+				ConflictID:          "conflict-001",
+				Type:                "RESOURCE_OVERLAP",
+				Severity:            "HIGH",
+				AffectedReservations: []string{"gpu_reservation", "maintenance"},
+				Description:         "GPU resources overlap with maintenance window",
+				DetectedTime:        time.Now().Add(-2 * time.Hour),
+				ResolutionTime:      time.Now(),
+				Status:              "resolved",
+			},
 		},
+		ConflictsByType: map[string]int{
+			"RESOURCE_OVERLAP": 3,
+			"TIME_CONFLICT":    2,
+		},
+		LastAnalyzed: time.Now(),
 	}
 
-	alerts := []*ReservationAlert{
-		{
-			ReservationName: "gpu_reservation",
-			AlertType:       "LOW_UTILIZATION",
-			AlertMessage:    "Reservation utilization below threshold",
-			AlertSeverity:   "WARNING",
-			AlertTime:       time.Now(),
-			ThresholdValue:  0.5,
-			CurrentValue:    0.35,
-			AlertActive:     true,
+	alerts := &ReservationAlerts{
+		AlertType:       "all",
+		TotalAlerts:     10,
+		ActiveAlerts:    3,
+		ResolvedAlerts:  7,
+		Alerts: []ReservationAlert{
+			{
+				AlertID:         "alert-001",
+				ReservationName: "gpu_reservation",
+				AlertType:       "LOW_UTILIZATION",
+				Severity:        "WARNING",
+				Timestamp:       time.Now().Add(-time.Hour),
+				Message:         "Reservation utilization below threshold",
+				Threshold:       0.5,
+				ActualValue:     0.35,
+				Status:          "active",
+			},
+			{
+				AlertID:         "alert-002",
+				ReservationName: "gpu_reservation",
+				AlertType:       "HIGH_COST",
+				Severity:        "INFO",
+				Timestamp:       time.Now().Add(-2 * time.Hour),
+				ResolvedAt:      time.Now().Add(-30 * time.Minute),
+				Status:          "resolved",
+			},
+		},
+		ResolutionStats: AlertResolutionStats{
+			FalsePositiveRate: 0.1,
 		},
 	}
 
 	trends := &ReservationTrends{
-		ReservationName:         "gpu_reservation",
-		UtilizationTrend:        "INCREASING",
-		EfficiencyTrend:         "STABLE",
-		DemandTrend:            "INCREASING",
-		WasteTrend:             "DECREASING",
-		PredictedUtilization:    0.82,
-		PredictedEfficiency:     0.87,
-		TrendConfidence:         0.78,
-		ForecastAccuracy:        0.85,
-		SeasonalPatterns:        []string{"weekday_peak", "weekend_low"},
-		AnomalyDetected:         false,
-		NextMaintenanceWindow:   time.Now().Add(7 * 24 * time.Hour),
-		OptimalReservationSize:  140,
-		RecommendedAdjustments:  []string{"extend_duration", "add_nodes"},
+		ReservationName:      "gpu_reservation",
+		Period:               "7d",
+		UtilizationTrend:     []float64{0.70, 0.72, 0.74, 0.75, 0.76, 0.78, 0.80},
+		EfficiencyTrend:      []float64{0.82, 0.83, 0.83, 0.84, 0.85, 0.85, 0.86},
+		ForecastAccuracy:     0.85,
+		ConfidenceInterval:   0.1,
 	}
 
-	overlaps := []*ReservationOverlap{
-		{
-			ReservationName:    "gpu_reservation",
-			OverlapType:        "PARTIAL",
-			OverlappingReservation: "shared_gpu_reservation",
-			OverlapStartTime:   time.Now().Add(1 * time.Hour),
-			OverlapEndTime:     time.Now().Add(3 * time.Hour),
-			OverlapSeverity:    "MEDIUM",
-			OverlapResolution:  "TIME_SHARING",
-			ConflictPotential:  0.3,
-		},
+	predictions := &ReservationPredictions{
+		ReservationName:       "gpu_reservation",
+		PredictionHorizon:     24 * time.Hour,
+		UtilizationForecast:   []float64{0.80, 0.82, 0.83},
+		EfficiencyForecast:    []float64{0.86, 0.87, 0.88},
+		ConfidenceLevel:       0.85,
+		ModelAccuracy:         0.82,
+		LastModelUpdate:       time.Now().Add(-time.Hour),
 	}
 
 	optimization := &ReservationOptimization{
-		ReservationName:              "gpu_reservation",
-		CurrentEfficiencyScore:       0.85,
-		OptimalEfficiencyScore:       0.95,
-		ImprovementPotential:         0.10,
-		OptimizationRecommendations:  []string{"right_size_memory", "optimize_scheduling"},
-		EstimatedCostSavings:         1250.50,
-		EstimatedPerformanceGain:     0.15,
-		ImplementationComplexity:     "MEDIUM",
-		ImplementationTimeframe:      "2_WEEKS",
-		RiskAssessment:              "LOW",
-		OptimizationPriority:        "HIGH",
-	}
-
-	scheduling := &ReservationScheduling{
-		ReservationName:      "gpu_reservation",
-		SchedulingPolicy:     "FAIR_SHARE",
-		SchedulingEfficiency: 0.78,
-		AverageQueueTime:     450,
-		QueueLength:          8,
-		SchedulingConflicts:  2,
-		PreemptionEvents:     1,
-		BackfillSuccess:      0.85,
-		SchedulingLatency:    12,
-		ResourceFragmentation: 0.15,
-		SchedulingOptimization: []string{"improve_backfill", "reduce_fragmentation"},
-	}
-
-	capacity := &ReservationCapacity{
-		ReservationName:        "gpu_reservation",
-		TotalCapacityCPUs:      128,
-		TotalCapacityMemoryMB:  512000,
-		TotalCapacityGPUs:      8,
-		TotalCapacityNodes:     2,
-		UsedCapacityCPUs:       96,
-		UsedCapacityMemoryMB:   384000,
-		UsedCapacityGPUs:       6,
-		UsedCapacityNodes:      2,
-		AvailableCapacityCPUs:  32,
-		AvailableCapacityMemoryMB: 128000,
-		AvailableCapacityGPUs:  2,
-		AvailableCapacityNodes: 0,
-		CapacityUtilization:    0.75,
-		CapacityEfficiency:     0.85,
-		CapacityBottlenecks:    []string{"nodes"},
-		ExpansionPotential:     0.25,
-		ScalingRecommendations: []string{"add_nodes"},
-	}
-
-	usageHistory := []*ReservationUsageHistory{
-		{
-			ReservationName: "gpu_reservation",
-			Timestamp:      time.Now().Add(-1 * time.Hour),
-			CPUUtilization: 0.78,
-			MemoryUtilization: 0.72,
-			GPUUtilization: 0.89,
-			NodeUtilization: 1.0,
-			JobCount:       15,
-			UserCount:      8,
-			AccountCount:   3,
-			EfficiencyScore: 0.83,
+		ReservationName: "gpu_reservation",
+		OptimizationPotential: OptimizationPotential{
+			EfficiencyGain:   0.10,
+			CostSavings:      1250.50,
+			PerformanceGain:  0.15,
 		},
 	}
 
-	client.On("ListReservations", mock.Anything).Return(reservations, nil)
+	// Mock analytics
+	analytics := &ReservationAnalytics{
+		ReservationName:    "gpu_reservation",
+		AnalysisDate:       time.Now(),
+		CostAnalysis: ReservationCostAnalysis{
+			TotalCost: 10000.0,
+		},
+	}
+
+	// Mock system overview
+	systemOverview := &SystemReservationOverview{
+		TotalReservations:    10,
+		ActiveReservations:   6,
+		PlannedReservations:  2,
+		ExpiredReservations:  2,
+		CancelledReservations: 0,
+		TotalNodes:           100,
+		ReservedNodes:        60,
+		AvailableNodes:       40,
+		ReservationUtilization: 0.75,
+		SystemEfficiency:     0.85,
+		TotalCost:            50000.0,
+		CostPerHour:          250.0,
+		OptimizationScore:    0.8,
+		SystemHealth:         "good",
+		LastUpdated:          time.Now(),
+	}
+
+	client.On("GetReservationList", mock.Anything, mock.Anything).Return(reservationList, nil)
 	client.On("GetReservationUtilization", mock.Anything, "gpu_reservation").Return(utilization, nil)
-	client.On("GetReservationUtilization", mock.Anything, "cpu_reservation").Return(nil, errors.New("not found"))
-	client.On("GetReservationStatistics", mock.Anything, "gpu_reservation").Return(statistics, nil)
-	client.On("GetReservationStatistics", mock.Anything, "cpu_reservation").Return(nil, errors.New("not found"))
+	client.On("GetReservationUtilization", mock.Anything, "bigmem").Return(nil, errors.New("not found"))
+	client.On("GetReservationUtilization", mock.Anything, "debug").Return(nil, errors.New("not found"))
+	client.On("GetReservationUtilization", mock.Anything, "maintenance").Return(nil, errors.New("not found"))
+	client.On("GetReservationStatistics", mock.Anything, "gpu_reservation", "24h").Return(statistics, nil)
+	client.On("GetReservationStatistics", mock.Anything, "bigmem", "24h").Return(nil, errors.New("not found"))
+	client.On("GetReservationStatistics", mock.Anything, "debug", "24h").Return(nil, errors.New("not found"))
+	client.On("GetReservationStatistics", mock.Anything, "maintenance", "24h").Return(nil, errors.New("not found"))
 	client.On("GetReservationEfficiency", mock.Anything, "gpu_reservation").Return(efficiency, nil)
-	client.On("GetReservationEfficiency", mock.Anything, "cpu_reservation").Return(nil, errors.New("not found"))
-	client.On("GetReservationConflicts", mock.Anything, "gpu_reservation").Return(conflicts, nil)
-	client.On("GetReservationConflicts", mock.Anything, "cpu_reservation").Return([]*ReservationConflict{}, nil)
-	client.On("GetReservationAlerts", mock.Anything, "gpu_reservation").Return(alerts, nil)
-	client.On("GetReservationAlerts", mock.Anything, "cpu_reservation").Return([]*ReservationAlert{}, nil)
-	client.On("GetReservationTrends", mock.Anything, "gpu_reservation").Return(trends, nil)
-	client.On("GetReservationTrends", mock.Anything, "cpu_reservation").Return(nil, errors.New("not found"))
-	client.On("GetReservationOverlaps", mock.Anything, "gpu_reservation").Return(overlaps, nil)
-	client.On("GetReservationOverlaps", mock.Anything, "cpu_reservation").Return([]*ReservationOverlap{}, nil)
+	client.On("GetReservationEfficiency", mock.Anything, "bigmem").Return(nil, errors.New("not found"))
+	client.On("GetReservationEfficiency", mock.Anything, "debug").Return(nil, errors.New("not found"))
+	client.On("GetReservationEfficiency", mock.Anything, "maintenance").Return(nil, errors.New("not found"))
+	client.On("GetReservationConflicts", mock.Anything).Return(conflicts, nil)
+	client.On("GetReservationAlerts", mock.Anything, "all").Return(alerts, nil)
+	client.On("GetReservationTrends", mock.Anything, "gpu_reservation", "7d").Return(trends, nil)
+	client.On("GetReservationTrends", mock.Anything, "bigmem", "7d").Return(nil, errors.New("not found"))
+	client.On("GetReservationTrends", mock.Anything, "debug", "7d").Return(nil, errors.New("not found"))
+	client.On("GetReservationPredictions", mock.Anything, "gpu_reservation").Return(predictions, nil)
+	client.On("GetReservationPredictions", mock.Anything, "bigmem").Return(nil, errors.New("not found"))
+	client.On("GetReservationPredictions", mock.Anything, "debug").Return(nil, errors.New("not found"))
+	client.On("GetReservationAnalytics", mock.Anything, "gpu_reservation").Return(analytics, nil)
+	client.On("GetReservationAnalytics", mock.Anything, "bigmem").Return(nil, errors.New("not found"))
+	client.On("GetReservationAnalytics", mock.Anything, "debug").Return(nil, errors.New("not found"))
 	client.On("GetReservationOptimization", mock.Anything, "gpu_reservation").Return(optimization, nil)
-	client.On("GetReservationOptimization", mock.Anything, "cpu_reservation").Return(nil, errors.New("not found"))
-	client.On("GetReservationScheduling", mock.Anything, "gpu_reservation").Return(scheduling, nil)
-	client.On("GetReservationScheduling", mock.Anything, "cpu_reservation").Return(nil, errors.New("not found"))
-	client.On("GetReservationCapacity", mock.Anything, "gpu_reservation").Return(capacity, nil)
-	client.On("GetReservationCapacity", mock.Anything, "cpu_reservation").Return(nil, errors.New("not found"))
-	client.On("GetReservationUsageHistory", mock.Anything, "gpu_reservation").Return(usageHistory, nil)
-	client.On("GetReservationUsageHistory", mock.Anything, "cpu_reservation").Return([]*ReservationUsageHistory{}, nil)
+	client.On("GetReservationOptimization", mock.Anything, "bigmem").Return(nil, errors.New("not found"))
+	client.On("GetReservationOptimization", mock.Anything, "debug").Return(nil, errors.New("not found"))
+	client.On("GetSystemReservationOverview", mock.Anything).Return(systemOverview, nil)
 
 	ch := make(chan prometheus.Metric, 100)
 	go func() {
@@ -385,7 +381,7 @@ func TestReservationUtilizationCollector_Collect_ListReservationsError(t *testin
 	client := &MockReservationUtilizationSLURMClient{}
 	collector := NewReservationUtilizationCollector(client)
 
-	client.On("ListReservations", mock.Anything).Return(nil, errors.New("API error"))
+	client.On("GetReservationList", mock.Anything, mock.Anything).Return(nil, errors.New("API error"))
 
 	ch := make(chan prometheus.Metric, 100)
 	go func() {

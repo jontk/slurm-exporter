@@ -1,0 +1,39 @@
+slurm-exporter (1.0.0-1) unstable; urgency=medium
+
+  * Initial Debian package release
+  * Comprehensive SLURM metrics collection covering jobs, nodes, partitions, 
+    accounts, fairshare policies, and QoS settings
+  * Advanced job analytics engine with efficiency monitoring, waste detection, 
+    and bottleneck analysis
+  * High performance with intelligent caching, connection pooling, and batch 
+    processing
+  * Production-ready security hardening with TLS, authentication, and audit 
+    compliance
+  * Native Kubernetes and container support with Helm charts and Docker images
+  * Real-time monitoring with pre-built Grafana dashboards and Prometheus 
+    alerting rules
+  * Comprehensive documentation and deployment guides
+  * Multi-architecture support (amd64, arm64, armhf, armel, i386)
+
+ -- SLURM Exporter Team <maintainers@slurm-exporter.io>  Mon, 15 Jan 2024 10:00:00 +0000
+
+slurm-exporter (0.9.0-1) unstable; urgency=low
+
+  * Beta release with job analytics engine
+  * Performance improvements and intelligent caching
+  * Enhanced security features and TLS support
+  * Grafana dashboards and Prometheus alerting rules
+  * Docker and Kubernetes deployment configurations
+  * Comprehensive test suite and CI/CD pipeline
+
+ -- SLURM Exporter Team <maintainers@slurm-exporter.io>  Thu, 14 Dec 2023 15:30:00 +0000
+
+slurm-exporter (0.8.0-1) unstable; urgency=low
+
+  * Alpha release with basic SLURM metrics collection
+  * Support for jobs, nodes, and partitions collectors
+  * RESTful API integration with SLURM controller
+  * Basic authentication and configuration management
+  * Initial documentation and installation guides
+
+ -- SLURM Exporter Team <maintainers@slurm-exporter.io>  Tue, 21 Nov 2023 12:00:00 +0000

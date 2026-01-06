@@ -1,0 +1,25 @@
+FROM python:3.11-slim
+
+# Install required packages
+RUN apt-get update && apt-get install -y \
+    curl \
+    openssl \
+    && rm -rf /var/lib/apt/lists/*
+
+# No additional Python dependencies needed
+
+# Create working directory
+WORKDIR /app
+
+# Copy mock server
+COPY mock-slurm-server.py .
+
+# Generate self-signed certificate for HTTPS
+RUN openssl req -x509 -newkey rsa:4096 -keyout test-key.pem -out test-cert.pem -days 365 -nodes \
+    -subj "/C=US/ST=Test/L=Test/O=Test/OU=Test/CN=localhost"
+
+# Expose port
+EXPOSE 6820
+
+# Run the mock server
+CMD ["python", "mock-slurm-server.py", "--port", "6820"]

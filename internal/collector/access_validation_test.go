@@ -518,7 +518,7 @@ func TestAccessValidationCollector_MetricValues(t *testing.T) {
 		ResourcePermissions: map[string][]string{},
 		EffectiveRights:     map[string]bool{},
 		ExpirationDates:     map[string]time.Time{},
-		PreferredAccounts:   []string{"default"},
+		SecondaryAccounts:   []string{"default"},
 	}, nil)
 	client.On("GetAccountAccessPolicies", mock.Anything, mock.AnythingOfType("string")).Return(&AccountAccessPolicies{
 		MinAuthLevel: 1,
@@ -788,7 +788,7 @@ func setupAccessValidationMocks(client *MockAccessValidationSLURMClient) {
 		ResourcePermissions: map[string][]string{},
 		EffectiveRights:     map[string]bool{},
 		ExpirationDates:     map[string]time.Time{},
-		PreferredAccounts:   []string{"default"},
+		SecondaryAccounts:   []string{"default"},
 	}, nil)
 	client.On("GetAccountAccessPolicies", mock.Anything, mock.AnythingOfType("string")).Return(&AccountAccessPolicies{
 		MinAuthLevel: 1,
@@ -866,7 +866,7 @@ func setupSessionMocks(client *MockAccessValidationSLURMClient) {
 		ResourcePermissions: map[string][]string{},
 		EffectiveRights:     map[string]bool{},
 		ExpirationDates:     map[string]time.Time{},
-		PreferredAccounts:   []string{"default"},
+		SecondaryAccounts:   []string{"default"},
 	}, nil)
 	client.On("GetAccountAccessPolicies", mock.Anything, mock.AnythingOfType("string")).Return(&AccountAccessPolicies{
 		MinAuthLevel: 1,
@@ -945,7 +945,7 @@ func setupViolationMocks(client *MockAccessValidationSLURMClient) {
 		ResourcePermissions: map[string][]string{},
 		EffectiveRights:     map[string]bool{},
 		ExpirationDates:     map[string]time.Time{},
-		PreferredAccounts:   []string{"default"},
+		SecondaryAccounts:   []string{"default"},
 	}, nil)
 	client.On("GetAccountAccessPolicies", mock.Anything, mock.AnythingOfType("string")).Return(&AccountAccessPolicies{
 		MinAuthLevel: 1,

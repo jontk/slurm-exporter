@@ -23,6 +23,7 @@ type Config struct {
 	Logging       LoggingConfig       `yaml:"logging"`
 	Metrics       MetricsConfig       `yaml:"metrics"`
 	Observability ObservabilityConfig `yaml:"observability"`
+	Validation    ValidationConfig    `yaml:"validation"`
 }
 
 // ServerConfig holds HTTP server configuration.
@@ -277,6 +278,11 @@ type CardinalityConfig struct {
 	WarnLimit    int `yaml:"warn_limit"`
 }
 
+// ValidationConfig holds validation configuration.
+type ValidationConfig struct {
+	AllowInsecureConnections bool `yaml:"allow_insecure_connections"`
+}
+
 // Default returns the default configuration.
 func Default() *Config {
 	return &Config{
@@ -302,7 +308,7 @@ func Default() *Config {
 		},
 		SLURM: SLURMConfig{
 			BaseURL:       "http://localhost:6820",
-			APIVersion:    "v0.0.42",
+			APIVersion:    "v0.0.43",
 			UseAdapters:   true,
 			Timeout:       30 * time.Second,
 			RetryAttempts: 3,

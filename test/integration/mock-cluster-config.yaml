@@ -1,0 +1,127 @@
+# Integration Test Configuration for Mock SLURM Server
+# This configuration is used for testing against the mock SLURM server when the real cluster is unavailable
+
+# SLURM connection settings for mock server
+slurm:
+  host: "mock-slurm"  # Docker service name
+  port: 6820
+  auth:
+    type: "jwt"
+    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjI2NTQzMDU1NzksImlhdCI6MTc1NDMwNTU3OSwic3VuIjoicm9vdCJ9.ECpVcCqD1eXUk5-3LZLCDVDolvCJkhGNj24IvqwCkPs"
+  tls:
+    enabled: true
+    verify: false  # Self-signed cert in mock server
+  timeout: 30s
+  max_retries: 3
+  retry_delay: 5s
+
+# Enable all collectors for comprehensive testing
+metrics:
+  enabled_collectors:
+    - jobs
+    - nodes
+    - partitions
+    - licenses
+    - reservations
+    - clusters
+    - diagnostics
+  
+  collection_interval: 15s  # Frequent collection for testing
+  
+  # Enable job analytics for testing
+  job_analytics:
+    enabled: true
+    efficiency_calculation: true
+    waste_detection: true
+    bottleneck_analysis: true
+    trend_analysis: true
+    anomaly_detection: true
+  
+  # Custom labels for test identification
+  custom_labels:
+    test_run: "mock_integration"
+    cluster: "mock-rocky-cluster"
+    environment: "test"
+
+# Performance optimization for testing
+performance:
+  cache:
+    enabled: true
+    ttl: 60s      # Short TTL for testing
+    max_size: 1000
+  
+  connection_pool:
+    enabled: true
+    max_connections: 5
+    max_idle_connections: 2
+    connection_lifetime: 120s
+  
+  batch_processing:
+    enabled: true
+    batch_size: 100
+    batch_timeout: 10s
+  
+  memory:
+    max_heap_size: 500000000  # 500MB for testing
+    gc_target_percentage: 20
+
+# Server configuration for testing
+server:
+  host: "0.0.0.0"
+  port: 9341
+  metrics_path: "/metrics"
+  health_path: "/health"
+  ready_path: "/ready"
+  read_timeout: 30s
+  write_timeout: 30s
+  idle_timeout: 60s
+
+# Detailed logging for debugging
+logging:
+  level: "debug"
+  format: "json"
+  output: "stdout"
+
+# Health checks configuration
+health:
+  enabled: true
+  readiness:
+    - slurm_connectivity
+    - metric_collection
+    - memory_usage
+  liveness:
+    - http_server
+    - memory_usage
+
+# Security settings for testing
+security:
+  basic_auth:
+    enabled: false  # Disabled for testing
+  access_control:
+    enabled: false  # Disabled for testing
+
+# Enable monitoring and observability
+monitoring:
+  self_monitoring:
+    enabled: true
+    include_build_info: true
+    include_go_metrics: true
+  
+  profiling:
+    enabled: true  # Enable for performance testing
+    path: "/debug/pprof"
+  
+  tracing:
+    enabled: true
+    endpoint: "http://jaeger:14268/api/traces"  # Docker service name
+    sample_rate: 1.0  # 100% sampling for testing
+    insecure: true
+
+# Development mode for testing
+development:
+  enabled: true
+  debug_endpoints:
+    enabled: true
+    vars_path: "/debug/vars"
+    config_path: "/debug/config"
+  config_reload: true

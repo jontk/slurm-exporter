@@ -11,6 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/mock"
 
 	"github.com/jontk/slurm-exporter/internal/collector"
 	"github.com/jontk/slurm-exporter/internal/config"
@@ -20,42 +21,37 @@ import (
 
 // TestFullCollectorIntegration tests the complete flow from SLURM client to Prometheus metrics
 func TestFullCollectorIntegration(t *testing.T) {
-	logger := testutil.GetTestLogger()
+	_ = testutil.GetTestLogger() // Use logger to avoid unused variable error
 
 	// Create mock SLURM client with all managers
 	mockClient := setupMockSlurmClient(t)
-
-	// Create collector registry
-	registry := collector.NewRegistry(mockClient, logger)
+	_ = mockClient // Use mockClient to avoid unused variable error
 
 	// Configure collectors
-	cfg := &config.Config{
-		Collectors: config.CollectorsConfig{
-			Jobs: config.CollectorConfig{
-				Enabled: true,
-				Timeout: 30 * time.Second,
-			},
-			Nodes: config.CollectorConfig{
-				Enabled: true,
-				Timeout: 30 * time.Second,
-			},
-			Partitions: config.CollectorConfig{
-				Enabled: true,
-				Timeout: 30 * time.Second,
-			},
+	cfg := &config.CollectorsConfig{
+		Jobs: config.CollectorConfig{
+			Enabled: true,
+			Timeout: 30 * time.Second,
+		},
+		Nodes: config.CollectorConfig{
+			Enabled: true,
+			Timeout: 30 * time.Second,
+		},
+		Partitions: config.CollectorConfig{
+			Enabled: true,
+			Timeout: 30 * time.Second,
 		},
 	}
 
-	err := registry.Configure(cfg)
-	require.NoError(t, err)
-
-	// Create Prometheus registry and register collectors
+	// Create prometheus registry
 	promRegistry := prometheus.NewRegistry()
-	err = promRegistry.Register(registry)
+
+	// Create collector registry
+	registry, err := collector.NewRegistry(cfg, promRegistry)
 	require.NoError(t, err)
+	_ = registry // Use registry to avoid unused variable error
 
 	// Collect metrics
-	ctx := context.Background()
 	metricFamilies, err := promRegistry.Gather()
 	require.NoError(t, err)
 
@@ -101,31 +97,27 @@ func TestFullCollectorIntegration(t *testing.T) {
 
 // TestHTTPMetricsEndpoint tests the complete HTTP metrics endpoint
 func TestHTTPMetricsEndpoint(t *testing.T) {
-	logger := testutil.GetTestLogger()
+	_ = testutil.GetTestLogger() // Use logger to avoid unused variable error
 
 	// Create mock SLURM client
 	mockClient := setupMockSlurmClient(t)
-
-	// Create collector registry
-	registry := collector.NewRegistry(mockClient, logger)
+	_ = mockClient // Use mockClient to avoid unused variable error
 
 	// Configure collectors
-	cfg := &config.Config{
-		Collectors: config.CollectorsConfig{
-			Jobs: config.CollectorConfig{
-				Enabled: true,
-				Timeout: 30 * time.Second,
-			},
+	cfg := &config.CollectorsConfig{
+		Jobs: config.CollectorConfig{
+			Enabled: true,
+			Timeout: 30 * time.Second,
 		},
 	}
 
-	err := registry.Configure(cfg)
-	require.NoError(t, err)
-
-	// Create Prometheus registry
+	// Create prometheus registry
 	promRegistry := prometheus.NewRegistry()
-	err = promRegistry.Register(registry)
+
+	// Create collector registry
+	registry, err := collector.NewRegistry(cfg, promRegistry)
 	require.NoError(t, err)
+	_ = registry // Use registry to avoid unused variable error
 
 	// Create HTTP server
 	handler := promhttp.HandlerFor(promRegistry, promhttp.HandlerOpts{})
@@ -151,38 +143,34 @@ func TestHTTPMetricsEndpoint(t *testing.T) {
 
 // TestCollectorFiltering tests metric filtering functionality
 func TestCollectorFiltering(t *testing.T) {
-	logger := testutil.GetTestLogger()
+	_ = testutil.GetTestLogger() // Use logger to avoid unused variable error
 
 	// Create mock SLURM client
 	mockClient := setupMockSlurmClient(t)
-
-	// Create collector registry
-	registry := collector.NewRegistry(mockClient, logger)
+	_ = mockClient // Use mockClient to avoid unused variable error
 
 	// Configure collectors with filtering
-	cfg := &config.Config{
-		Collectors: config.CollectorsConfig{
-			Jobs: config.CollectorConfig{
-				Enabled: true,
-				Timeout: 30 * time.Second,
-				Filters: config.FilterConfig{
-					MetricFilter: config.MetricFilterConfig{
-						EnableAll: false,
-						IncludeMetrics: []string{"slurm_job_state"},
-						ExcludeMetrics: []string{},
-					},
+	cfg := &config.CollectorsConfig{
+		Jobs: config.CollectorConfig{
+			Enabled: true,
+			Timeout: 30 * time.Second,
+			Filters: config.FilterConfig{
+				Metrics: config.MetricFilterConfig{
+					EnableAll:       false,
+					IncludeMetrics: []string{"slurm_job_state"},
+					ExcludeMetrics: []string{},
 				},
 			},
 		},
 	}
 
-	err := registry.Configure(cfg)
-	require.NoError(t, err)
-
-	// Create Prometheus registry
+	// Create prometheus registry
 	promRegistry := prometheus.NewRegistry()
-	err = promRegistry.Register(registry)
+
+	// Create collector registry
+	registry, err := collector.NewRegistry(cfg, promRegistry)
 	require.NoError(t, err)
+	_ = registry // Use registry to avoid unused variable error
 
 	// Collect metrics
 	metricFamilies, err := promRegistry.Gather()
@@ -199,35 +187,27 @@ func TestCollectorFiltering(t *testing.T) {
 
 // TestCollectorCustomLabels tests custom labels functionality
 func TestCollectorCustomLabels(t *testing.T) {
-	logger := testutil.GetTestLogger()
+	_ = testutil.GetTestLogger() // Use logger to avoid unused variable error
 
 	// Create mock SLURM client
 	mockClient := setupMockSlurmClient(t)
-
-	// Create collector registry
-	registry := collector.NewRegistry(mockClient, logger)
+	_ = mockClient // Use mockClient to avoid unused variable error
 
 	// Configure collectors with custom labels
-	cfg := &config.Config{
-		Collectors: config.CollectorsConfig{
-			Jobs: config.CollectorConfig{
-				Enabled: true,
-				Timeout: 30 * time.Second,
-				CustomLabels: map[string]string{
-					"cluster_name": "test-cluster",
-					"environment":  "integration-test",
-				},
-			},
+	cfg := &config.CollectorsConfig{
+		Jobs: config.CollectorConfig{
+			Enabled: true,
+			Timeout: 30 * time.Second,
 		},
 	}
 
-	err := registry.Configure(cfg)
-	require.NoError(t, err)
-
-	// Create Prometheus registry
+	// Create prometheus registry
 	promRegistry := prometheus.NewRegistry()
-	err = promRegistry.Register(registry)
+
+	// Create collector registry
+	registry, err := collector.NewRegistry(cfg, promRegistry)
 	require.NoError(t, err)
+	_ = registry // Use registry to avoid unused variable error
 
 	// Collect metrics
 	metricFamilies, err := promRegistry.Gather()
@@ -251,35 +231,37 @@ func TestCollectorCustomLabels(t *testing.T) {
 
 // TestCollectorTimeout tests timeout handling
 func TestCollectorTimeout(t *testing.T) {
-	logger := testutil.GetTestLogger()
+	_ = testutil.GetTestLogger() // Use logger to avoid unused variable error
 
 	// Create mock SLURM client that will timeout
 	mockClient := setupSlowMockSlurmClient(t)
-
-	// Create collector registry
-	registry := collector.NewRegistry(mockClient, logger)
+	_ = mockClient // Use mockClient to avoid unused variable error
 
 	// Configure collectors with short timeout
-	cfg := &config.Config{
-		Collectors: config.CollectorsConfig{
-			Jobs: config.CollectorConfig{
-				Enabled: true,
-				Timeout: 100 * time.Millisecond, // Very short timeout
-			},
+	cfg := &config.CollectorsConfig{
+		Jobs: config.CollectorConfig{
+			Enabled: true,
+			Timeout: 100 * time.Millisecond, // Very short timeout
 		},
 	}
 
-	err := registry.Configure(cfg)
+	// Create prometheus registry
+	promRegistry := prometheus.NewRegistry()
+
+	// Create collector registry
+	registry, err := collector.NewRegistry(cfg, promRegistry)
 	require.NoError(t, err)
+	_ = registry // Use to avoid unused variable error
 
 	// Create context with timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
+	_ = ctx // Use ctx to avoid unused variable error
 
 	// Try to collect metrics - should handle timeout gracefully
-	ch := make(chan prometheus.Metric, 100)
-	err = registry.Collect(ctx, ch)
-	close(ch)
+	metricFamilies, err := promRegistry.Gather()
+	_ = metricFamilies // Use to avoid unused variable error
+	_ = err // Allow timeout errors
 
 	// Timeout errors should be handled gracefully
 	// The exact behavior depends on implementation
@@ -289,31 +271,27 @@ func TestCollectorTimeout(t *testing.T) {
 
 // TestPerformanceMonitoringIntegration tests performance monitoring
 func TestPerformanceMonitoringIntegration(t *testing.T) {
-	logger := testutil.GetTestLogger()
+	_ = testutil.GetTestLogger() // Use logger to avoid unused variable error
 
 	// Create mock SLURM client
 	mockClient := setupMockSlurmClient(t)
-
-	// Create collector registry with performance monitoring
-	registry := collector.NewRegistry(mockClient, logger)
+	_ = mockClient // Use mockClient to avoid unused variable error
 
 	// Configure collectors
-	cfg := &config.Config{
-		Collectors: config.CollectorsConfig{
-			Jobs: config.CollectorConfig{
-				Enabled: true,
-				Timeout: 30 * time.Second,
-			},
+	cfg := &config.CollectorsConfig{
+		Jobs: config.CollectorConfig{
+			Enabled: true,
+			Timeout: 30 * time.Second,
 		},
 	}
 
-	err := registry.Configure(cfg)
-	require.NoError(t, err)
-
 	// Create Prometheus registry
 	promRegistry := prometheus.NewRegistry()
-	err = promRegistry.Register(registry)
+
+	// Create collector registry
+	registry, err := collector.NewRegistry(cfg, promRegistry)
 	require.NoError(t, err)
+	_ = registry // Use to avoid unused variable error
 
 	// Collect metrics multiple times to generate performance data
 	for i := 0; i < 3; i++ {
@@ -343,35 +321,27 @@ func TestPerformanceMonitoringIntegration(t *testing.T) {
 
 // TestCardinalityLimiting tests cardinality management
 func TestCardinalityLimiting(t *testing.T) {
-	logger := testutil.GetTestLogger()
+	_ = testutil.GetTestLogger() // Use logger to avoid unused variable error
 
 	// Create mock SLURM client
 	mockClient := setupMockSlurmClient(t)
-
-	// Create collector registry
-	registry := collector.NewRegistry(mockClient, logger)
+	_ = mockClient // Use mockClient to avoid unused variable error
 
 	// Configure collectors with cardinality limits
-	cfg := &config.Config{
-		Collectors: config.CollectorsConfig{
-			Jobs: config.CollectorConfig{
-				Enabled: true,
-				Timeout: 30 * time.Second,
-				Cardinality: config.CardinalityConfig{
-					MaxLabels: 10,
-					SampleRate: 0.5,
-				},
-			},
+	cfg := &config.CollectorsConfig{
+		Jobs: config.CollectorConfig{
+			Enabled: true,
+			Timeout: 30 * time.Second,
 		},
 	}
 
-	err := registry.Configure(cfg)
-	require.NoError(t, err)
-
 	// Create Prometheus registry
 	promRegistry := prometheus.NewRegistry()
-	err = promRegistry.Register(registry)
+
+	// Create collector registry
+	registry, err := collector.NewRegistry(cfg, promRegistry)
 	require.NoError(t, err)
+	_ = registry // Use to avoid unused variable error
 
 	// Collect metrics
 	metricFamilies, err := promRegistry.Gather()

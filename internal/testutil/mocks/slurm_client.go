@@ -37,6 +37,32 @@ func (m *MockSlurmClient) Info() slurm.InfoManager {
 	return args.Get(0).(slurm.InfoManager)
 }
 
+// Accounts returns a mock AccountManager
+func (m *MockSlurmClient) Accounts() slurm.AccountManager {
+	args := m.Called()
+	return args.Get(0).(slurm.AccountManager)
+}
+
+// QoS returns a mock QoSManager  
+func (m *MockSlurmClient) QoS() slurm.QoSManager {
+	args := m.Called()
+	return args.Get(0).(slurm.QoSManager)
+}
+
+// Reservations returns a mock ReservationManager
+func (m *MockSlurmClient) Reservations() slurm.ReservationManager {
+	args := m.Called()
+	return args.Get(0).(slurm.ReservationManager)
+}
+
+// Associations returns a mock AssociationManager
+func (m *MockSlurmClient) Associations() interface{} {
+	args := m.Called()
+	return args.Get(0)
+}
+
+
+
 // Close closes the client
 func (m *MockSlurmClient) Close() error {
 	args := m.Called()

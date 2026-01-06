@@ -1,0 +1,21 @@
+#!/bin/sh
+set -e
+
+# Remove user and group on package purge
+if [ "$1" = "purge" ]; then
+    if getent passwd slurm-exporter >/dev/null; then
+        deluser slurm-exporter
+    fi
+    if getent group slurm-exporter >/dev/null; then
+        delgroup slurm-exporter
+    fi
+    
+    # Remove directories if empty
+    rmdir /var/lib/slurm-exporter 2>/dev/null || true
+    rmdir /var/log/slurm-exporter 2>/dev/null || true
+    rmdir /etc/slurm-exporter 2>/dev/null || true
+fi
+
+#DEBHELPER#
+
+exit 0

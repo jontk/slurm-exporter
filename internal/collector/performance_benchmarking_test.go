@@ -37,27 +37,31 @@ func (m *MockBenchmarkingSlurmClient) Info() slurm.InfoManager {
 	return args.Get(0).(slurm.InfoManager)
 }
 
+// Mock slurm types that are not yet available in the client
+type NodeListOption interface{}
+type NodeGetOption interface{}
+
 // MockBenchmarkingJobManager for testing
 type MockBenchmarkingJobManager struct {
 	mock.Mock
 }
 
-func (m *MockBenchmarkingJobManager) List(ctx context.Context, opts ...slurm.JobListOption) (*slurm.JobList, error) {
+func (m *MockBenchmarkingJobManager) List(ctx context.Context, opts ...JobListOption) (*slurm.JobList, error) {
 	args := m.Called(ctx, opts)
 	return args.Get(0).(*slurm.JobList), args.Error(1)
 }
 
-func (m *MockBenchmarkingJobManager) Get(ctx context.Context, jobID string, opts ...slurm.JobGetOption) (*slurm.Job, error) {
+func (m *MockBenchmarkingJobManager) Get(ctx context.Context, jobID string, opts ...JobGetOption) (*slurm.Job, error) {
 	args := m.Called(ctx, jobID, opts)
 	return args.Get(0).(*slurm.Job), args.Error(1)
 }
 
-func (m *MockBenchmarkingJobManager) Submit(ctx context.Context, job *slurm.JobSubmissionRequest) (*slurm.JobSubmissionResponse, error) {
+func (m *MockBenchmarkingJobManager) Submit(ctx context.Context, job *JobSubmissionRequest) (*JobSubmissionResponse, error) {
 	args := m.Called(ctx, job)
 	return args.Get(0).(*slurm.JobSubmissionResponse), args.Error(1)
 }
 
-func (m *MockBenchmarkingJobManager) Cancel(ctx context.Context, jobID string, opts ...slurm.JobCancelOption) error {
+func (m *MockBenchmarkingJobManager) Cancel(ctx context.Context, jobID string, opts ...JobCancelOption) error {
 	args := m.Called(ctx, jobID, opts)
 	return args.Error(0)
 }
@@ -67,12 +71,12 @@ type MockBenchmarkingNodeManager struct {
 	mock.Mock
 }
 
-func (m *MockBenchmarkingNodeManager) List(ctx context.Context, opts ...slurm.NodeListOption) (*slurm.NodeList, error) {
+func (m *MockBenchmarkingNodeManager) List(ctx context.Context, opts ...NodeListOption) (*slurm.NodeList, error) {
 	args := m.Called(ctx, opts)
 	return args.Get(0).(*slurm.NodeList), args.Error(1)
 }
 
-func (m *MockBenchmarkingNodeManager) Get(ctx context.Context, nodeName string, opts ...slurm.NodeGetOption) (*slurm.Node, error) {
+func (m *MockBenchmarkingNodeManager) Get(ctx context.Context, nodeName string, opts ...NodeGetOption) (*slurm.Node, error) {
 	args := m.Called(ctx, nodeName, opts)
 	return args.Get(0).(*slurm.Node), args.Error(1)
 }

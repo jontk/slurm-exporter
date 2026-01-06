@@ -655,7 +655,7 @@ func TestQoSLimitsCollector_ViolationMetrics(t *testing.T) {
 	client := &MockQoSLimitsSLURMClient{}
 
 	// Setup violation specific mocks
-	setupViolationMocks(client)
+	setupQoSViolationMocks(client)
 
 	collector := NewQoSLimitsCollector(client)
 
@@ -769,7 +769,7 @@ func setupQoSLimitsMocks(client *MockQoSLimitsSLURMClient) {
 	}, nil)
 }
 
-func setupViolationMocks(client *MockQoSLimitsSLURMClient) {
+func setupQoSViolationMocks(client *MockQoSLimitsSLURMClient) {
 	violations := &QoSViolations{
 		TotalViolations:    20,
 		ActiveViolations:   5,

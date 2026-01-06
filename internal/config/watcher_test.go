@@ -20,17 +20,17 @@ type MockReloadHandler struct {
 	lastError   error
 }
 
-func (m *MockReloadHandler) OnConfigReload(config *Config, err error) {
+func (m *MockReloadHandler) Handle(config *Config) error {
 	m.reloadCount++
 	m.lastConfig = config
-	m.lastError = err
+	return m.lastError
 }
 
 func TestWatcher_New(t *testing.T) {
 	logger := testutil.GetTestLogger()
 	handler := &MockReloadHandler{}
 
-	watcher, err := NewWatcher("/tmp/test-config.yaml", handler, logger)
+	watcher, err := NewWatcher("/tmp/test-config.yaml", handler.Handle, logger)
 	assert.NoError(t, err)
 	assert.NotNil(t, watcher)
 
@@ -57,7 +57,7 @@ slurm:
 	logger := testutil.GetTestLogger()
 	handler := &MockReloadHandler{}
 
-	watcher, err := NewWatcher(configFile, handler, logger)
+	watcher, err := NewWatcher(configFile, handler.Handle, logger)
 	require.NoError(t, err)
 
 	// Start watcher
@@ -102,7 +102,7 @@ slurm:
 	logger := testutil.GetTestLogger()
 	handler := &MockReloadHandler{}
 
-	watcher, err := NewWatcher(configFile, handler, logger)
+	watcher, err := NewWatcher(configFile, handler.Handle, logger)
 	require.NoError(t, err)
 
 	// Start watcher
@@ -162,7 +162,7 @@ slurm:
 	logger := testutil.GetTestLogger()
 	handler := &MockReloadHandler{}
 
-	watcher, err := NewWatcher(configFile, handler, logger)
+	watcher, err := NewWatcher(configFile, handler.Handle, logger)
 	require.NoError(t, err)
 
 	// Start watcher
@@ -204,11 +204,11 @@ func TestWatcher_NonExistentFile(t *testing.T) {
 	logger := testutil.GetTestLogger()
 	handler := &MockReloadHandler{}
 
-	_, err := NewWatcher("/nonexistent/config.yaml", handler, logger)
+	_, err := NewWatcher("/nonexistent/config.yaml", handler.Handle, logger)
 	assert.Error(t, err)
 }
 
-func TestWatcher_GetCurrentConfig(t *testing.T) {
+func TestWatcher_GetConfig(t *testing.T) {
 	// Create temporary config file
 	tmpDir, err := os.MkdirTemp("", "watcher_test")
 	require.NoError(t, err)
@@ -228,7 +228,7 @@ slurm:
 	logger := testutil.GetTestLogger()
 	handler := &MockReloadHandler{}
 
-	watcher, err := NewWatcher(configFile, handler, logger)
+	watcher, err := NewWatcher(configFile, handler.Handle, logger)
 	require.NoError(t, err)
 
 	// Start watcher briefly
@@ -243,7 +243,7 @@ slurm:
 	time.Sleep(200 * time.Millisecond)
 
 	// Get current config
-	currentConfig := watcher.GetCurrentConfig()
+	currentConfig := watcher.GetConfig()
 	assert.NotNil(t, currentConfig)
 	assert.Equal(t, ":8080", currentConfig.Server.Address)
 
@@ -272,7 +272,7 @@ slurm:
 	handler := &MockReloadHandler{}
 
 	// Create watcher with short debounce time for testing
-	watcher, err := NewWatcher(configFile, handler, logger)
+	watcher, err := NewWatcher(configFile, handler.Handle, logger)
 	require.NoError(t, err)
 	watcher.debounceTime = 100 * time.Millisecond
 
@@ -335,7 +335,7 @@ slurm:
 	logger := testutil.GetTestLogger()
 	handler := &MockReloadHandler{}
 
-	watcher, err := NewWatcher(configFile, handler, logger)
+	watcher, err := NewWatcher(configFile, handler.Handle, logger)
 	require.NoError(t, err)
 
 	// Start watcher
@@ -349,12 +349,12 @@ slurm:
 
 	time.Sleep(100 * time.Millisecond)
 
-	// Concurrent access to GetCurrentConfig
+	// Concurrent access to GetConfig
 	done := make(chan bool, 10)
 	for i := 0; i < 10; i++ {
 		go func() {
 			for j := 0; j < 100; j++ {
-				config := watcher.GetCurrentConfig()
+				config := watcher.GetConfig()
 				assert.NotNil(t, config)
 			}
 			done <- true

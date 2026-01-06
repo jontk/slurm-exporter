@@ -43,22 +43,22 @@ type MockTaskUtilizationJobManager struct {
 	mock.Mock
 }
 
-func (m *MockTaskUtilizationJobManager) List(ctx context.Context, opts ...slurm.JobListOption) (*slurm.JobList, error) {
+func (m *MockTaskUtilizationJobManager) List(ctx context.Context, opts ...interface{}) (*slurm.JobList, error) {
 	args := m.Called(ctx, opts)
 	return args.Get(0).(*slurm.JobList), args.Error(1)
 }
 
-func (m *MockTaskUtilizationJobManager) Get(ctx context.Context, jobID string, opts ...slurm.JobGetOption) (*slurm.Job, error) {
+func (m *MockTaskUtilizationJobManager) Get(ctx context.Context, jobID string, opts ...interface{}) (*slurm.Job, error) {
 	args := m.Called(ctx, jobID, opts)
 	return args.Get(0).(*slurm.Job), args.Error(1)
 }
 
-func (m *MockTaskUtilizationJobManager) Submit(ctx context.Context, job *slurm.JobSubmissionRequest) (*slurm.JobSubmissionResponse, error) {
+func (m *MockTaskUtilizationJobManager) Submit(ctx context.Context, job interface{}) (interface{}, error) {
 	args := m.Called(ctx, job)
-	return args.Get(0).(*slurm.JobSubmissionResponse), args.Error(1)
+	return args.Get(0), args.Error(1)
 }
 
-func (m *MockTaskUtilizationJobManager) Cancel(ctx context.Context, jobID string, opts ...slurm.JobCancelOption) error {
+func (m *MockTaskUtilizationJobManager) Cancel(ctx context.Context, jobID string, opts ...interface{}) error {
 	args := m.Called(ctx, jobID, opts)
 	return args.Error(0)
 }

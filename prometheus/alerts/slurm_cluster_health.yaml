@@ -1,0 +1,150 @@
+groups:
+  - name: slurm.cluster.health
+    interval: 30s
+    rules:
+      - alert: SlurmControllerDown
+        expr: slurm_controller_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: controller
+          team: hpc-ops
+        annotations:
+          summary: "SLURM controller {{ $labels.controller }} is down"
+          description: |
+            SLURM controller {{ $labels.controller }} on cluster {{ $labels.cluster }} has been 
+            unreachable for more than 1 minute. This will prevent job scheduling and cluster management.
+          impact: "Job scheduling stopped, cluster management unavailable"
+          action: "Check controller service status, network connectivity, and system resources"
+          runbook_url: "https://docs.example.com/runbooks/slurm-controller-down"
+          dashboard_url: "https://grafana.example.com/d/slurm-cluster-overview"
+
+      - alert: SlurmControllerHighLatency
+        expr: slurm_exporter_api_request_duration_seconds{endpoint="info"} > 5
+        for: 5m
+        labels:
+          severity: warning
+          component: controller
+          team: hpc-ops
+        annotations:
+          summary: "SLURM controller {{ $labels.controller }} responding slowly"
+          description: |
+            SLURM controller API requests are taking {{ $value }}s to complete, 
+            indicating performance issues or overload.
+          action: "Check controller CPU/memory usage, database performance, network latency"
+
+      - alert: SlurmDatabaseDown
+        expr: slurm_database_up == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: database
+          team: hpc-ops
+        annotations:
+          summary: "SLURM database connection failed"
+          description: |
+            Connection to SLURM accounting database has been down for more than 2 minutes. 
+            Job accounting and historical data queries are unavailable.
+          impact: "Job accounting disabled, historical data unavailable"
+          action: "Check database service, connectivity, and credentials"
+          runbook_url: "https://docs.example.com/runbooks/slurm-database-down"
+
+      - alert: SlurmVersionMismatch
+        expr: count(count by (version)(slurm_version_info)) > 1
+        for: 10m
+        labels:
+          severity: warning
+          component: version
+          team: hpc-ops
+        annotations:
+          summary: "Multiple SLURM versions detected in cluster"
+          description: |
+            Different SLURM versions are running across the cluster, which may cause 
+            compatibility issues and unexpected behavior.
+          action: "Coordinate upgrade to ensure version consistency across all components"
+
+      - alert: HighNodeFailureRate
+        expr: increase(slurm_nodes_total{state="down"}[1h]) > 5
+        for: 5m
+        labels:
+          severity: warning
+          component: nodes
+          team: hpc-ops
+        annotations:
+          summary: "High node failure rate in cluster {{ $labels.cluster }}"
+          description: |
+            {{ $value }} nodes have failed in the last hour, indicating potential 
+            hardware or network issues affecting cluster stability.
+          action: "Investigate common causes: power, network, hardware failures"
+          runbook_url: "https://docs.example.com/runbooks/high-node-failure-rate"
+
+      - alert: NodeDrained
+        expr: slurm_node_drain_info > 0
+        for: 2m
+        labels:
+          severity: info
+          component: nodes
+          team: hpc-ops
+        annotations:
+          summary: "Node {{ $labels.node }} is drained"
+          description: |
+            Node {{ $labels.node }} has been drained with reason: {{ $labels.reason }}
+          action: "Review drain reason and plan for node recovery or replacement"
+
+      - alert: PartitionDown
+        expr: slurm_partition_up == 0
+        for: 5m
+        labels:
+          severity: critical
+          component: partition
+          team: hpc-ops
+        annotations:
+          summary: "Partition {{ $labels.partition }} is down"
+          description: |
+            Partition {{ $labels.partition }} has been unavailable for 5 minutes. 
+            Jobs cannot be scheduled to this partition.
+          impact: "Job scheduling blocked for partition {{ $labels.partition }}"
+          action: "Check partition configuration and node availability"
+          runbook_url: "https://docs.example.com/runbooks/partition-down"
+
+      - alert: PartitionNoIdleNodes
+        expr: slurm_partition_nodes_idle == 0 and slurm_partition_nodes_total > 0
+        for: 30m
+        labels:
+          severity: warning
+          component: capacity
+          team: hpc-ops
+        annotations:
+          summary: "No idle nodes in partition {{ $labels.partition }}"
+          description: |
+            All {{ $value }} nodes in partition {{ $labels.partition }} are allocated. 
+            New jobs will queue until resources become available.
+          action: "Monitor queue length and consider capacity expansion if sustained"
+
+      - alert: ClusterFragmentation
+        expr: (slurm_partition_nodes_total - slurm_partition_nodes_allocated - slurm_partition_nodes_idle) / slurm_partition_nodes_total > 0.2
+        for: 15m
+        labels:
+          severity: warning
+          component: scheduling
+          team: hpc-ops
+        annotations:
+          summary: "High cluster fragmentation in partition {{ $labels.partition }}"
+          description: |
+            {{ $value | humanizePercentage }} of nodes are in mixed/unusable states, 
+            reducing scheduling efficiency.
+          action: "Review node states and consider cleanup or reconfiguration"
+
+      - alert: SchedulerCycleHigh
+        expr: slurm_scheduler_cycle_duration_seconds > 30
+        for: 10m
+        labels:
+          severity: warning
+          component: scheduler
+          team: hpc-ops
+        annotations:
+          summary: "SLURM scheduler cycle taking too long"
+          description: |
+            Scheduler cycle duration is {{ $value }}s, indicating performance issues 
+            that may delay job scheduling decisions.
+          action: "Check scheduler configuration, database performance, and cluster load"

@@ -1,0 +1,12 @@
+#!/bin/sh
+set -e
+
+# Set proper ownership and permissions
+chown slurm-exporter:slurm-exporter /var/lib/slurm-exporter
+chown slurm-exporter:slurm-exporter /var/log/slurm-exporter
+chown root:slurm-exporter /etc/slurm-exporter/config.yaml
+chmod 640 /etc/slurm-exporter/config.yaml
+
+#DEBHELPER#
+
+exit 0

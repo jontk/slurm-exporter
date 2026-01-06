@@ -37,27 +37,34 @@ func (m *MockFairShareSlurmClient) Info() slurm.InfoManager {
 	return args.Get(0).(slurm.InfoManager)
 }
 
+// Mock slurm types that are not yet available in the client
+type JobListOption interface{}
+type JobGetOption interface{}
+type JobSubmissionRequest struct{}
+type JobSubmissionResponse struct{}
+type JobCancelOption interface{}
+
 // MockFairShareJobManager for testing
 type MockFairShareJobManager struct {
 	mock.Mock
 }
 
-func (m *MockFairShareJobManager) List(ctx context.Context, opts ...slurm.JobListOption) (*slurm.JobList, error) {
+func (m *MockFairShareJobManager) List(ctx context.Context, opts ...JobListOption) (*slurm.JobList, error) {
 	args := m.Called(ctx, opts)
 	return args.Get(0).(*slurm.JobList), args.Error(1)
 }
 
-func (m *MockFairShareJobManager) Get(ctx context.Context, jobID string, opts ...slurm.JobGetOption) (*slurm.Job, error) {
+func (m *MockFairShareJobManager) Get(ctx context.Context, jobID string, opts ...JobGetOption) (*slurm.Job, error) {
 	args := m.Called(ctx, jobID, opts)
 	return args.Get(0).(*slurm.Job), args.Error(1)
 }
 
-func (m *MockFairShareJobManager) Submit(ctx context.Context, job *slurm.JobSubmissionRequest) (*slurm.JobSubmissionResponse, error) {
+func (m *MockFairShareJobManager) Submit(ctx context.Context, job *JobSubmissionRequest) (*JobSubmissionResponse, error) {
 	args := m.Called(ctx, job)
 	return args.Get(0).(*slurm.JobSubmissionResponse), args.Error(1)
 }
 
-func (m *MockFairShareJobManager) Cancel(ctx context.Context, jobID string, opts ...slurm.JobCancelOption) error {
+func (m *MockFairShareJobManager) Cancel(ctx context.Context, jobID string, opts ...JobCancelOption) error {
 	args := m.Called(ctx, jobID, opts)
 	return args.Error(0)
 }

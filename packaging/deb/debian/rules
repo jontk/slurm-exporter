@@ -1,0 +1,103 @@
+#!/usr/bin/make -f
+
+# Enable hardening
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+# Go build settings
+export CGO_ENABLED = 0
+export GOOS = linux
+
+# Map Debian arch to Go arch
+DEB_HOST_ARCH ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
+ifeq ($(DEB_HOST_ARCH),amd64)
+	export GOARCH = amd64
+else ifeq ($(DEB_HOST_ARCH),arm64)
+	export GOARCH = arm64
+else ifeq ($(DEB_HOST_ARCH),armhf)
+	export GOARCH = arm
+	export GOARM = 7
+else ifeq ($(DEB_HOST_ARCH),armel)
+	export GOARCH = arm
+	export GOARM = 5
+else ifeq ($(DEB_HOST_ARCH),i386)
+	export GOARCH = 386
+else ifeq ($(DEB_HOST_ARCH),mips64el)
+	export GOARCH = mips64le
+else ifeq ($(DEB_HOST_ARCH),ppc64el)
+	export GOARCH = ppc64le
+else ifeq ($(DEB_HOST_ARCH),s390x)
+	export GOARCH = s390x
+else
+	$(error Unsupported architecture: $(DEB_HOST_ARCH))
+endif
+
+# Version information
+VERSION := $(shell dpkg-parsechangelog -SVersion | cut -d- -f1)
+REVISION := $(shell dpkg-parsechangelog -SVersion | cut -d- -f2)
+
+%:
+	dh $@ --with=systemd
+
+override_dh_auto_build:
+	# Build the binary
+	make build \
+		VERSION=$(VERSION) \
+		REVISION=$(REVISION) \
+		BRANCH=debian \
+		BUILD_USER=debian-builder \
+		BUILD_DATE="$(shell date -u '+%Y-%m-%d_%H:%M:%S')"
+
+override_dh_auto_test:
+	# Run tests
+	make test
+
+override_dh_auto_install:
+	# Install binary
+	install -D -m 0755 bin/slurm-exporter debian/slurm-exporter/usr/bin/slurm-exporter
+	
+	# Install configuration
+	install -D -m 0640 packaging/deb/config.yaml debian/slurm-exporter/etc/slurm-exporter/config.yaml
+	
+	# Install systemd service
+	install -D -m 0644 packaging/deb/slurm-exporter.service debian/slurm-exporter/lib/systemd/system/slurm-exporter.service
+	
+	# Install logrotate configuration
+	install -D -m 0644 packaging/deb/slurm-exporter.logrotate debian/slurm-exporter/etc/logrotate.d/slurm-exporter
+	
+	# Install man page
+	install -D -m 0644 packaging/deb/slurm-exporter.1 debian/slurm-exporter/usr/share/man/man1/slurm-exporter.1
+	
+	# Install documentation
+	install -D -m 0644 README.md debian/slurm-exporter/usr/share/doc/slurm-exporter/README.md
+	install -D -m 0644 CHANGELOG.md debian/slurm-exporter/usr/share/doc/slurm-exporter/CHANGELOG.md
+	
+	# Install examples
+	mkdir -p debian/slurm-exporter/usr/share/doc/slurm-exporter/examples
+	cp configs/*.yaml debian/slurm-exporter/usr/share/doc/slurm-exporter/examples/
+	
+	# Install Grafana dashboards
+	mkdir -p debian/slurm-exporter/usr/share/doc/slurm-exporter/dashboards
+	cp dashboards/*.json debian/slurm-exporter/usr/share/doc/slurm-exporter/dashboards/
+	
+	# Install Prometheus alerts
+	mkdir -p debian/slurm-exporter/usr/share/doc/slurm-exporter/alerts
+	cp alerts/*.yml debian/slurm-exporter/usr/share/doc/slurm-exporter/alerts/
+
+override_dh_systemd_enable:
+	dh_systemd_enable --name=slurm-exporter
+
+override_dh_systemd_start:
+	dh_systemd_start --restart-after-upgrade
+
+override_dh_installsystemd:
+	dh_installsystemd --name=slurm-exporter --restart-after-upgrade
+
+# Don't strip debug symbols for debug package
+override_dh_strip:
+	dh_strip --dbgsym-migration='slurm-exporter-dbg (<< 1.0.0-1~)'
+
+# Compress man pages
+override_dh_compress:
+	dh_compress
+
+.PHONY: override_dh_auto_build override_dh_auto_test override_dh_auto_install

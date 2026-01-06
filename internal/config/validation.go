@@ -145,7 +145,7 @@ func (c *Config) validateSecurity() ValidationErrors {
 	}
 
 	// Validate SLURM URL is HTTPS in production-like configurations
-	if c.SLURM.BaseURL != "" {
+	if c.SLURM.BaseURL != "" && !c.Validation.AllowInsecureConnections {
 		if u, err := url.Parse(c.SLURM.BaseURL); err == nil {
 			if u.Scheme == "http" && !isLocalhost(u.Host) {
 				errors = append(errors, ValidationError{

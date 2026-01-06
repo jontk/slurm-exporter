@@ -11,36 +11,36 @@ import (
 	"github.com/jontk/slurm-exporter/internal/config"
 )
 
-// mockCollector implements the Collector interface for testing
-type mockCollector struct {
+// mockRegistryCollector implements the Collector interface for testing
+type mockRegistryCollector struct {
 	name        string
 	enabled     bool
 	collectFunc func(context.Context, chan<- prometheus.Metric) error
 	descs       []*prometheus.Desc
 }
 
-func (m *mockCollector) Name() string {
+func (m *mockRegistryCollector) Name() string {
 	return m.name
 }
 
-func (m *mockCollector) Describe(ch chan<- *prometheus.Desc) {
+func (m *mockRegistryCollector) Describe(ch chan<- *prometheus.Desc) {
 	for _, desc := range m.descs {
 		ch <- desc
 	}
 }
 
-func (m *mockCollector) Collect(ctx context.Context, ch chan<- prometheus.Metric) error {
+func (m *mockRegistryCollector) Collect(ctx context.Context, ch chan<- prometheus.Metric) error {
 	if m.collectFunc != nil {
 		return m.collectFunc(ctx, ch)
 	}
 	return nil
 }
 
-func (m *mockCollector) IsEnabled() bool {
+func (m *mockRegistryCollector) IsEnabled() bool {
 	return m.enabled
 }
 
-func (m *mockCollector) SetEnabled(enabled bool) {
+func (m *mockRegistryCollector) SetEnabled(enabled bool) {
 	m.enabled = enabled
 }
 
@@ -60,7 +60,7 @@ func TestRegistry(t *testing.T) {
 	}
 
 	t.Run("RegisterAndGet", func(t *testing.T) {
-		collector := &mockCollector{
+		collector := &mockRegistryCollector{
 			name:    "test_collector",
 			enabled: true,
 		}
@@ -101,7 +101,7 @@ func TestRegistry(t *testing.T) {
 
 		// Register multiple collectors
 		for i := 0; i < 3; i++ {
-			collector := &mockCollector{
+			collector := &mockRegistryCollector{
 				name:    string(rune('a' + i)),
 				enabled: true,
 			}
@@ -119,7 +119,7 @@ func TestRegistry(t *testing.T) {
 	})
 
 	t.Run("EnableDisable", func(t *testing.T) {
-		collector := &mockCollector{
+		collector := &mockRegistryCollector{
 			name:    "toggle_collector",
 			enabled: true,
 		}
@@ -155,7 +155,7 @@ func TestRegistry(t *testing.T) {
 	})
 
 	t.Run("Unregister", func(t *testing.T) {
-		collector := &mockCollector{
+		collector := &mockRegistryCollector{
 			name:    "temp_collector",
 			enabled: true,
 		}
@@ -191,7 +191,7 @@ func TestRegistry(t *testing.T) {
 		}
 
 		// Register collectors with different behaviors
-		successCollector := &mockCollector{
+		successCollector := &mockRegistryCollector{
 			name:    "success",
 			enabled: true,
 			collectFunc: func(ctx context.Context, ch chan<- prometheus.Metric) error {
@@ -200,7 +200,7 @@ func TestRegistry(t *testing.T) {
 			},
 		}
 
-		failCollector := &mockCollector{
+		failCollector := &mockRegistryCollector{
 			name:    "fail",
 			enabled: true,
 			collectFunc: func(ctx context.Context, ch chan<- prometheus.Metric) error {
@@ -208,7 +208,7 @@ func TestRegistry(t *testing.T) {
 			},
 		}
 
-		disabledCollector := &mockCollector{
+		disabledCollector := &mockRegistryCollector{
 			name:    "disabled",
 			enabled: false,
 			collectFunc: func(ctx context.Context, ch chan<- prometheus.Metric) error {
@@ -236,7 +236,7 @@ func TestRegistry(t *testing.T) {
 		}
 
 		// Register a mix of collectors
-		mockCol := &mockCollector{
+		mockCol := &mockRegistryCollector{
 			name:    "mock",
 			enabled: true,
 		}
@@ -287,7 +287,7 @@ func TestRegistry(t *testing.T) {
 
 func TestCollectorAdapter(t *testing.T) {
 	// Create a mock collector
-	mockCol := &mockCollector{
+	mockCol := &mockRegistryCollector{
 		name:    "adapter_test",
 		enabled: true,
 		descs: []*prometheus.Desc{
@@ -337,7 +337,7 @@ func TestCollectorAdapter(t *testing.T) {
 	})
 
 	t.Run("CollectWithError", func(t *testing.T) {
-		errorCol := &mockCollector{
+		errorCol := &mockRegistryCollector{
 			name:    "error_test",
 			enabled: true,
 			collectFunc: func(ctx context.Context, ch chan<- prometheus.Metric) error {
@@ -368,7 +368,7 @@ func TestCollectorFactory(t *testing.T) {
 	factoryCalled := false
 	testFactory := func(cfg *config.CollectorConfig) (Collector, error) {
 		factoryCalled = true
-		return &mockCollector{
+		return &mockRegistryCollector{
 			name:    "factory_test",
 			enabled: cfg.Enabled,
 		}, nil

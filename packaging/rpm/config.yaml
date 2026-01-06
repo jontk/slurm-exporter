@@ -1,0 +1,231 @@
+# SLURM Exporter Configuration
+# Documentation: https://jontk.github.io/slurm-exporter
+
+# SLURM connection settings
+slurm:
+  # SLURM REST API endpoint
+  host: "localhost"
+  port: 6820
+  
+  # Authentication (choose one method)
+  auth:
+    type: "jwt"  # Options: jwt, basic, certificate
+    token: ""    # JWT token or path to token file
+    # user: ""     # Username for basic auth
+    # password: "" # Password for basic auth
+  
+  # TLS settings
+  tls:
+    enabled: true
+    verify: true
+    ca_cert: ""      # Path to CA certificate
+    client_cert: ""  # Path to client certificate
+    client_key: ""   # Path to client private key
+  
+  # Connection tuning
+  timeout: 30s
+  max_retries: 3
+  retry_delay: 5s
+
+# Metric collection settings
+metrics:
+  # Enable/disable metric collectors
+  enabled_collectors:
+    - jobs           # Job metrics (execution, queuing, resource usage)
+    - nodes          # Node metrics (health, utilization, hardware)
+    - partitions     # Partition metrics (availability, limits, queues)
+    - accounts       # Account metrics (usage, limits, fairshare)
+    - fairshare      # Fairshare policy metrics
+    - qos            # Quality of Service metrics
+    - reservations   # Reservation utilization metrics
+    # - licenses     # License usage metrics (if available)
+    # - tres         # Trackable Resources metrics
+    # - associations # User/account associations
+  
+  # Collection intervals
+  collection_interval: 30s
+  
+  # Job analytics engine
+  job_analytics:
+    enabled: true
+    efficiency_calculation: true
+    waste_detection: true
+    bottleneck_analysis: true
+    trend_analysis: true
+  
+  # Metric filtering
+  filtering:
+    enabled: true
+    # Exclude metrics by pattern
+    exclude_metrics:
+      - "slurm_node_tres_.*_allocated"  # Reduce cardinality
+    # Include only specific partitions
+    include_partitions: []
+    # Exclude specific partitions
+    exclude_partitions: ["debug", "test"]
+  
+  # Custom labels
+  custom_labels:
+    cluster: "production"
+    datacenter: "dc1"
+    # environment: "prod"
+
+# Performance and caching
+performance:
+  # Intelligent caching
+  cache:
+    enabled: true
+    ttl: 300s              # Cache TTL for slow-changing data
+    max_size: 10000        # Maximum cache entries
+  
+  # Connection pooling
+  connection_pool:
+    enabled: true
+    max_connections: 10
+    max_idle_connections: 5
+    connection_lifetime: 300s
+  
+  # Batch processing
+  batch_processing:
+    enabled: true
+    batch_size: 1000
+    batch_timeout: 10s
+  
+  # Memory management
+  memory:
+    max_heap_size: 1000000000  # 1GB in bytes
+    gc_target_percentage: 10
+
+# HTTP server settings
+server:
+  # Listening address
+  host: "0.0.0.0"
+  port: 9341
+  
+  # Endpoints
+  metrics_path: "/metrics"
+  health_path: "/health"
+  ready_path: "/ready"
+  
+  # Timeouts
+  read_timeout: 30s
+  write_timeout: 30s
+  idle_timeout: 60s
+  
+  # TLS settings (optional)
+  tls:
+    enabled: false
+    cert_file: ""
+    key_file: ""
+  
+  # Request logging
+  access_log:
+    enabled: false
+    path: "/var/log/slurm-exporter/access.log"
+
+# Logging configuration
+logging:
+  level: "info"  # Options: debug, info, warn, error
+  format: "json" # Options: json, text
+  output: "stdout" # Options: stdout, stderr, file path
+  
+  # File logging (if output is file path)
+  file:
+    path: "/var/log/slurm-exporter/slurm-exporter.log"
+    max_size: 100      # MB
+    max_backups: 10
+    max_age: 30        # days
+    compress: true
+
+# Health checks
+health:
+  enabled: true
+  # Readiness checks
+  readiness:
+    - slurm_connectivity
+    - metric_collection
+  # Liveness checks  
+  liveness:
+    - http_server
+    - memory_usage
+
+# Security settings
+security:
+  # Authentication for metrics endpoint
+  basic_auth:
+    enabled: false
+    username: ""
+    password: ""
+  
+  # IP access control
+  access_control:
+    enabled: false
+    allowed_ips:
+      - "127.0.0.1"
+      - "::1"
+      - "10.0.0.0/8"
+      - "172.16.0.0/12"
+      - "192.168.0.0/16"
+
+# Monitoring and observability
+monitoring:
+  # Self-monitoring metrics
+  self_monitoring:
+    enabled: true
+    include_build_info: true
+    include_go_metrics: true
+  
+  # Profiling endpoint
+  profiling:
+    enabled: false  # Enable for debugging only
+    path: "/debug/pprof"
+  
+  # Tracing
+  tracing:
+    enabled: false
+    jaeger:
+      endpoint: ""
+      service_name: "slurm-exporter"
+
+# Development and debugging
+development:
+  # Enable development mode
+  enabled: false
+  
+  # Debug endpoints
+  debug_endpoints:
+    enabled: false
+    vars_path: "/debug/vars"
+    config_path: "/debug/config"
+  
+  # Reload configuration on SIGHUP
+  config_reload: true
+
+# Example deployment-specific overrides
+# Uncomment and modify for your environment:
+
+# Production cluster example:
+# slurm:
+#   host: "slurm-prod.company.com"
+#   auth:
+#     type: "jwt"
+#     token: "/etc/slurm-exporter/jwt-token"
+# metrics:
+#   custom_labels:
+#     cluster: "production"
+#     datacenter: "us-east-1"
+# logging:
+#   level: "warn"
+
+# Development cluster example:
+# slurm:
+#   host: "slurm-dev.company.com"
+#   port: 6820
+# metrics:
+#   collection_interval: 60s
+#   custom_labels:
+#     cluster: "development"
+# logging:
+#   level: "debug"
+# development:
+#   enabled: true

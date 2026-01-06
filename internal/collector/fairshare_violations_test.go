@@ -615,7 +615,7 @@ func TestFairShareViolationsCollector_Integration(t *testing.T) {
 	client := &MockFairShareViolationsSLURMClient{}
 
 	// Setup comprehensive mock data
-	setupViolationMocks(client)
+	setupFairShareViolationMocks(client)
 
 	collector := NewFairShareViolationsCollector(client)
 
@@ -699,7 +699,7 @@ func TestFairShareViolationsCollector_ViolationDetection(t *testing.T) {
 	assert.True(t, foundImpactMetrics, "Should find violation impact metrics")
 }
 
-func setupViolationMocks(client *MockFairShareViolationsSLURMClient) {
+func setupFairShareViolationMocks(client *MockFairShareViolationsSLURMClient) {
 	violations := []*FairShareViolation{
 		{
 			ViolationID:   "v1",

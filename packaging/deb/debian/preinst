@@ -1,0 +1,23 @@
+#!/bin/sh
+set -e
+
+# Create system user and group
+if ! getent group slurm-exporter >/dev/null; then
+    addgroup --system slurm-exporter
+fi
+
+if ! getent passwd slurm-exporter >/dev/null; then
+    adduser --system --group slurm-exporter \
+        --home /var/lib/slurm-exporter \
+        --shell /bin/false \
+        --gecos "SLURM Exporter service account" \
+        slurm-exporter
+fi
+
+# Create directories
+mkdir -p /var/lib/slurm-exporter
+mkdir -p /var/log/slurm-exporter
+
+#DEBHELPER#
+
+exit 0

@@ -1,0 +1,251 @@
+.TH SLURM-EXPORTER 1 "January 2024" "slurm-exporter 1.0.0" "User Commands"
+.SH NAME
+slurm-exporter \- Prometheus exporter for SLURM workload manager metrics
+.SH SYNOPSIS
+.B slurm-exporter
+[\fIOPTION\fR]...
+.SH DESCRIPTION
+SLURM Exporter is a comprehensive Prometheus exporter designed specifically for SLURM (Simple Linux Utility for Resource Management) workload managers. It provides detailed metrics about jobs, nodes, partitions, users, accounts, fairshare policies, and quality of service (QoS) settings.
+
+The exporter connects to the SLURM REST API to collect metrics and exposes them in Prometheus format on an HTTP endpoint. It includes advanced features like job analytics, efficiency monitoring, intelligent caching, and production-grade security hardening.
+
+.SH OPTIONS
+.TP
+.BR \-\-config.file =\fIFILE\fR
+Path to configuration file (default: /etc/slurm-exporter/config.yaml)
+.TP
+.BR \-\-slurm.host =\fIHOST\fR
+SLURM controller hostname or IP address
+.TP
+.BR \-\-slurm.port =\fIPORT\fR
+SLURM REST API port (default: 6820)
+.TP
+.BR \-\-slurm.token =\fITOKEN\fR
+JWT authentication token for SLURM REST API
+.TP
+.BR \-\-slurm.user =\fIUSER\fR
+Username for basic authentication
+.TP
+.BR \-\-slurm.password =\fIPASSWORD\fR
+Password for basic authentication
+.TP
+.BR \-\-web.listen\-address =\fIADDRESS\fR
+Address to listen on for HTTP requests (default: :9341)
+.TP
+.BR \-\-web.telemetry\-path =\fIPATH\fR
+Path under which to expose metrics (default: /metrics)
+.TP
+.BR \-\-web.config.file =\fIFILE\fR
+Path to web configuration file for TLS and authentication
+.TP
+.BR \-\-log.level =\fILEVEL\fR
+Log level: debug, info, warn, error (default: info)
+.TP
+.BR \-\-log.format =\fIFORMAT\fR
+Log format: json, logfmt (default: logfmt)
+.TP
+.BR \-\-collectors.enabled =\fICOLLECTORS\fR
+Comma-separated list of collectors to enable (default: jobs,nodes,partitions)
+.TP
+.BR \-\-collector.jobs.analytics
+Enable advanced job analytics and efficiency calculations
+.TP
+.BR \-\-collector.cache.ttl =\fIDURATION\fR
+Cache TTL for metric data (default: 5m)
+.TP
+.BR \-\-version
+Show version information and exit
+.TP
+.BR \-\-help
+Show help message and exit
+
+.SH CONFIGURATION
+The exporter can be configured using a YAML configuration file, command-line arguments, or environment variables. Configuration file options take precedence over command-line arguments, which take precedence over environment variables.
+
+.SS Configuration File
+The default configuration file location is \fI/etc/slurm-exporter/config.yaml\fR. The file uses YAML format and supports the following main sections:
+
+.TP
+.B slurm
+SLURM connection settings including host, port, authentication, and TLS configuration.
+.TP
+.B metrics
+Metric collection settings including enabled collectors, intervals, and filtering options.
+.TP
+.B performance
+Performance tuning options including caching, connection pooling, and batch processing.
+.TP
+.B server
+HTTP server settings including listen address, ports, and TLS configuration.
+.TP
+.B logging
+Logging configuration including level, format, and output destinations.
+
+.SS Environment Variables
+Configuration options can be set using environment variables with the prefix \fISLURM_EXPORTER_\fR. For example:
+.IP
+SLURM_EXPORTER_SLURM_HOST=slurm-controller.example.com
+.br
+SLURM_EXPORTER_SLURM_TOKEN=your-jwt-token
+.br
+SLURM_EXPORTER_LOG_LEVEL=debug
+
+.SH COLLECTORS
+The exporter supports multiple collectors that can be enabled or disabled independently:
+
+.TP
+.B jobs
+Collects job-related metrics including running, pending, and completed jobs, resource usage, and execution statistics.
+.TP
+.B nodes
+Collects node-related metrics including node states, resource allocation, hardware information, and health status.
+.TP
+.B partitions
+Collects partition-related metrics including queue depths, resource limits, and availability status.
+.TP
+.B accounts
+Collects account-related metrics including usage statistics, quotas, and fairshare information.
+.TP
+.B fairshare
+Collects fairshare policy metrics including shares, usage, and priority calculations.
+.TP
+.B qos
+Collects Quality of Service metrics including limits, priorities, and usage patterns.
+.TP
+.B reservations
+Collects reservation metrics including utilization, efficiency, and availability.
+
+.SH METRICS
+The exporter provides hundreds of metrics covering all aspects of SLURM cluster operation. Key metric families include:
+
+.TP
+.B slurm_up
+Indicates whether the SLURM cluster is reachable (1) or not (0).
+.TP
+.B slurm_jobs_*
+Job-related metrics including counts by state, resource usage, and performance statistics.
+.TP
+.B slurm_nodes_*
+Node-related metrics including counts by state, resource allocation, and hardware utilization.
+.TP
+.B slurm_partitions_*
+Partition-related metrics including queue depths, limits, and resource availability.
+.TP
+.B slurm_accounts_*
+Account-related metrics including usage, quotas, fairshare values, and efficiency scores.
+
+All metrics include relevant labels for filtering and aggregation, such as cluster, partition, account, user, and QoS.
+
+.SH EXAMPLES
+.SS Basic Usage
+Start the exporter with minimal configuration:
+.IP
+slurm-exporter --slurm.host=slurm-controller.example.com --slurm.token=your-jwt-token
+
+.SS Configuration File
+Create a configuration file and start the exporter:
+.IP
+slurm-exporter --config.file=/path/to/config.yaml
+
+.SS Debug Mode
+Run with debug logging to troubleshoot issues:
+.IP
+slurm-exporter --log.level=debug --slurm.host=slurm-controller.example.com
+
+.SS Specific Collectors
+Enable only specific collectors:
+.IP
+slurm-exporter --collectors.enabled=jobs,nodes --slurm.host=slurm-controller.example.com
+
+.SH FILES
+.TP
+.I /etc/slurm-exporter/config.yaml
+Default configuration file
+.TP
+.I /var/lib/slurm-exporter/
+Data directory for cache and state files
+.TP
+.I /var/log/slurm-exporter/
+Log directory (when file logging is enabled)
+.TP
+.I /usr/lib/systemd/system/slurm-exporter.service
+Systemd service file
+
+.SH EXIT STATUS
+The exporter exits with status 0 on success, or non-zero on error. Common exit codes:
+.TP
+.B 1
+General errors (configuration, connectivity, etc.)
+.TP
+.B 2
+Invalid command-line arguments
+.TP
+.B 3
+Configuration file errors
+
+.SH SIGNALS
+.TP
+.B SIGTERM, SIGINT
+Graceful shutdown
+.TP
+.B SIGHUP
+Reload configuration (if config_reload is enabled)
+.TP
+.B SIGUSR1
+Reopen log files
+
+.SH SECURITY
+The exporter implements several security best practices:
+.IP \(bu 2
+Runs as non-privileged user (slurm-exporter)
+.IP \(bu 2
+Supports TLS for both SLURM API and HTTP endpoints
+.IP \(bu 2
+Provides authentication options for metrics endpoint
+.IP \(bu 2
+Implements IP-based access control
+.IP \(bu 2
+Uses systemd security features when available
+
+.SH PERFORMANCE
+For optimal performance in large environments:
+.IP \(bu 2
+Enable caching to reduce SLURM API load
+.IP \(bu 2
+Use connection pooling for high-frequency scraping
+.IP \(bu 2
+Enable batch processing for large job sets
+.IP \(bu 2
+Configure appropriate collection intervals
+.IP \(bu 2
+Use metric filtering to control cardinality
+
+.SH MONITORING
+The exporter provides self-monitoring capabilities:
+.IP \(bu 2
+Health checks at /health endpoint
+.IP \(bu 2
+Readiness checks at /ready endpoint
+.IP \(bu 2
+Internal metrics about collection performance
+.IP \(bu 2
+Optional profiling endpoints for debugging
+
+.SH SEE ALSO
+.BR prometheus (1),
+.BR sinfo (1),
+.BR squeue (1),
+.BR sacct (1),
+.BR scontrol (1)
+
+Project documentation: https://jontk.github.io/slurm-exporter
+
+.SH BUGS
+Report bugs to: https://github.com/jontk/slurm-exporter/issues
+
+.SH AUTHORS
+SLURM Exporter was written by the SLURM Exporter contributors.
+
+.SH COPYRIGHT
+Copyright \(co 2024 SLURM Exporter Contributors.
+This is free software; see the source for copying conditions. There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.

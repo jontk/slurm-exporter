@@ -136,24 +136,7 @@ func (m *MockFairSharePolicyEffectivenessSLURMClient) GetPolicyCostBenefitAnalys
 	return args.Get(0).(*PolicyCostBenefitAnalysis), args.Error(1)
 }
 
-// Mock structures for missing types
-type ResourceAllocationEffectiveness struct{}
-type UserEquityAnalysis struct{}
-type SystemPerformanceImpact struct{}
-type UserSatisfactionMetrics struct{}
-type ResourceUtilizationImpact struct{}
-type PolicyOptimizationRecommendations struct{}
-type PolicyTuningHistory struct{}
-type PolicyPerformanceComparison struct{}
-type OptimalPolicyParameters struct{}
-type PolicyComplianceMonitoring struct{}
-type PolicyViolationAnalysis struct{}
-type PolicyDriftDetection struct{}
-type PolicyEffectivenessAlerts struct{}
-type PolicyEffectivenessTrends struct{}
-type PolicyScenarioAnalysis struct{}
-type PolicyPredictiveModeling struct{}
-type PolicyCostBenefitAnalysis struct{}
+// Types are already defined in fairshare_policy_effectiveness.go
 
 func TestNewFairSharePolicyEffectivenessCollector(t *testing.T) {
 	client := &MockFairSharePolicyEffectivenessSLURMClient{}

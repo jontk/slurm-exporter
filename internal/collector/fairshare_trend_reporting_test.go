@@ -116,23 +116,7 @@ func (m *MockFairShareTrendReportingSLURMClient) GetReportingSchedule(ctx contex
 	return args.Get(0).(*ReportingSchedule), args.Error(1)
 }
 
-// Mock structures for missing types
-type UserFairShareHistory struct{}
-type AccountFairShareHistory struct{}
-type SystemFairShareTrends struct{}
-type FairShareAggregations struct{}
-type FairShareMovingAverages struct{}
-type SeasonalDecomposition struct{}
-type FairShareDistribution struct{}
-type FairShareComparison struct{}
-type FairShareCorrelations struct{}
-type FairShareInsights struct{}
-type FairShareAnomalies struct{}
-type FairShareForecast struct{}
-type DashboardMetrics struct{}
-type RealtimeUpdates struct{}
-type VisualizationConfig struct{}
-type ReportingSchedule struct{}
+// Types are already defined in fairshare_trend_reporting.go
 
 func TestNewFairShareTrendReportingCollector(t *testing.T) {
 	client := &MockFairShareTrendReportingSLURMClient{}

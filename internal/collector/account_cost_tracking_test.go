@@ -2,6 +2,7 @@ package collector
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -395,12 +396,12 @@ func TestAccountCostTrackingCollector_CostMetricsValues(t *testing.T) {
 	mockClient.On("GetAccountCostPolicies", mock.Anything, mock.Anything).Return([]*AccountCostPolicy{}, nil)
 
 	// Test total cost metric
-	expected := `
+	expectedCost := `
 		# HELP slurm_account_total_cost Total cost for account
 		# TYPE slurm_account_total_cost gauge
 		slurm_account_total_cost{account="account1"} 15000.5
 	`
-	err := testutil.CollectAndCompare(collector, testutil.ToFloat64Collector(costMetrics.TotalCost), "slurm_account_total_cost")
+	err := testutil.CollectAndCompare(collector, strings.NewReader(expectedCost), "slurm_account_total_cost")
 	assert.NoError(t, err)
 
 	// Test cost efficiency metric
@@ -409,7 +410,7 @@ func TestAccountCostTrackingCollector_CostMetricsValues(t *testing.T) {
 		# TYPE slurm_account_cost_efficiency gauge
 		slurm_account_cost_efficiency{account="account1"} 0.85
 	`
-	err = testutil.CollectAndCompare(collector, testutil.ToFloat64Collector(costMetrics.CostEfficiency), "slurm_account_cost_efficiency")
+	err = testutil.CollectAndCompare(collector, strings.NewReader(expectedEfficiency), "slurm_account_cost_efficiency")
 	assert.NoError(t, err)
 
 	mockClient.AssertExpectations(t)
