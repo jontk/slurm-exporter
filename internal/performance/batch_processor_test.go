@@ -416,6 +416,14 @@ func TestBatchProcessor_RegisterMetrics(t *testing.T) {
 	err = bp.RegisterMetrics(reg)
 	assert.NoError(t, err)
 
+	// Create some metric data so they appear in the registry (Prometheus only
+	// shows metrics in Gather() after they have at least one data point)
+	bp.metrics.batchesProcessed.WithLabelValues("test", "success").Add(0)
+	bp.metrics.itemsProcessed.WithLabelValues("test").Add(0)
+	bp.metrics.batchSize.WithLabelValues("test").Observe(1)
+	bp.metrics.batchWaitTime.WithLabelValues("test").Observe(0.1)
+	bp.metrics.processingDuration.WithLabelValues("test").Observe(0.01)
+
 	// Verify metrics registered
 	mfs, err := reg.Gather()
 	assert.NoError(t, err)

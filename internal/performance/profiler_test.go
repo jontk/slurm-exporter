@@ -2,7 +2,6 @@ package performance
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"runtime"
 	"testing"
