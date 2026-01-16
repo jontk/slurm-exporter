@@ -16,9 +16,9 @@ permissions:
   pull-requests: write
 
 env:
-  GO_VERSION_STABLE: '1.22'
-  GO_VERSION_OLDSTABLE: '1.21'
-  GO_VERSION_MINIMUM: '1.21'
+  GO_VERSION_STABLE: '1.24'
+  GO_VERSION_OLDSTABLE: '1.23'
+  GO_VERSION_MINIMUM: '1.23'
 
 jobs:
   test:
@@ -27,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: ['1.21', '1.22']
+        go-version: ['1.23', '1.24']
         os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
