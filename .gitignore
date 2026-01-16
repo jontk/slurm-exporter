@@ -6,6 +6,8 @@
 *.dylib
 bin/
 dist/
+slurm-exporter
+validate-config
 
 # Test binary, built with `go test -c`
 *.test
@@ -14,6 +16,7 @@ dist/
 *.out
 coverage.html
 coverage.xml
+coverage.txt
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
@@ -41,6 +44,7 @@ Thumbs.db
 *.tmp
 *.temp
 *.log
+design_files_removal_report.json
 
 # Config files that might contain secrets
 config.local.yaml
