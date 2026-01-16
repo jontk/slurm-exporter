@@ -3,6 +3,7 @@ package security
 import (
 	"crypto/tls"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -441,11 +442,11 @@ func (s *SecurityTestSuite) addSecurityMiddleware(handler http.Handler) http.Han
 }
 
 func (s *SecurityTestSuite) makeRequest(method, path string, headers map[string]string, body interface{}) *http.Response {
-	var reqBody *strings.Reader
+	var reqBody io.Reader
 	if body != nil {
 		reqBody = strings.NewReader(fmt.Sprintf("%v", body))
 	}
-	
+
 	req, err := http.NewRequest(method, s.server.URL+path, reqBody)
 	s.Require().NoError(err)
 	
