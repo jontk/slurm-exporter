@@ -434,11 +434,8 @@ func (p *Profiler) continuousProfiling() {
 	ticker := time.NewTicker(p.config.ContinuousProfiling.Interval)
 	defer ticker.Stop()
 
-	for {
-		select {
-		case <-ticker.C:
-			p.collectContinuousProfile()
-		}
+	for range ticker.C {
+		p.collectContinuousProfile()
 	}
 }
 

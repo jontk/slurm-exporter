@@ -376,7 +376,6 @@ func (c *SimplifiedJobPerformanceCollector) collectJobMetrics(ctx context.Contex
 func (c *SimplifiedJobPerformanceCollector) updateMetricsFromJob(job *slurm.Job) {
 	// TODO: Job field names are not compatible with current slurm-client version
 	// Skipping metric updates for now
-	return
 	/*
 	labels := []string{
 		job.JobID,
@@ -450,7 +449,6 @@ func (c *SimplifiedJobPerformanceCollector) updateAggregationCounters(
 ) {
 	// TODO: Job field names are not compatible with current slurm-client version
 	// Skipping aggregation counter updates for now
-	return
 	/*
 	// State counts by partition
 	if stateCounts[job.Partition] == nil {
@@ -530,7 +528,6 @@ func (c *SimplifiedJobPerformanceCollector) GetCacheSize() int {
 func (c *SimplifiedJobPerformanceCollector) updateEfficiencyMetrics(job *slurm.Job) {
 	// TODO: Job field names are not compatible with current slurm-client version
 	// Skipping efficiency metric updates for now
-	return
 	/*
 	// Check efficiency cache first
 	if cachedEfficiency, exists := c.efficiencyCache[job.JobID]; exists {
@@ -560,7 +557,6 @@ func (c *SimplifiedJobPerformanceCollector) updateEfficiencyMetrics(job *slurm.J
 func (c *SimplifiedJobPerformanceCollector) setEfficiencyMetrics(job *slurm.Job, effMetrics *EfficiencyMetrics) {
 	// TODO: Job field names are not compatible with current slurm-client version
 	// Skipping metric updates for now
-	return
 	/*
 	labels := []string{
 		job.JobID,

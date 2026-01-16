@@ -1879,7 +1879,6 @@ func (c *QuotaComplianceCollector) collectEnforcementMetrics(ch chan<- prometheu
 func (c *QuotaComplianceCollector) collectTrendMetrics(ch chan<- prometheus.Metric, entityType, entityName string, trends *QuotaTrends) {
 	// TODO: QuotaTrends struct is missing expected fields (UsageTrends, SeasonalPatterns, AnomalyDetection)
 	// Skipping trend metrics collection for now
-	return
 	/*
 	// Usage trends
 	for _, usageTrend := range trends.UsageTrends {
@@ -1976,7 +1975,6 @@ func (c *QuotaComplianceCollector) collectForecastMetrics(ch chan<- prometheus.M
 func (c *QuotaComplianceCollector) collectRecommendationMetrics(ch chan<- prometheus.Metric, entityType, entityName string, recommendations *QuotaRecommendations) {
 	// TODO: QuotaRecommendations struct is missing expected fields (QuotaOptimization, PolicyRecommendations, PriorityMatrix)
 	// Skipping recommendation metrics collection for now
-	return
 	/*
 	// Overall recommendations metrics
 	ch <- prometheus.MustNewConstMetric(
