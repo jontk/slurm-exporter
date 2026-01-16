@@ -95,7 +95,7 @@ jobs:
 
       # Upload security scan artifacts
       - name: Upload security scan results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: security-scan-results
@@ -155,7 +155,7 @@ jobs:
           grype slurm-exporter:security-scan -o table || true
 
       - name: Upload container scan artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: container-security-results
@@ -208,7 +208,7 @@ jobs:
           echo "✅ No forbidden licenses detected" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload license report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: license-report
@@ -254,7 +254,7 @@ jobs:
           fi
 
       - name: Upload secret scan results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: secret-scan-results
@@ -328,7 +328,7 @@ jobs:
       issues: write
     steps:
       - name: Download all security artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: security-artifacts
 
@@ -382,7 +382,7 @@ jobs:
           echo "- [Container Security Best Practices](https://owasp.org/www-project-docker-top-10/)" >> security-summary.md
 
       - name: Upload security summary
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: security-summary
           path: security-summary.md
@@ -402,7 +402,7 @@ jobs:
 
       - name: Upload security audit results
         if: env.SECURITY_AUDIT_AVAILABLE == 'true'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: security-audit-results
           path: security-audit-*

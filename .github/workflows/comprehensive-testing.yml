@@ -76,7 +76,7 @@ jobs:
         
     - name: Upload test results
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: test-results-${{ matrix.platform }}-go${{ matrix.go-version }}
         path: |
@@ -133,7 +133,7 @@ jobs:
         
     - name: Upload integration test results
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: integration-test-results
         path: test-results.xml
@@ -240,7 +240,7 @@ jobs:
         fail-on-alert: true
         
     - name: Upload benchmark results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: benchmark-results
         path: bench.txt
@@ -289,7 +289,7 @@ jobs:
         
     - name: Upload security test results
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: security-test-results
         path: |
@@ -333,7 +333,7 @@ jobs:
         k6 run test/load/debug_endpoints_load_test.js
         
     - name: Upload load test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: load-test-results
         path: load-test-results.json
@@ -464,7 +464,7 @@ jobs:
     
     steps:
     - name: Download all artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       
     - name: Generate test report
       run: |
@@ -480,7 +480,7 @@ jobs:
         echo "- Dependency Checks: ${{ needs.dependency-checks.result }}" >> test-summary.md
         
     - name: Upload test summary
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: test-summary
         path: test-summary.md
