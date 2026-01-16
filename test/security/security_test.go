@@ -9,9 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jontk/slurm-exporter/internal/server"
 	"github.com/jontk/slurm-exporter/internal/testutil"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
 
