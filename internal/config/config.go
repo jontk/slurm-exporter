@@ -3,7 +3,6 @@ package config
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -677,7 +676,7 @@ func Load(filename string) (*Config, error) {
 	}
 
 	// Read file content
-	data, err := ioutil.ReadFile(filename)
+	data, err := os.ReadFile(filename)
 	if err != nil {
 		return cfg, fmt.Errorf("failed to read configuration file %s: %w", filename, err)
 	}

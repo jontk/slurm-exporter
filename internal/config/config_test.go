@@ -1,7 +1,6 @@
 package config
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 	"time"
@@ -311,7 +310,7 @@ metrics:
   namespace: "custom_slurm"
 `
 
-	tmpFile, err := ioutil.TempFile("", "test-config-*.yaml")
+	tmpFile, err := os.CreateTemp("", "test-config-*.yaml")
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
@@ -387,7 +386,7 @@ server:
   invalid_yaml: [unclosed
 `
 
-	tmpFile, err := ioutil.TempFile("", "invalid-config-*.yaml")
+	tmpFile, err := os.CreateTemp("", "invalid-config-*.yaml")
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
@@ -781,7 +780,7 @@ logging:
   level: "warn"
 `
 
-	tmpFile, err := ioutil.TempFile("", "precedence-config-*.yaml")
+	tmpFile, err := os.CreateTemp("", "precedence-config-*.yaml")
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}

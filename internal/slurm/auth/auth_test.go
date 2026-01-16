@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -105,7 +104,7 @@ func TestConfigureAuth(t *testing.T) {
 
 func TestReadSecretFile(t *testing.T) {
 	// Create temporary directory for test files
-	tmpDir, err := ioutil.TempDir("", "auth-test")
+	tmpDir, err := os.MkdirTemp("", "auth-test")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
@@ -163,7 +162,7 @@ func TestReadSecretFile(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create test file
 			filepath := filepath.Join(tmpDir, tt.filename)
-			err := ioutil.WriteFile(filepath, []byte(tt.content), tt.permissions)
+			err := os.WriteFile(filepath, []byte(tt.content), tt.permissions)
 			if err != nil {
 				t.Fatalf("Failed to create test file: %v", err)
 			}
@@ -191,7 +190,7 @@ func TestReadSecretFile(t *testing.T) {
 
 func TestConfigureAuthWithFiles(t *testing.T) {
 	// Create temporary directory for test files
-	tmpDir, err := ioutil.TempDir("", "auth-file-test")
+	tmpDir, err := os.MkdirTemp("", "auth-file-test")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
@@ -202,9 +201,9 @@ func TestConfigureAuthWithFiles(t *testing.T) {
 	passwordFile := filepath.Join(tmpDir, "password")
 	apiKeyFile := filepath.Join(tmpDir, "api-key")
 
-	ioutil.WriteFile(tokenFile, []byte("jwt-token-from-file"), 0600)
-	ioutil.WriteFile(passwordFile, []byte("password-from-file"), 0600)
-	ioutil.WriteFile(apiKeyFile, []byte("api-key-from-file"), 0600)
+	os.WriteFile(tokenFile, []byte("jwt-token-from-file"), 0600)
+	os.WriteFile(passwordFile, []byte("password-from-file"), 0600)
+	os.WriteFile(apiKeyFile, []byte("api-key-from-file"), 0600)
 
 	tests := []struct {
 		name    string
@@ -254,7 +253,7 @@ func TestConfigureAuthWithFiles(t *testing.T) {
 
 func TestServiceAccountAuth(t *testing.T) {
 	// Create temporary directory for test files
-	tmpDir, err := ioutil.TempDir("", "sa-test")
+	tmpDir, err := os.MkdirTemp("", "sa-test")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
@@ -263,7 +262,7 @@ func TestServiceAccountAuth(t *testing.T) {
 	// Create test token file
 	tokenPath := filepath.Join(tmpDir, "token")
 	tokenContent := "k8s-service-account-token"
-	err = ioutil.WriteFile(tokenPath, []byte(tokenContent), 0600)
+	err = os.WriteFile(tokenPath, []byte(tokenContent), 0600)
 	if err != nil {
 		t.Fatalf("Failed to create token file: %v", err)
 	}

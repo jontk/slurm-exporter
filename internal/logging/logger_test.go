@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -130,7 +129,7 @@ func TestNewLogger(t *testing.T) {
 
 func TestLoggerFileOutput(t *testing.T) {
 	// Create temporary directory for test files
-	tmpDir, err := ioutil.TempDir("", "logger_test")
+	tmpDir, err := os.MkdirTemp("", "logger_test")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
@@ -162,7 +161,7 @@ func TestLoggerFileOutput(t *testing.T) {
 		}
 
 		// Read file contents
-		content, err := ioutil.ReadFile(logFile)
+		content, err := os.ReadFile(logFile)
 		if err != nil {
 			t.Fatalf("Failed to read log file: %v", err)
 		}
@@ -418,7 +417,7 @@ func TestLogFormats(t *testing.T) {
 
 func TestClose(t *testing.T) {
 	t.Run("FileOutput", func(t *testing.T) {
-		tmpDir, err := ioutil.TempDir("", "logger_close_test")
+		tmpDir, err := os.MkdirTemp("", "logger_close_test")
 		if err != nil {
 			t.Fatalf("Failed to create temp dir: %v", err)
 		}
