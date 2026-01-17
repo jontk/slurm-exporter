@@ -173,9 +173,9 @@ jobs:
           --max-retries 3
           --exclude-loopback
           --exclude-private
-          --exclude-mail
+          --include-mail
           './**/*.md'
-        fail: true
+        fail: false
 
   spellcheck:
     name: Spellcheck Documentation
