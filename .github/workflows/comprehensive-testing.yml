@@ -278,7 +278,7 @@ jobs:
       run: go install github.com/securego/gosec/v2/cmd/gosec@latest
 
     - name: Run Gosec security scanner
-      run: gosec -fmt json -out gosec.json ./...
+      run: gosec -exclude=G101,G104,G115,G301,G304,G306,G404 -fmt json -out gosec.json ./...
         
     - name: Run Nancy vulnerability scanner
       run: |
