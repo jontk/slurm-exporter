@@ -1,25 +1,10 @@
 {
-  "exclude": [
+  "excludes": [
     "G101",
     "G104",
     "G115",
     "G304",
     "G306",
     "G404"
-  ],
-  "exclude-generated": true,
-  "exclude-dirs": [
-    "test",
-    "vendor"
-  ],
-  "severity": "high",
-  "confidence": "high",
-  "rule-exclude": {
-    "G101": "Kubernetes service account token path is not a hardcoded credential",
-    "G104": "Hash.Write() never returns an error, safe to ignore",
-    "G115": "Integer type conversions in SLURM data are within safe ranges",
-    "G304": "File operations in test utilities are controlled",
-    "G306": "File permissions 0644 are appropriate for config files",
-    "G404": "math/rand is acceptable for test data generation"
-  }
+  ]
 }
