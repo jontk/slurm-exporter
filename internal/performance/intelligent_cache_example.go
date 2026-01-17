@@ -14,7 +14,7 @@ type ExampleJobData struct {
 	ID       string    `json:"id"`
 	Name     string    `json:"name"`
 	State    string    `json:"state"`
-	UserId   string    `json:"user_id"`
+	UserID   string    `json:"user_id"`
 	NodeList string    `json:"node_list"`
 	SubmitTime time.Time `json:"submit_time"`
 	StartTime  *time.Time `json:"start_time,omitempty"`
@@ -71,7 +71,7 @@ func demonstrateStableDataCaching(cache *IntelligentCache, logger *logrus.Logger
 		ID:       "job_12345",
 		Name:     "simulation_run",
 		State:    "COMPLETED",
-		UserId:   "user123",
+		UserID:   "user123",
 		NodeList: "node[001-004]",
 		SubmitTime: time.Now().Add(-2 * time.Hour),
 		StartTime:  timePtr(time.Now().Add(-1 * time.Hour)),
@@ -116,7 +116,7 @@ func demonstrateVolatileDataCaching(cache *IntelligentCache, logger *logrus.Logg
 		ID:       "job_67890",
 		Name:     "ml_training",
 		State:    "RUNNING",
-		UserId:   "user456",
+		UserID:   "user456",
 		NodeList: "gpu[001-002]",
 		SubmitTime: time.Now().Add(-30 * time.Minute),
 		StartTime:  timePtr(time.Now().Add(-25 * time.Minute)),
@@ -160,29 +160,29 @@ func demonstrateCachedFunction(cache *IntelligentCache, logger *logrus.Logger) {
 	logger.Info("=== Demonstrating Cached Function Wrapper ===")
 	
 	// Simulate an expensive SLURM API call
-	expensiveSlurmCall := func(ctx context.Context, jobId string) (interface{}, error) {
-		logger.WithField("job_id", jobId).Info("Making expensive SLURM API call")
+	expensiveSlurmCall := func(ctx context.Context, jobID string) (interface{}, error) {
+		logger.WithField("job_id", jobID).Info("Making expensive SLURM API call")
 		
 		// Simulate API latency
 		time.Sleep(500 * time.Millisecond)
 		
 		// Return mock job data
 		return &ExampleJobData{
-			ID:     jobId,
-			Name:   fmt.Sprintf("job_%s", jobId),
+			ID:     jobID,
+			Name:   fmt.Sprintf("job_%s", jobID),
 			State:  "RUNNING",
-			UserId: "api_user",
+			UserID: "api_user",
 		}, nil
 	}
 	
 	// Wrap with cache
 	cachedSlurmCall := cache.CachedFunction(expensiveSlurmCall)
-	
-	jobId := "api_job_123"
-	
+
+	jobID := "api_job_123"
+
 	// First call - should hit the API
 	start := time.Now()
-	result1, err := cachedSlurmCall(context.Background(), jobId)
+	result1, err := cachedSlurmCall(context.Background(), jobID)
 	duration1 := time.Since(start)
 	
 	if err == nil {
@@ -196,7 +196,7 @@ func demonstrateCachedFunction(cache *IntelligentCache, logger *logrus.Logger) {
 	
 	// Second call - should hit the cache
 	start = time.Now()
-	result2, err := cachedSlurmCall(context.Background(), jobId)
+	result2, err := cachedSlurmCall(context.Background(), jobID)
 	duration2 := time.Since(start)
 	
 	if err == nil {
@@ -298,9 +298,9 @@ func IntegrationExample() {
 func (c *CachedSlurmCollector) cacheJobData() {
 	// Simulate different job states and their caching behavior
 	jobs := []*ExampleJobData{
-		{ID: "1001", State: "COMPLETED", UserId: "user1"}, // Stable
-		{ID: "1002", State: "RUNNING", UserId: "user2"},   // Changing
-		{ID: "1003", State: "PENDING", UserId: "user3"},   // Will change
+		{ID: "1001", State: "COMPLETED", UserID: "user1"}, // Stable
+		{ID: "1002", State: "RUNNING", UserID: "user2"},   // Changing
+		{ID: "1003", State: "PENDING", UserID: "user3"},   // Will change
 	}
 	
 	for _, job := range jobs {
