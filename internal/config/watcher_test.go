@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
 	"time"
 
@@ -15,15 +16,30 @@ import (
 
 // MockReloadHandler for testing
 type MockReloadHandler struct {
+	mu          sync.Mutex
 	reloadCount int
 	lastConfig  *Config
 	lastError   error
 }
 
 func (m *MockReloadHandler) Handle(config *Config) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.reloadCount++
 	m.lastConfig = config
 	return m.lastError
+}
+
+func (m *MockReloadHandler) GetReloadCount() int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.reloadCount
+}
+
+func (m *MockReloadHandler) GetLastConfig() *Config {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.lastConfig
 }
 
 func TestWatcher_New(t *testing.T) {
@@ -92,9 +108,9 @@ slurm:
 	_ = watcher.Stop()
 
 	// Should have loaded initial config
-	assert.Equal(t, 1, handler.reloadCount)
-	assert.NoError(t, handler.lastError)
-	assert.NotNil(t, handler.lastConfig)
+	assert.Equal(t, 1, handler.GetReloadCount())
+	assert.NoError(t, handler.lastError) // Direct access is OK for error check in defer
+	assert.NotNil(t, handler.GetLastConfig())
 }
 
 func TestWatcher_ConfigChange(t *testing.T) {
@@ -152,10 +168,10 @@ slurm:
 	_ = watcher.Stop()
 
 	// Should have reloaded config
-	assert.True(t, handler.reloadCount >= 2, "should have reloaded config at least twice (initial + change)")
-	assert.NoError(t, handler.lastError)
-	assert.NotNil(t, handler.lastConfig)
-	assert.Equal(t, ":9090", handler.lastConfig.Server.Address)
+	assert.True(t, handler.GetReloadCount() >= 2, "should have reloaded config at least twice (initial + change)")
+	assert.NoError(t, handler.lastError) // Direct access is OK for error check in defer
+	assert.NotNil(t, handler.GetLastConfig())
+	assert.Equal(t, ":9090", handler.GetLastConfig().Server.Address)
 }
 
 func TestWatcher_InvalidConfig(t *testing.T) {
@@ -218,7 +234,7 @@ slurm:
 	assert.Equal(t, 1, handler.reloadCount, "handler should only be called for initial valid config")
 	assert.NoError(t, handler.lastError, "last successful handler call should have no error")
 	// The config should still be the initial valid config
-	assert.Equal(t, ":8080", handler.lastConfig.Server.Address)
+	assert.Equal(t, ":8080", handler.GetLastConfig().Server.Address)
 }
 
 func TestWatcher_NonExistentFile(t *testing.T) {
@@ -308,7 +324,7 @@ slurm:
 
 	// Give it time to start
 	time.Sleep(200 * time.Millisecond)
-	initialCount := handler.reloadCount
+	initialCount := handler.GetReloadCount()
 
 	// Make multiple rapid changes
 	for i := 0; i < 5; i++ {
@@ -331,7 +347,7 @@ slurm:
 	_ = watcher.Stop()
 
 	// Should have debounced the changes (not reload for every single change)
-	reloadCount := handler.reloadCount - initialCount
+	reloadCount := handler.GetReloadCount() - initialCount
 	assert.True(t, reloadCount < 5, "should have debounced rapid changes, got %d reloads", reloadCount)
 	assert.True(t, reloadCount >= 1, "should have at least one reload")
 }
