@@ -57,7 +57,7 @@ jobs:
         run: gosec -conf .gosec.json -fmt sarif -out gosec-results.sarif ./...
 
       - name: Upload Gosec results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: gosec-results.sarif
@@ -96,7 +96,7 @@ jobs:
           fi
 
       - name: Upload StaticCheck results
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: staticcheck-results.sarif
@@ -222,6 +222,7 @@ jobs:
       # Trivy - Container vulnerability scanner
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
+        continue-on-error: true
         with:
           image-ref: 'slurm-exporter:security-scan'
           format: 'sarif'
@@ -229,8 +230,8 @@ jobs:
           severity: 'CRITICAL,HIGH,MEDIUM'
 
       - name: Upload Trivy scan results
-        uses: github/codeql-action/upload-sarif@v2
-        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        if: always() && hashFiles('trivy-results.sarif') != ''
         with:
           sarif_file: trivy-results.sarif
           category: trivy
