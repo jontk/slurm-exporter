@@ -178,9 +178,12 @@ jobs:
         tool: 'go'
         output-file-path: benchmark.txt
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        auto-push: true
+        # Only push to gh-pages on main branch, not PRs
+        auto-push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         comment-on-alert: true
         alert-threshold: '200%'
+        # Save benchmark data as artifact for PRs
+        save-data-file: true
 
   build:
     name: Build
