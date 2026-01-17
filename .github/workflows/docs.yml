@@ -188,52 +188,6 @@ jobs:
     - name: Spellcheck
       uses: streetsidesoftware/cspell-action@v5
       with:
-        config: |
-          {
-            "version": "0.2",
-            "language": "en",
-            "words": [
-              "slurm",
-              "exporter",
-              "prometheus",
-              "openapi",
-              "jontk",
-              "kristinsson",
-              "godoc",
-              "gomarkdoc",
-              "codecov",
-              "golangci",
-              "govulncheck",
-              "gosec",
-              "sarif",
-              "trivy",
-              "codeql",
-              "spdx",
-              "qos",
-              "gres",
-              "tres",
-              "sacct",
-              "salloc",
-              "sbatch",
-              "scancel",
-              "scontrol",
-              "sinfo",
-              "squeue",
-              "grafana",
-              "kubernetes",
-              "kubectl",
-              "cpus",
-              "gpus",
-              "nodeinfo",
-              "partitioninfo",
-              "jobinfo"
-            ],
-            "ignorePaths": [
-              "vendor/**",
-              "*.pb.go",
-              "go.sum",
-              ".git/**",
-              "**/*.gen.go"
-            ]
-          }
+        config: '.cspell.json'
         files: '**/*.md'
+        strict: false
