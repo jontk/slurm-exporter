@@ -134,6 +134,22 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Building version: $VERSION"
 
+      - name: Set Docker image
+        id: docker_image
+        run: |
+          # Convert matrix OS name to proper Docker image name
+          os="${{ matrix.os }}"
+          case "$os" in
+            ubuntu-20.04) image="ubuntu:20.04" ;;
+            ubuntu-22.04) image="ubuntu:22.04" ;;
+            ubuntu-24.04) image="ubuntu:24.04" ;;
+            debian-11) image="debian:11" ;;
+            debian-12) image="debian:12" ;;
+            *) image="$os" ;;
+          esac
+          echo "image=$image" >> $GITHUB_OUTPUT
+          echo "Using Docker image: $image"
+
       - name: Build DEB package
         run: |
           # Create build directory
@@ -148,7 +164,7 @@ jobs:
             --platform linux/${{ matrix.arch }} \
             -v $(pwd):/workspace \
             -w /workspace \
-            ${{ matrix.os }} \
+            ${{ steps.docker_image.outputs.image }} \
             bash -c "
               # Update package list
               apt-get update
@@ -388,7 +404,7 @@ jobs:
               slurm-exporter --version
             "
           fi
-          
+
           # Test DEB installation
           if [[ "${{ matrix.os }}" =~ ubuntu|debian ]]; then
             docker run --rm -v $(pwd)/artifacts:/artifacts ${{ matrix.os }} bash -c "
