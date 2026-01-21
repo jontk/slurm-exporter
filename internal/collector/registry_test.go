@@ -96,7 +96,7 @@ func TestRegistry(t *testing.T) {
 	t.Run("List", func(t *testing.T) {
 		// Clear registry first
 		for _, name := range registry.List() {
-			registry.Unregister(name)
+			_ = registry.Unregister(name)
 		}
 
 		// Register multiple collectors
@@ -187,7 +187,7 @@ func TestRegistry(t *testing.T) {
 	t.Run("CollectAll", func(t *testing.T) {
 		// Clear registry
 		for _, name := range registry.List() {
-			registry.Unregister(name)
+			_ = registry.Unregister(name)
 		}
 
 		// Register collectors with different behaviors
@@ -217,9 +217,9 @@ func TestRegistry(t *testing.T) {
 			},
 		}
 
-		registry.Register("success", successCollector)
-		registry.Register("fail", failCollector)
-		registry.Register("disabled", disabledCollector)
+		_ = registry.Register("success", successCollector)
+		_ = registry.Register("fail", failCollector)
+		_ = registry.Register("disabled", disabledCollector)
 
 		// Collect all
 		ctx := context.Background()
@@ -232,7 +232,7 @@ func TestRegistry(t *testing.T) {
 	t.Run("GetStats", func(t *testing.T) {
 		// Clear registry
 		for _, name := range registry.List() {
-			registry.Unregister(name)
+			_ = registry.Unregister(name)
 		}
 
 		// Register a mix of collectors
@@ -250,8 +250,8 @@ func TestRegistry(t *testing.T) {
 			nil,
 		)
 
-		registry.Register("mock", mockCol)
-		registry.Register("base", baseCol)
+		_ = registry.Register("mock", mockCol)
+		_ = registry.Register("base", baseCol)
 
 		// Get stats
 		stats := registry.GetStats()

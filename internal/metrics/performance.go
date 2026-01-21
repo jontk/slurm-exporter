@@ -2,7 +2,8 @@ package metrics
 
 import (
 	"fmt"
-	"sync"
+	// Commented out as only used in commented-out field
+	// "sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -33,7 +34,7 @@ type PerformanceMetrics struct {
 	// Memory usage tracking
 	MemoryUsage *prometheus.GaugeVec
 
-	// CPU usage tracking  
+	// CPU usage tracking
 	CPUUsage *prometheus.GaugeVec
 
 	// Collection rate by collector
@@ -54,7 +55,8 @@ type PerformanceMetrics struct {
 	// Thread pool utilization
 	ThreadPoolUtilization *prometheus.GaugeVec
 
-	mu sync.RWMutex
+	// TODO: Unused field - preserved for future thread safety
+	// mu sync.RWMutex
 }
 
 // NewPerformanceMetrics creates a new performance metrics instance
@@ -75,7 +77,7 @@ func NewPerformanceMetrics(namespace string) *PerformanceMetrics {
 			prometheus.HistogramOpts{
 				Namespace: namespace,
 				Subsystem: "exporter",
-				Name:      "api_duration_seconds", 
+				Name:      "api_duration_seconds",
 				Help:      "Duration of SLURM API calls",
 				Buckets:   []float64{.01, .05, .1, .25, .5, 1, 2.5, 5, 10, 30},
 			},
@@ -85,7 +87,7 @@ func NewPerformanceMetrics(namespace string) *PerformanceMetrics {
 		CollectionErrors: prometheus.NewCounterVec(
 			prometheus.CounterOpts{
 				Namespace: namespace,
-				Subsystem: "exporter", 
+				Subsystem: "exporter",
 				Name:      "collection_errors_total",
 				Help:      "Total number of collection errors by type",
 			},
@@ -96,7 +98,7 @@ func NewPerformanceMetrics(namespace string) *PerformanceMetrics {
 			prometheus.CounterOpts{
 				Namespace: namespace,
 				Subsystem: "exporter",
-				Name:      "api_errors_total", 
+				Name:      "api_errors_total",
 				Help:      "Total number of API errors by endpoint and status",
 			},
 			[]string{"endpoint", "status_code", "error_type"},
@@ -145,7 +147,7 @@ func NewPerformanceMetrics(namespace string) *PerformanceMetrics {
 		MemoryUsage: prometheus.NewGaugeVec(
 			prometheus.GaugeOpts{
 				Namespace: namespace,
-				Subsystem: "exporter", 
+				Subsystem: "exporter",
 				Name:      "memory_usage_bytes",
 				Help:      "Current memory usage in bytes",
 			},
@@ -286,10 +288,10 @@ type CollectionTimer struct {
 // NewCollectionTimer creates a timer for collection operations
 func (pm *PerformanceMetrics) NewCollectionTimer(collector, phase string) *CollectionTimer {
 	timer := NewTimer(pm.CollectionDuration.WithLabelValues(collector, phase))
-	
+
 	// Increment concurrent collections
 	pm.ConcurrentCollections.WithLabelValues(collector).Inc()
-	
+
 	return &CollectionTimer{
 		collector: collector,
 		phase:     phase,
@@ -301,40 +303,40 @@ func (pm *PerformanceMetrics) NewCollectionTimer(collector, phase string) *Colle
 // Stop stops the collection timer and updates metrics
 func (ct *CollectionTimer) Stop() time.Duration {
 	duration := ct.timer.Stop()
-	
+
 	// Decrement concurrent collections
 	ct.metrics.ConcurrentCollections.WithLabelValues(ct.collector).Dec()
-	
+
 	// Update collection rate
 	ct.metrics.CollectionRate.WithLabelValues(ct.collector).Inc()
-	
+
 	return duration
 }
 
 // APITimer provides specialized timing for API operations
 type APITimer struct {
-	endpoint string
-	method   string
-	metrics  *PerformanceMetrics
-	timer    *Timer
+	endpoint  string
+	method    string
+	metrics   *PerformanceMetrics
+	startTime time.Time
 }
 
 // NewAPITimer creates a timer for API operations
 func (pm *PerformanceMetrics) NewAPITimer(endpoint, method string) *APITimer {
 	return &APITimer{
-		endpoint: endpoint,
-		method:   method,
-		metrics:  pm,
-		// Timer will be created when status is known
+		endpoint:  endpoint,
+		method:    method,
+		metrics:   pm,
+		startTime: time.Now(), // Capture start time immediately
 	}
 }
 
 // StopWithStatus stops the API timer with the given status
 func (at *APITimer) StopWithStatus(status string) time.Duration {
-	if at.timer == nil {
-		at.timer = NewTimer(at.metrics.APICallDuration.WithLabelValues(at.endpoint, at.method, status))
-	}
-	return at.timer.Stop()
+	duration := time.Since(at.startTime)
+	// Observe the duration with the correct labels
+	at.metrics.APICallDuration.WithLabelValues(at.endpoint, at.method, status).Observe(duration.Seconds())
+	return duration
 }
 
 // RecordError records an API error

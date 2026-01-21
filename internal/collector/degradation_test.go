@@ -62,7 +62,7 @@ func TestCircuitBreaker(t *testing.T) {
 
 		// Open the circuit
 		for i := 0; i < 2; i++ {
-			cb.Call(func() error {
+			_ = cb.Call(func() error {
 				return errors.New("test failure")
 			})
 		}
@@ -95,7 +95,7 @@ func TestCircuitBreaker(t *testing.T) {
 
 		// Open the circuit
 		for i := 0; i < 2; i++ {
-			cb.Call(func() error {
+			_ = cb.Call(func() error {
 				return errors.New("test failure")
 			})
 		}
@@ -104,7 +104,7 @@ func TestCircuitBreaker(t *testing.T) {
 		time.Sleep(150 * time.Millisecond)
 
 		// Fail in half-open state
-		cb.Call(func() error {
+		_ = cb.Call(func() error {
 			return errors.New("test failure in half-open")
 		})
 
@@ -119,7 +119,7 @@ func TestCircuitBreaker(t *testing.T) {
 
 		// Open the circuit
 		for i := 0; i < 2; i++ {
-			cb.Call(func() error {
+			_ = cb.Call(func() error {
 				return errors.New("test failure")
 			})
 		}
@@ -197,13 +197,13 @@ func TestDegradationManager(t *testing.T) {
 			),
 		}
 
-		dm.ExecuteWithDegradation(ctx, "cache_test", func(context.Context) ([]prometheus.Metric, error) {
+		_, _ = dm.ExecuteWithDegradation(ctx, "cache_test", func(context.Context) ([]prometheus.Metric, error) {
 			return testMetrics, nil
 		})
 
 		// Generate failures to open circuit
 		for i := 0; i < cfg.MaxFailures; i++ {
-			dm.ExecuteWithDegradation(ctx, "cache_test", func(context.Context) ([]prometheus.Metric, error) {
+			_, _ = dm.ExecuteWithDegradation(ctx, "cache_test", func(context.Context) ([]prometheus.Metric, error) {
 				return nil, errors.New("test failure")
 			})
 		}
@@ -252,13 +252,13 @@ func TestDegradationManager(t *testing.T) {
 			),
 		}
 
-		dm2.ExecuteWithDegradation(ctx, "expiry_test", func(context.Context) ([]prometheus.Metric, error) {
+		_, _ = dm2.ExecuteWithDegradation(ctx, "expiry_test", func(context.Context) ([]prometheus.Metric, error) {
 			return testMetrics, nil
 		})
 
 		// Open circuit
 		for i := 0; i < shortCfg.MaxFailures; i++ {
-			dm2.ExecuteWithDegradation(ctx, "expiry_test", func(context.Context) ([]prometheus.Metric, error) {
+			_, _ = dm2.ExecuteWithDegradation(ctx, "expiry_test", func(context.Context) ([]prometheus.Metric, error) {
 				return nil, errors.New("test failure")
 			})
 		}

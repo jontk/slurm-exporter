@@ -66,7 +66,7 @@ func TestConcurrentCollector(t *testing.T) {
 					return nil
 				},
 			}
-			registry.Register(name, collector)
+			_ = registry.Register(name, collector)
 		}
 
 		// Collect all
@@ -103,7 +103,7 @@ func TestConcurrentCollector(t *testing.T) {
 	t.Run("MaxConcurrency", func(t *testing.T) {
 		// Clear registry
 		for _, name := range registry.List() {
-			registry.Unregister(name)
+			_ = registry.Unregister(name)
 		}
 
 		// Create collector with max concurrency of 2
@@ -136,7 +136,7 @@ func TestConcurrentCollector(t *testing.T) {
 					return nil
 				},
 			}
-			registry.Register(name, collector)
+			_ = registry.Register(name, collector)
 		}
 
 		// Collect all
@@ -155,11 +155,11 @@ func TestConcurrentCollector(t *testing.T) {
 	t.Run("ErrorHandling", func(t *testing.T) {
 		// Clear registry
 		for _, name := range registry.List() {
-			registry.Unregister(name)
+			_ = registry.Unregister(name)
 		}
 
 		// Register collectors with different behaviors
-		registry.Register("success", &mockCollector{
+		_ = registry.Register("success", &mockCollector{
 			name:    "success",
 			enabled: true,
 			collectFunc: func(ctx context.Context, ch chan<- prometheus.Metric) error {
@@ -167,7 +167,7 @@ func TestConcurrentCollector(t *testing.T) {
 			},
 		})
 
-		registry.Register("fail", &mockCollector{
+		_ = registry.Register("fail", &mockCollector{
 			name:    "fail",
 			enabled: true,
 			collectFunc: func(ctx context.Context, ch chan<- prometheus.Metric) error {
@@ -203,11 +203,11 @@ func TestConcurrentCollector(t *testing.T) {
 	t.Run("ContextCancellation", func(t *testing.T) {
 		// Clear registry
 		for _, name := range registry.List() {
-			registry.Unregister(name)
+			_ = registry.Unregister(name)
 		}
 
 		// Register slow collector
-		registry.Register("slow", &mockCollector{
+		_ = registry.Register("slow", &mockCollector{
 			name:    "slow",
 			enabled: true,
 			collectFunc: func(ctx context.Context, ch chan<- prometheus.Metric) error {
@@ -237,7 +237,7 @@ func TestConcurrentCollector(t *testing.T) {
 	t.Run("Metrics", func(t *testing.T) {
 		// Clear registry first
 		for _, name := range registry.List() {
-			registry.Unregister(name)
+			_ = registry.Unregister(name)
 		}
 
 		// Wait a bit for any ongoing collections to complete
@@ -248,7 +248,7 @@ func TestConcurrentCollector(t *testing.T) {
 		failedBefore := cc.GetFailedCollections()
 
 		// Register and collect
-		registry.Register("metric_test", &mockCollector{
+		_ = registry.Register("metric_test", &mockCollector{
 			name:    "metric_test",
 			enabled: true,
 			collectFunc: func(ctx context.Context, ch chan<- prometheus.Metric) error {
@@ -257,7 +257,7 @@ func TestConcurrentCollector(t *testing.T) {
 		})
 
 		ctx := context.Background()
-		cc.CollectAll(ctx)
+		_, _ = cc.CollectAll(ctx)
 
 		// Check metrics increased
 		if cc.GetTotalCollections() <= totalBefore {
@@ -322,7 +322,7 @@ func TestCollectionOrchestrator(t *testing.T) {
 				return nil
 			},
 		}
-		registry.Register("immediate", collector)
+		_ = registry.Register("immediate", collector)
 
 		// Collect immediately
 		result, err := orchestrator.CollectNow("immediate")
@@ -361,7 +361,7 @@ func TestCollectionOrchestrator(t *testing.T) {
 				return nil
 			},
 		}
-		registry.Register("scheduled", collector)
+		_ = registry.Register("scheduled", collector)
 
 		// Set short interval
 		orchestrator.SetCollectorInterval("scheduled", 50*time.Millisecond)
@@ -372,20 +372,28 @@ func TestCollectionOrchestrator(t *testing.T) {
 		// Wait for multiple collections
 		time.Sleep(200 * time.Millisecond)
 
-		// Stop orchestrator
-		orchestrator.Stop()
-
-		// Verify collections happened
+		// Verify collections happened before stopping
 		count := atomic.LoadInt32(&collectCount)
 		if count < 2 {
 			t.Errorf("Expected at least 2 collections, got %d", count)
 		}
 
-		// Verify no more collections after stop
-		countAfterStop := atomic.LoadInt32(&collectCount)
+		// Stop orchestrator
+		orchestrator.Stop()
+
+		// Wait for any in-flight collection to complete (interval is 50ms, so wait 100ms)
 		time.Sleep(100 * time.Millisecond)
-		if atomic.LoadInt32(&collectCount) != countAfterStop {
-			t.Error("Collections should stop after Stop()")
+
+		// Record count after in-flight collections complete
+		countAfterStop := atomic.LoadInt32(&collectCount)
+
+		// Wait longer than the interval to verify no new collections start
+		time.Sleep(150 * time.Millisecond)
+
+		// Verify no NEW collections started after stop
+		finalCount := atomic.LoadInt32(&collectCount)
+		if finalCount != countAfterStop {
+			t.Errorf("New collections started after Stop() (had %d after stop wait, now have %d)", countAfterStop, finalCount)
 		}
 	})
 }

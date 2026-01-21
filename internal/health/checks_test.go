@@ -3,6 +3,7 @@ package health
 import (
 	"context"
 	"errors"
+	"os"
 	"testing"
 	"time"
 
@@ -47,7 +48,7 @@ func TestSLURMAPIHealthCheck_Healthy(t *testing.T) {
 	assert.Contains(t, result.Message, "responding normally")
 	assert.Equal(t, "true", result.Metadata["ping_successful"])
 	assert.Equal(t, "true", result.Metadata["info_successful"])
-	
+
 	client.AssertExpectations(t)
 }
 
@@ -61,7 +62,7 @@ func TestSLURMAPIHealthCheck_PingFails(t *testing.T) {
 	assert.Equal(t, StatusUnhealthy, result.Status)
 	assert.Contains(t, result.Error, "ping failed")
 	assert.Contains(t, result.Error, "connection refused")
-	
+
 	client.AssertExpectations(t)
 }
 
@@ -77,7 +78,7 @@ func TestSLURMAPIHealthCheck_InfoFails(t *testing.T) {
 	assert.Contains(t, result.Error, "info call failed")
 	assert.Contains(t, result.Error, "unauthorized")
 	assert.Equal(t, "true", result.Metadata["ping_successful"])
-	
+
 	client.AssertExpectations(t)
 }
 
@@ -222,13 +223,15 @@ func TestMemoryHealthCheck_NoThreshold(t *testing.T) {
 }
 
 func TestDiskHealthCheck_Normal(t *testing.T) {
-	checkFunc := NewDiskHealthCheck("/tmp", 90.0) // 90% threshold
+	// Use OS temp directory which works on all platforms
+	tmpDir := os.TempDir()
+	checkFunc := NewDiskHealthCheck(tmpDir, 90.0) // 90% threshold
 	result := checkFunc(context.Background())
 
-	// Most systems should have /tmp with < 90% usage
+	// Most systems should have temp directory with < 90% usage
 	assert.True(t, result.Status == StatusHealthy || result.Status == StatusDegraded)
 	assert.NotEmpty(t, result.Metadata["used_percent"])
-	assert.Equal(t, "/tmp", result.Metadata["path"])
+	assert.Equal(t, tmpDir, result.Metadata["path"])
 	assert.Equal(t, "90.0", result.Metadata["threshold"])
 }
 
