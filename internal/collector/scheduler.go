@@ -221,22 +221,31 @@ func (s *Scheduler) Stop() {
 	s.stopped = true
 	s.mu.Unlock()
 
-	// Cancel context
+	// Cancel context first - this will signal all goroutines to stop
 	s.cancel()
 
 	// Stop orchestrator
 	s.orchestrator.Stop()
 
-	// Stop all schedules
-	s.mu.Lock()
+	// Collect all timers while holding the lock briefly
+	// This avoids the deadlock with runScheduledCollection which holds
+	// schedule.mu and tries to acquire s.mu.RLock
+	s.mu.RLock()
+	timers := make([]*time.Timer, 0, len(s.schedules))
 	for _, schedule := range s.schedules {
 		schedule.mu.Lock()
 		if schedule.timer != nil {
-			schedule.timer.Stop()
+			timers = append(timers, schedule.timer)
+			schedule.timer = nil
 		}
 		schedule.mu.Unlock()
 	}
-	s.mu.Unlock()
+	s.mu.RUnlock()
+
+	// Stop all timers outside of any locks
+	for _, timer := range timers {
+		timer.Stop()
+	}
 }
 
 // startSchedule starts a collection schedule

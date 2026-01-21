@@ -260,6 +260,7 @@ func TestProfiledCollectorManager(t *testing.T) {
 
 		pc := wrapped.(*ProfiledCollector)
 		err = pc.Collect(context.Background(), ch)
+		close(ch) // Close channel to allow goroutine to exit
 		require.NoError(t, err)
 
 		// Save the profile
