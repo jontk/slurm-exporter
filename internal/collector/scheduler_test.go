@@ -76,7 +76,7 @@ func TestScheduler(t *testing.T) {
 	// Register mock collectors
 	var clusterCount, nodesCount int32
 
-	registry.Register("cluster", &mockCollector{
+	_ = registry.Register("cluster", &mockCollector{
 		name:    "cluster",
 		enabled: true,
 		collectFunc: func(ctx context.Context, ch chan<- prometheus.Metric) error {
@@ -85,7 +85,7 @@ func TestScheduler(t *testing.T) {
 		},
 	})
 
-	registry.Register("nodes", &mockCollector{
+	_ = registry.Register("nodes", &mockCollector{
 		name:    "nodes",
 		enabled: true,
 		collectFunc: func(ctx context.Context, ch chan<- prometheus.Metric) error {
@@ -94,7 +94,7 @@ func TestScheduler(t *testing.T) {
 		},
 	})
 
-	registry.Register("jobs", &mockCollector{
+	_ = registry.Register("jobs", &mockCollector{
 		name:    "jobs",
 		enabled: false,
 		collectFunc: func(ctx context.Context, ch chan<- prometheus.Metric) error {
@@ -187,11 +187,11 @@ func TestScheduler(t *testing.T) {
 		}
 
 		// Register a test collector
-		registry2.Register("cluster", &mockCollector{
+		_ = registry2.Register("cluster", &mockCollector{
 			name:    "cluster",
 			enabled: true,
 		})
-		scheduler2.InitializeSchedules()
+		_ = scheduler2.InitializeSchedules()
 
 		// Update cluster schedule
 		err = scheduler2.UpdateSchedule("cluster", 150*time.Millisecond, 50*time.Millisecond)
@@ -222,11 +222,11 @@ func TestScheduler(t *testing.T) {
 		}
 
 		// Register a test collector
-		registry3.Register("cluster", &mockCollector{
+		_ = registry3.Register("cluster", &mockCollector{
 			name:    "cluster",
 			enabled: true,
 		})
-		scheduler3.InitializeSchedules()
+		_ = scheduler3.InitializeSchedules()
 
 		// Disable cluster schedule
 		err = scheduler3.DisableSchedule("cluster")
@@ -267,11 +267,11 @@ func TestScheduler(t *testing.T) {
 		}
 
 		// Register test collectors
-		registry4.Register("cluster", &mockCollector{
+		_ = registry4.Register("cluster", &mockCollector{
 			name:    "cluster",
 			enabled: true,
 		})
-		scheduler4.InitializeSchedules()
+		_ = scheduler4.InitializeSchedules()
 
 		// Get stats
 		stats := scheduler4.GetScheduleStats()
@@ -335,8 +335,8 @@ func TestSchedulerErrorHandling(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create scheduler: %v", err)
 	}
-	scheduler.InitializeSchedules()
-	scheduler.Start()
+	_ = scheduler.InitializeSchedules()
+	_ = scheduler.Start()
 
 	// Wait for collections - longer wait to ensure multiple collection cycles
 	time.Sleep(200 * time.Millisecond)
@@ -405,7 +405,7 @@ func TestScheduleHealthCheck(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create scheduler: %v", err)
 	}
-	scheduler.InitializeSchedules()
+	_ = scheduler.InitializeSchedules()
 
 	// Manually set NextRun to past
 	schedule := scheduler.schedules["cluster"]

@@ -106,7 +106,7 @@ func TestDegradedCollector(t *testing.T) {
 		// Generate failures to open circuit
 		for i := 0; i < degradationConfig.MaxFailures; i++ {
 			metricChan := make(chan prometheus.Metric, 10)
-			degradedCollector.Collect(ctx, metricChan)
+			_ = degradedCollector.Collect(ctx, metricChan)
 			close(metricChan)
 		}
 
@@ -299,7 +299,7 @@ func TestDegradedRegistry(t *testing.T) {
 			},
 		}
 
-		registry.Register("collect_all_test", mockCollector)
+		_ = registry.Register("collect_all_test", mockCollector)
 
 		// Test collect all
 		ctx := context.Background()

@@ -122,16 +122,18 @@ jobs:
                   return os.environ.get(values[0], values[1] if len(values) > 1 else '')
               return ''
 
-          # Add constructors for MkDocs Python object tags
-          def python_name_constructor(loader, node):
-              return loader.construct_scalar(node)
+          # Add multi-constructors for MkDocs Python object tags (they have suffixes)
+          def python_name_constructor(loader, suffix, node):
+              # Returns the Python function/class name from the tag suffix
+              return suffix
 
-          def python_object_apply_constructor(loader, node):
-              return loader.construct_mapping(node)
+          def python_object_apply_constructor(loader, suffix, node):
+              # For object/apply tags, just return the mapping
+              return loader.construct_mapping(node, deep=True)
 
           yaml.SafeLoader.add_constructor('!ENV', env_constructor)
-          yaml.SafeLoader.add_constructor('tag:yaml.org,2002:python/name', python_name_constructor)
-          yaml.SafeLoader.add_constructor('tag:yaml.org,2002:python/object/apply', python_object_apply_constructor)
+          yaml.SafeLoader.add_multi_constructor('tag:yaml.org,2002:python/name:', python_name_constructor)
+          yaml.SafeLoader.add_multi_constructor('tag:yaml.org,2002:python/object/apply:', python_object_apply_constructor)
 
           with open('mkdocs.yml', 'r') as f:
               config = yaml.safe_load(f)

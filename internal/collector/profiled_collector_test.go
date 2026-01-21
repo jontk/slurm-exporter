@@ -265,7 +265,7 @@ func TestProfiledCollectorManager(t *testing.T) {
 		// Save the profile
 		op := profiler.StartOperation("profile_test")
 		op.Stop()
-		op.Save()
+		_ = op.Save()
 
 		// Get profiles
 		profiles, err := pcm.GetCollectorProfiles("profile_test")
