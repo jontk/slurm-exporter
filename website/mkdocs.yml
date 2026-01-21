@@ -111,6 +111,7 @@ plugins:
   - git-committers:
       repository: jontk/slurm-exporter
       branch: main
+      token: !ENV [MKDOCS_GIT_COMMITTERS_APIKEY, ""]
   - social:
       cards_layout_options:
         background_color: "#673ab7"
@@ -121,7 +122,7 @@ extra:
     default: latest
   analytics:
     provider: google
-    property: !ENV GOOGLE_ANALYTICS_KEY
+    property: !ENV [GOOGLE_ANALYTICS_KEY, ""]
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/jontk/slurm-exporter

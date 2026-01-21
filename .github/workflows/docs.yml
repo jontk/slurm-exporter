@@ -59,6 +59,8 @@ jobs:
         continue-on-error: true
 
       - name: Build documentation
+        env:
+          MKDOCS_GIT_COMMITTERS_APIKEY: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd website
           mkdocs build --strict
@@ -99,6 +101,8 @@ jobs:
           pip install -r website/requirements.txt
 
       - name: Validate documentation
+        env:
+          MKDOCS_GIT_COMMITTERS_APIKEY: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd website
           # Check for broken links
@@ -107,6 +111,28 @@ jobs:
           # Check for missing pages
           python -c "
           import yaml
+          import os
+
+          # Add constructor for !ENV tag to handle environment variables
+          def env_constructor(loader, node):
+              if isinstance(node, yaml.ScalarNode):
+                  return os.environ.get(loader.construct_scalar(node), '')
+              elif isinstance(node, yaml.SequenceNode):
+                  values = loader.construct_sequence(node)
+                  return os.environ.get(values[0], values[1] if len(values) > 1 else '')
+              return ''
+
+          # Add constructors for MkDocs Python object tags
+          def python_name_constructor(loader, node):
+              return loader.construct_scalar(node)
+
+          def python_object_apply_constructor(loader, node):
+              return loader.construct_mapping(node)
+
+          yaml.SafeLoader.add_constructor('!ENV', env_constructor)
+          yaml.SafeLoader.add_constructor('tag:yaml.org,2002:python/name', python_name_constructor)
+          yaml.SafeLoader.add_constructor('tag:yaml.org,2002:python/object/apply', python_object_apply_constructor)
+
           with open('mkdocs.yml', 'r') as f:
               config = yaml.safe_load(f)
           
