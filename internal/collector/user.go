@@ -195,7 +195,7 @@ func (uc *UserCollector) collectUserStats(ctx context.Context, ch chan<- prometh
 		}
 	}
 
-	uc.LogCollection("Collected statistics for %d users", len(userStats))
+	uc.LogCollectionf("Collected statistics for %d users", len(userStats))
 	return nil
 }
 
@@ -364,7 +364,7 @@ func (uc *UserCollector) collectAccountStats(ctx context.Context, ch chan<- prom
 		}
 	}
 
-	uc.LogCollection("Collected statistics for %d accounts", len(accountStats))
+	uc.LogCollectionf("Collected statistics for %d accounts", len(accountStats))
 	return nil
 }
 

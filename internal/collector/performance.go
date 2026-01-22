@@ -174,7 +174,7 @@ func (pc *PerformanceCollector) collectThroughputMetrics(ctx context.Context, ch
 		))
 	}
 
-	pc.LogCollection("Collected throughput metrics for %d data points", len(throughputData))
+	pc.LogCollectionf("Collected throughput metrics for %d data points", len(throughputData))
 	return nil
 }
 
@@ -294,7 +294,7 @@ func (pc *PerformanceCollector) collectEfficiencyMetrics(ctx context.Context, ch
 		))
 	}
 
-	pc.LogCollection("Collected efficiency metrics for %d efficiency points and %d resource points",
+	pc.LogCollectionf("Collected efficiency metrics for %d efficiency points and %d resource points",
 		len(efficiencyData), len(resourceData))
 	return nil
 }
@@ -400,7 +400,7 @@ func (pc *PerformanceCollector) collectQueueMetrics(ctx context.Context, ch chan
 		))
 	}
 
-	pc.LogCollection("Collected queue analysis for %d partitions", len(queueData))
+	pc.LogCollectionf("Collected queue analysis for %d partitions", len(queueData))
 	return nil
 }
 

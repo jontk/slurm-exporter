@@ -245,8 +245,8 @@ func (b *BaseCollector) WrapError(err error, format string, args ...interface{})
 	return fmt.Errorf("collector %s: %s: %w", b.name, msg, err)
 }
 
-// LogCollection logs collection events
-func (b *BaseCollector) LogCollection(format string, args ...interface{}) {
+// LogCollectionf logs collection events with printf-style formatting
+func (b *BaseCollector) LogCollectionf(format string, args ...interface{}) {
 	b.logger.Debugf(format, args...)
 }
 

@@ -133,7 +133,7 @@ func (cc *ClusterCollector) collectClusterInfo(ctx context.Context, ch chan<- pr
 		clusterInfo["controller_host"],
 	))
 
-	cc.LogCollection("Collected cluster info: version=%s", clusterInfo["version"])
+	cc.LogCollectionf("Collected cluster info: version=%s", clusterInfo["version"])
 	return nil
 }
 
@@ -245,7 +245,7 @@ func (cc *ClusterCollector) collectNodeSummary(ctx context.Context, ch chan<- pr
 		))
 	}
 
-	cc.LogCollection("Collected node summary: %d total nodes, %.1f%% CPU utilization",
+	cc.LogCollectionf("Collected node summary: %d total nodes, %.1f%% CPU utilization",
 		nodeData.TotalNodes, cpuUtilization*100)
 
 	return nil
@@ -291,7 +291,7 @@ func (cc *ClusterCollector) collectJobSummary(ctx context.Context, ch chan<- pro
 		totalJobs += count
 	}
 
-	cc.LogCollection("Collected job summary: %d total jobs, %d unique users", totalJobs, uniqueUsers)
+	cc.LogCollectionf("Collected job summary: %d total jobs, %d unique users", totalJobs, uniqueUsers)
 	return nil
 }
 
@@ -308,7 +308,7 @@ func (cc *ClusterCollector) collectPartitionSummary(ctx context.Context, ch chan
 		cc.clusterName,
 	))
 
-	cc.LogCollection("Collected partition summary: %d partitions", partitionCount)
+	cc.LogCollectionf("Collected partition summary: %d partitions", partitionCount)
 	return nil
 }
 
