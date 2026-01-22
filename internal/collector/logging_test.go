@@ -257,7 +257,7 @@ func TestCollectorLogger(t *testing.T) {
 			"success":     true,
 		}
 
-		collectorLogger.LogCollectionf("test_collector", "collect", fields)
+		collectorLogger.LogCollection("test_collector", "collect", fields)
 
 		entries := hook.AllEntries()
 		if len(entries) != 1 {
