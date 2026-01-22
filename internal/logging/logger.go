@@ -57,7 +57,7 @@ func NewLogger(cfg *config.LoggingConfig) (*Logger, error) {
 		})
 	case "text":
 		logger.SetFormatter(&logrus.TextFormatter{
-			TimestampFormat: "2006-01-02 15:04:05",
+			TimestampFormat: time.DateTime,
 			FullTimestamp:   true,
 		})
 	default:

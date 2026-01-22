@@ -175,7 +175,7 @@ func PerformanceTest(t *testing.T) {
 
 			metricCount := 0
 			for _, family := range families {
-				metricCount += len(family.Metric)
+				metricCount += len(family.GetMetric())
 			}
 
 			results.RequestDurations[i] = duration

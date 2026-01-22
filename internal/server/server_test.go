@@ -133,7 +133,7 @@ func TestHealthEndpoint(t *testing.T) {
 		t.Fatalf("Failed to create server: %v", err)
 	}
 
-	req := httptest.NewRequest("GET", "/health", nil)
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	w := httptest.NewRecorder()
 
 	server.handleHealth(w, req)
@@ -174,7 +174,7 @@ func TestReadyEndpoint(t *testing.T) {
 			t.Fatalf("Failed to create server: %v", err)
 		}
 
-		req := httptest.NewRequest("GET", "/ready", nil)
+		req := httptest.NewRequest(http.MethodGet, "/ready", nil)
 		w := httptest.NewRecorder()
 
 		server.handleReady(w, req)
@@ -209,7 +209,7 @@ func TestReadyEndpoint(t *testing.T) {
 			t.Fatalf("Failed to create server: %v", err)
 		}
 
-		req := httptest.NewRequest("GET", "/ready", nil)
+		req := httptest.NewRequest(http.MethodGet, "/ready", nil)
 		w := httptest.NewRecorder()
 
 		server.handleReady(w, req)
@@ -238,7 +238,7 @@ func TestReadyEndpoint(t *testing.T) {
 			t.Fatalf("Failed to create server: %v", err)
 		}
 
-		req := httptest.NewRequest("GET", "/ready", nil)
+		req := httptest.NewRequest(http.MethodGet, "/ready", nil)
 		w := httptest.NewRecorder()
 
 		server.handleReady(w, req)
@@ -264,7 +264,7 @@ func TestRootEndpoint(t *testing.T) {
 		t.Fatalf("Failed to create server: %v", err)
 	}
 
-	req := httptest.NewRequest("GET", "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	w := httptest.NewRecorder()
 
 	server.handleRoot(w, req)
@@ -326,7 +326,7 @@ func TestMetricsEndpoint(t *testing.T) {
 			t.Fatalf("Failed to register test metric: %v", err)
 		}
 
-		req := httptest.NewRequest("GET", "/metrics", nil)
+		req := httptest.NewRequest(http.MethodGet, "/metrics", nil)
 		w := httptest.NewRecorder()
 
 		handler := server.createMetricsHandler()
@@ -365,7 +365,7 @@ func TestMetricsEndpoint(t *testing.T) {
 			t.Fatalf("Failed to create server: %v", err)
 		}
 
-		req := httptest.NewRequest("GET", "/metrics", nil)
+		req := httptest.NewRequest(http.MethodGet, "/metrics", nil)
 		w := httptest.NewRecorder()
 
 		handler := server.createMetricsHandler()
@@ -387,7 +387,7 @@ func TestMetricsEndpoint(t *testing.T) {
 			t.Fatalf("Failed to create server: %v", err)
 		}
 
-		req := httptest.NewRequest("GET", "/metrics", nil)
+		req := httptest.NewRequest(http.MethodGet, "/metrics", nil)
 		w := httptest.NewRecorder()
 
 		handler := server.createMetricsHandler()

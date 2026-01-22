@@ -297,7 +297,7 @@ func (s *SecurityTestSuite) TestRateLimiting() {
 
 			for i := 0; i < requestCount; i++ {
 				resp := s.makeRequest("GET", endpoint, nil, nil)
-				if resp.StatusCode == 200 {
+				if resp.StatusCode == http.StatusOK {
 					successCount++
 				}
 
@@ -424,7 +424,7 @@ func (s *SecurityTestSuite) createTestHandler() http.Handler {
 	// Add test routes
 	mux.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(200)
+		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("# Test metrics\ntest_metric 1\n"))
 	})
 
@@ -432,13 +432,13 @@ func (s *SecurityTestSuite) createTestHandler() http.Handler {
 		// Simulate authentication requirement
 		auth := r.Header.Get("Authorization")
 		if auth != "Bearer valid-token" {
-			w.WriteHeader(401)
+			w.WriteHeader(http.StatusUnauthorized)
 			_, _ = w.Write([]byte("Unauthorized"))
 			return
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(200)
+		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte(`{"status": "ok"}`))
 	})
 
@@ -455,8 +455,8 @@ func (s *SecurityTestSuite) addSecurityMiddleware(handler http.Handler) http.Han
 		w.Header().Set("Content-Security-Policy", "default-src 'self'")
 
 		// Block TRACE method
-		if r.Method == "TRACE" {
-			w.WriteHeader(405)
+		if r.Method == http.MethodTrace {
+			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
 

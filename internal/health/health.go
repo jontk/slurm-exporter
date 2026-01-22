@@ -328,7 +328,7 @@ func CollectorHealthCheck(collectorName string, lastCollection time.Time, maxAge
 // MetricsEndpointCheck creates a health check for the metrics endpoint
 func MetricsEndpointCheck(metricsURL string, client *http.Client) CheckFunc {
 	return func(ctx context.Context) Check {
-		req, err := http.NewRequestWithContext(ctx, "GET", metricsURL, nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, metricsURL, nil)
 		if err != nil {
 			return Check{
 				Status: StatusUnhealthy,

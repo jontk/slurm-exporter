@@ -264,7 +264,6 @@ func TestJobCollectorUtilities(t *testing.T) {
 			}
 		}
 	})
-
 }
 
 func TestJobCollectorIntegration(t *testing.T) {

@@ -47,7 +47,6 @@ func NewExampleCollectorManager(
 	slurmClient ExampleSLURMClient,
 	logger *logrus.Logger,
 ) (*ExampleCollectorManager, error) {
-
 	// Create adaptive scheduler
 	scheduler, err := NewCollectorScheduler(cfg, 30*time.Second, logger)
 	if err != nil {

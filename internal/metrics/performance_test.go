@@ -72,7 +72,7 @@ func TestPerformanceMetrics(t *testing.T) {
 	// Check that we have some expected metrics
 	metricNames := make(map[string]bool)
 	for _, family := range families {
-		metricNames[*family.Name] = true
+		metricNames[family.GetName()] = true
 	}
 
 	// Verify key metrics exist

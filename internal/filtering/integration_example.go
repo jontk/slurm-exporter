@@ -39,7 +39,6 @@ func NewFilteredCollectorManager(
 	filterCfg config.SmartFilteringConfig,
 	logger *logrus.Logger,
 ) (*FilteredCollectorManager, error) {
-
 	// Create smart filter
 	filter, err := NewSmartFilter(filterCfg, logger)
 	if err != nil {
@@ -221,7 +220,7 @@ func (fcm *FilteredCollectorManager) runFilteredCollector(collector *FilteredCol
 func (fcm *FilteredCollectorManager) countMetrics(families []*dto.MetricFamily) int {
 	count := 0
 	for _, family := range families {
-		count += len(family.Metric)
+		count += len(family.GetMetric())
 	}
 	return count
 }
@@ -501,10 +500,10 @@ func AdvancedFilteringExample() {
 		rawCount := 0
 		filteredCount := 0
 		for _, family := range metrics {
-			rawCount += len(family.Metric)
+			rawCount += len(family.GetMetric())
 		}
 		for _, family := range filtered {
-			filteredCount += len(family.Metric)
+			filteredCount += len(family.GetMetric())
 		}
 
 		filterRate := 0.0
