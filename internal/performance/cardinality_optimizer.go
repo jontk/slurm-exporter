@@ -310,13 +310,13 @@ func (co *CardinalityOptimizer) SetSampleRate(rate float64) {
 }
 
 // SetMaxCardinality updates the maximum cardinality limit
-func (co *CardinalityOptimizer) SetMaxCardinality(max int) {
+func (co *CardinalityOptimizer) SetMaxCardinality(maxLimit int) {
 	co.mu.Lock()
 	defer co.mu.Unlock()
 
-	co.maxCardinality = max
+	co.maxCardinality = maxLimit
 
-	co.logger.WithField("max_cardinality", max).Info("Updated maximum cardinality")
+	co.logger.WithField("max_cardinality", maxLimit).Info("Updated maximum cardinality")
 }
 
 // Describe implements prometheus.Collector

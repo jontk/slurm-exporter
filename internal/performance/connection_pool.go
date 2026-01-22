@@ -386,16 +386,16 @@ func (cp *ConnectionPool) Stats() PoolStats {
 }
 
 // SetPoolSize adjusts the pool size limits
-func (cp *ConnectionPool) SetPoolSize(min, max int) {
+func (cp *ConnectionPool) SetPoolSize(minSize, maxSize int) {
 	cp.mu.Lock()
 	defer cp.mu.Unlock()
 
-	cp.minConnections = min
-	cp.maxConnections = max
+	cp.minConnections = minSize
+	cp.maxConnections = maxSize
 
 	cp.logger.WithFields(logrus.Fields{
-		"min_connections": min,
-		"max_connections": max,
+		"min_connections": minSize,
+		"max_connections": maxSize,
 	}).Info("Updated pool size")
 }
 

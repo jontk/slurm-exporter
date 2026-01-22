@@ -123,8 +123,8 @@ func TestConcurrentCollector(t *testing.T) {
 
 					// Update max if needed
 					for {
-						max := atomic.LoadInt32(&maxConcurrent)
-						if current <= max || atomic.CompareAndSwapInt32(&maxConcurrent, max, current) {
+						maxVal := atomic.LoadInt32(&maxConcurrent)
+						if current <= maxVal || atomic.CompareAndSwapInt32(&maxConcurrent, maxVal, current) {
 							break
 						}
 					}
