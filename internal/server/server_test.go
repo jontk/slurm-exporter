@@ -316,6 +316,7 @@ func TestMetricsEndpoint(t *testing.T) {
 		}
 
 		// Register a test metric
+		//nolint:promlinter // Test metric name is intentionally simple
 		gauge := prometheus.NewGauge(prometheus.GaugeOpts{
 			Name: "test_gauge",
 			Help: "A test gauge",
@@ -486,6 +487,7 @@ func TestServerConfiguration(t *testing.T) {
 		}
 
 		// Test registering and unregistering a collector
+		//nolint:promlinter // Test metric name is intentionally simple
 		gauge := prometheus.NewGauge(prometheus.GaugeOpts{
 			Name: "test_registry_gauge",
 			Help: "A test gauge for registry testing",

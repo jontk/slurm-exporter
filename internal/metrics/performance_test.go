@@ -110,7 +110,7 @@ func TestCardinalityTracker(t *testing.T) {
 
 	// Register some test metrics
 	testCounter := prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "test_counter",
+		Name: "test_counter_total",
 		Help: "A test counter",
 	})
 	registry.MustRegister(testCounter)
