@@ -1005,9 +1005,9 @@ func NewMetricDefinitions(namespace, subsystem string, constLabels prometheus.La
 	}
 }
 
-// Register registers all metrics with the given registry
-func (md *MetricDefinitions) Register(registry *prometheus.Registry) error {
-	metrics := []prometheus.Collector{
+// allMetrics returns all metrics as a slice
+func (md *MetricDefinitions) allMetrics() []prometheus.Collector {
+	return []prometheus.Collector{
 		// Cluster metrics
 		md.ClusterInfo,
 		md.ClusterCapacityCPUs,
@@ -1101,8 +1101,11 @@ func (md *MetricDefinitions) Register(registry *prometheus.Registry) error {
 		md.CacheHits,
 		md.CacheMisses,
 	}
+}
 
-	for _, metric := range metrics {
+// Register registers all metrics with the given registry
+func (md *MetricDefinitions) Register(registry *prometheus.Registry) error {
+	for _, metric := range md.allMetrics() {
 		if err := registry.Register(metric); err != nil {
 			return err
 		}
@@ -1113,102 +1116,7 @@ func (md *MetricDefinitions) Register(registry *prometheus.Registry) error {
 
 // Unregister unregisters all metrics from the given registry
 func (md *MetricDefinitions) Unregister(registry *prometheus.Registry) {
-	metrics := []prometheus.Collector{
-		// Cluster metrics
-		md.ClusterInfo,
-		md.ClusterCapacityCPUs,
-		md.ClusterCapacityMemory,
-		md.ClusterCapacityNodes,
-		md.ClusterAllocatedCPUs,
-		md.ClusterAllocatedMemory,
-		md.ClusterAllocatedNodes,
-		md.ClusterUtilizationCPUs,
-		md.ClusterUtilizationMemory,
-		md.ClusterUtilizationNodes,
-		md.ClusterNodeStates,
-		md.ClusterPartitionCount,
-		md.ClusterJobCount,
-		md.ClusterUserCount,
-
-		// Node metrics
-		md.NodeInfo,
-		md.NodeCPUs,
-		md.NodeMemory,
-		md.NodeState,
-		md.NodeAllocatedCPUs,
-		md.NodeAllocatedMemory,
-		md.NodeLoad,
-		md.NodeUptime,
-		md.NodeLastHeartbeat,
-		md.NodeFeatures,
-		md.NodeGPUs,
-		md.NodeWeight,
-
-		// Job metrics
-		md.JobInfo,
-		md.JobStates,
-		md.JobQueueTime,
-		md.JobRunTime,
-		md.JobWaitTime,
-		md.JobCPURequested,
-		md.JobMemoryRequested,
-		md.JobNodesRequested,
-		md.JobCPUAllocated,
-		md.JobMemoryAllocated,
-		md.JobNodesAllocated,
-		md.JobPriority,
-		md.JobStartTime,
-		md.JobEndTime,
-		md.JobExitCode,
-
-		// User and account metrics
-		md.UserJobCount,
-		md.UserCPUAllocated,
-		md.UserMemoryAllocated,
-		md.UserJobStates,
-		md.AccountInfo,
-		md.AccountJobCount,
-		md.AccountCPUAllocated,
-		md.AccountMemoryAllocated,
-		md.AccountFairShare,
-		md.AccountUsage,
-
-		// Partition metrics
-		md.PartitionInfo,
-		md.PartitionNodes,
-		md.PartitionCPUs,
-		md.PartitionMemory,
-		md.PartitionState,
-		md.PartitionJobCount,
-		md.PartitionAllocatedCPUs,
-		md.PartitionAllocatedMemory,
-		md.PartitionUtilization,
-		md.PartitionMaxTime,
-		md.PartitionDefaultTime,
-		md.PartitionPriority,
-
-		// Performance metrics
-		md.SystemThroughput,
-		md.SystemEfficiency,
-		md.QueueWaitTime,
-		md.QueueDepth,
-		md.ResourceUtilization,
-		md.JobTurnover,
-
-		// Exporter metrics
-		md.CollectionDuration,
-		md.CollectionErrors,
-		md.CollectionSuccess,
-		md.CollectorUp,
-		md.LastCollectionTime,
-		md.MetricsExported,
-		md.APICallDuration,
-		md.APICallErrors,
-		md.CacheHits,
-		md.CacheMisses,
-	}
-
-	for _, metric := range metrics {
+	for _, metric := range md.allMetrics() {
 		registry.Unregister(metric)
 	}
 }

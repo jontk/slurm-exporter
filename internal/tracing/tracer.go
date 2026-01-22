@@ -186,7 +186,6 @@ func (ct *CollectionTracer) TraceAPICall(ctx context.Context, endpoint, method s
 	}
 
 	spanName := fmt.Sprintf("api.%s", endpoint)
-	//nolint:spancheck // Cleanup function ensures span.End() is called by caller
 	ctx, span := ct.tracer.Start(ctx, spanName,
 		trace.WithAttributes(
 			attribute.String("api.endpoint", endpoint),
@@ -197,6 +196,7 @@ func (ct *CollectionTracer) TraceAPICall(ctx context.Context, endpoint, method s
 
 	startTime := time.Now()
 
+	//nolint:spancheck // Cleanup function ensures span.End() is called by caller
 	return ctx, func(err error) {
 		duration := time.Since(startTime)
 		span.SetAttributes(

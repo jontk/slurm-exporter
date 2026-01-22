@@ -45,6 +45,7 @@ func (dg *DocumentationGenerator) GenerateAll() error {
 		content := gen.content()
 		filePath := filepath.Join(dg.outputDir, gen.filename)
 
+		//nolint:gosec // Documentation files need to be world-readable for web servers
 		if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
 			return fmt.Errorf("failed to write %s: %w", gen.filename, err)
 		}
@@ -452,6 +453,7 @@ serviceMonitor:
 	}
 
 	for path, content := range files {
+		//nolint:gosec // Helm chart files need to be world-readable for deployment tools
 		if err := os.WriteFile(path, []byte(content), 0644); err != nil {
 			return fmt.Errorf("failed to write %s: %w", path, err)
 		}

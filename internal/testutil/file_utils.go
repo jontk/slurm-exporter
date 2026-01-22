@@ -7,7 +7,7 @@ import (
 
 // WriteFile writes data to a file
 func WriteFile(filename string, data []byte) error {
-	return os.WriteFile(filename, data, 0644)
+	return os.WriteFile(filename, data, 0600)
 }
 
 // RemoveFile removes a file
