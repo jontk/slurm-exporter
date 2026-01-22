@@ -81,23 +81,7 @@ jobs:
           else
             echo "✅ No static analysis issues found" >> $GITHUB_STEP_SUMMARY
             # Create valid empty SARIF file
-            cat > staticcheck-results.sarif <<'EOF'
-{
-  "version": "2.1.0",
-  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
-  "runs": [
-    {
-      "tool": {
-        "driver": {
-          "name": "staticcheck",
-          "informationUri": "https://staticcheck.io/"
-        }
-      },
-      "results": []
-    }
-  ]
-}
-EOF
+            printf '%s\n' '{"version":"2.1.0","$schema":"https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json","runs":[{"tool":{"driver":{"name":"staticcheck","informationUri":"https://staticcheck.io/"}},"results":[]}]}' > staticcheck-results.sarif
           fi
 
       - name: Upload StaticCheck results
