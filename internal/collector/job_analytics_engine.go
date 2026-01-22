@@ -2053,8 +2053,6 @@ func (e *JobAnalyticsEngine) calculateWasteImpact(job *slurm.Job, wasteScore flo
 
 // calculateCostOfWaste calculates the monetary cost of waste
 func (e *JobAnalyticsEngine) calculateCostOfWaste(job *slurm.Job, wasteScore float64, categories map[string]*WasteCategory) float64 {
-	totalCost := 0.0
-
 	// Base cost calculation
 	cpuCost := float64(job.CPUs) * 0.10             // $0.10 per CPU-hour
 	memoryCost := float64(job.Memory) / 1024 * 0.02 // $0.02 per GB-hour
@@ -2065,7 +2063,7 @@ func (e *JobAnalyticsEngine) calculateCostOfWaste(job *slurm.Job, wasteScore flo
 	}
 
 	baseCost := (cpuCost + memoryCost) * wallTime
-	totalCost = baseCost * wasteScore
+	totalCost := baseCost * wasteScore
 
 	return totalCost
 }

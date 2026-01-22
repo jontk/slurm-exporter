@@ -179,13 +179,14 @@ func (ct *CollectionTracer) TraceCollection(ctx context.Context, collector strin
 }
 
 // TraceAPICall creates a span for an API call
+// The caller MUST call the returned cleanup function to end the span
 func (ct *CollectionTracer) TraceAPICall(ctx context.Context, endpoint, method string) (context.Context, func(error)) {
 	if !ct.enabled || ct.tracer == nil {
 		return ctx, func(error) {}
 	}
 
 	spanName := fmt.Sprintf("api.%s", endpoint)
-	ctx, span := ct.tracer.Start(ctx, spanName,
+	ctx, span := ct.tracer.Start(ctx, spanName, //nolint:spancheck // Cleanup function ensures span.End() is called by caller
 		trace.WithAttributes(
 			attribute.String("api.endpoint", endpoint),
 			attribute.String("api.method", method),
@@ -402,11 +403,14 @@ func (ct *CollectionTracer) TracingMiddleware(handler func(ctx context.Context))
 }
 
 // CreateChildSpan creates a child span with the given name and attributes
+// CreateChildSpan creates a child span with the given name and attributes
+// The caller MUST call span.End() when the operation is complete
 func (ct *CollectionTracer) CreateChildSpan(ctx context.Context, name string, attributes ...attribute.KeyValue) (context.Context, trace.Span) {
 	if !ct.enabled || ct.tracer == nil {
 		return ctx, trace.SpanFromContext(ctx)
 	}
 
+	//nolint:spancheck // Caller is responsible for calling span.End()
 	return ct.tracer.Start(ctx, name, trace.WithAttributes(attributes...))
 }
 

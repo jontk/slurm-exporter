@@ -74,7 +74,7 @@ func (lh *LabelHelper) ValidateAndBuildMetric(
 }
 
 // BuildMetricWithValidation is a convenience method that extends BaseCollector.BuildMetric with validation
-func (bc *BaseCollector) BuildMetricWithValidation(
+func (b *BaseCollector) BuildMetricWithValidation(
 	desc *prometheus.Desc,
 	valueType prometheus.ValueType,
 	value float64,
@@ -82,7 +82,7 @@ func (bc *BaseCollector) BuildMetricWithValidation(
 ) prometheus.Metric {
 	// For now, use the existing BuildMetric method
 	// In a full implementation, we would extract label names from desc and validate
-	return bc.BuildMetric(desc, valueType, value, labelValues...)
+	return b.BuildMetric(desc, valueType, value, labelValues...)
 }
 
 // GetLabelNames extracts label names from a Prometheus descriptor
