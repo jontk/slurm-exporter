@@ -230,11 +230,6 @@ linters:
         text: 'Function .collectStreamingMetrics'
       - linters:
           - gocognit
-          - gocyclo
-        path: internal/collector/jobs_simple\.go
-        text: '(cognitive|cyclomatic) complexity.*collect'
-      - linters:
-          - gocognit
         path: internal/collector/access_validation\.go
         text: 'cognitive complexity.*collectRiskAssessmentMetrics'
       - linters:
@@ -243,10 +238,6 @@ linters:
           - gocyclo
         path: internal/collector/registry\.go
         text: '(Function .CreateCollectorsFromConfig|(cognitive|cyclomatic) complexity.*CreateCollectorsFromConfig)'
-      - linters:
-          - funlen
-        path: internal/collector/jobs_simple\.go
-        text: 'Function .collect. is too long'
       # Deep nesting - will be reduced through refactoring in Phase 5
       - linters:
           - nestif
