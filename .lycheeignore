@@ -5,6 +5,8 @@
 # Will be enabled when repository goes public
 https://github.com/jontk/slurm-exporter/discussions
 https://github.com/jontk/slurm-exporter/docs
+https://github.com/jontk/slurm-exporter/security/advisories
+https://github.com/jontk/slurm-exporter/security/advisories.atom
 https://github.com/orgs/jontk/teams/maintainers
 https://jontk.github.io/slurm-exporter
 
