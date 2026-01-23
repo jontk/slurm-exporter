@@ -219,12 +219,11 @@ linters:
         path: internal/config/config\.go
         text: 'Function .Default.'
       # job.collectActiveJobs and cluster_health_streaming.collectStreamingMetrics refactored in Phase 5
-      # Phase 5: Remaining complexity after tightening thresholds
-      # These are candidates for future refactoring but acceptable for now
+      # Phase 5: Functions close to threshold - candidates for refactoring
       - linters:
           - funlen
         path: internal/collector/
-        text: 'Function .(collectStreamingMetrics|resetAllMetrics|collectAllMetrics|collectPartitionInfo|collectSecurityEvents|ReconfigureCollectors)'
+        text: 'Function .(collectStreamingMetrics|collectPartitionInfo|resetAllMetrics|collectAllMetrics|collectSecurityEvents|ReconfigureCollectors)'
       # collectAccountStats refactored in Phase 5
       - linters:
           - funlen
@@ -239,7 +238,7 @@ linters:
           - funlen
           - gocognit
         path: internal/config/
-        text: '(has too many statements|cognitive complexity.*(applySLURMEnvOverrides|validateSecurity))'
+        text: '(applySLURMEnvOverrides|validateSecurity)'
       - linters:
           - nestif
         path: internal/
