@@ -1528,6 +1528,72 @@ func (c *AccessValidationCollector) collectSecurityAlertMetrics() {
 	c.lastCollectionTime.WithLabelValues("security_alerts").Set(float64(time.Now().Unix()))
 }
 
+// countVulnerabilitiesBySeverity groups vulnerabilities by severity level
+func countVulnerabilitiesBySeverity(vulnerabilities []Vulnerability) map[string]int {
+	counts := make(map[string]int)
+	for _, vuln := range vulnerabilities {
+		counts[vuln.Severity]++
+	}
+	return counts
+}
+
+// countThreatsByTypeAndStatus groups threats by type and status
+func countThreatsByTypeAndStatus(threats []Threat) map[string]map[string]int {
+	counts := make(map[string]map[string]int)
+	for _, threat := range threats {
+		if counts[threat.Type] == nil {
+			counts[threat.Type] = make(map[string]int)
+		}
+		counts[threat.Type][threat.Status]++
+	}
+	return counts
+}
+
+// countMitigationsByTypeAndStatus groups mitigations by type and status
+func countMitigationsByTypeAndStatus(mitigations []Mitigation) map[string]map[string]int {
+	counts := make(map[string]map[string]int)
+	for _, mitigation := range mitigations {
+		if counts[mitigation.Type] == nil {
+			counts[mitigation.Type] = make(map[string]int)
+		}
+		counts[mitigation.Type][mitigation.Status]++
+	}
+	return counts
+}
+
+// collectEntityRiskMetrics collects all risk-related metrics for a single entity
+func (c *AccessValidationCollector) collectEntityRiskMetrics(entityType, entityID string, risk *RiskAssessment) {
+	// Overall risk score
+	c.overallRisk.WithLabelValues(entityType, entityID).Set(risk.OverallRisk)
+
+	// Individual risk factors
+	for factor, score := range risk.RiskFactors {
+		c.riskFactors.WithLabelValues(entityType, entityID, factor).Set(score)
+	}
+
+	// Vulnerabilities by severity
+	vulnCounts := countVulnerabilitiesBySeverity(risk.Vulnerabilities)
+	for severity, count := range vulnCounts {
+		c.vulnerabilities.WithLabelValues(severity).Set(float64(count))
+	}
+
+	// Threats by type and status
+	threatCounts := countThreatsByTypeAndStatus(risk.Threats)
+	for threatType, statusCounts := range threatCounts {
+		for status, count := range statusCounts {
+			c.threats.WithLabelValues(threatType, status).Set(float64(count))
+		}
+	}
+
+	// Mitigations by type and status
+	mitigationCounts := countMitigationsByTypeAndStatus(risk.Mitigations)
+	for mitigationType, statusCounts := range mitigationCounts {
+		for status, count := range statusCounts {
+			c.mitigations.WithLabelValues(mitigationType, status).Set(float64(count))
+		}
+	}
+}
+
 func (c *AccessValidationCollector) collectRiskAssessmentMetrics() {
 	ctx := context.Background()
 	start := time.Now()
@@ -1550,50 +1616,7 @@ func (c *AccessValidationCollector) collectRiskAssessmentMetrics() {
 		}
 
 		if risk != nil {
-			// Overall risk score
-			c.overallRisk.WithLabelValues(entity.entityType, entity.entityID).Set(risk.OverallRisk)
-
-			// Individual risk factors
-			for factor, score := range risk.RiskFactors {
-				c.riskFactors.WithLabelValues(entity.entityType, entity.entityID, factor).Set(score)
-			}
-
-			// Count vulnerabilities by severity
-			vulnCount := make(map[string]int)
-			for _, vuln := range risk.Vulnerabilities {
-				vulnCount[vuln.Severity]++
-			}
-			for severity, count := range vulnCount {
-				c.vulnerabilities.WithLabelValues(severity).Set(float64(count))
-			}
-
-			// Count threats
-			threatCount := make(map[string]map[string]int)
-			for _, threat := range risk.Threats {
-				if threatCount[threat.Type] == nil {
-					threatCount[threat.Type] = make(map[string]int)
-				}
-				threatCount[threat.Type][threat.Status]++
-			}
-			for threatType, statusCounts := range threatCount {
-				for status, count := range statusCounts {
-					c.threats.WithLabelValues(threatType, status).Set(float64(count))
-				}
-			}
-
-			// Count mitigations
-			mitigationCount := make(map[string]map[string]int)
-			for _, mitigation := range risk.Mitigations {
-				if mitigationCount[mitigation.Type] == nil {
-					mitigationCount[mitigation.Type] = make(map[string]int)
-				}
-				mitigationCount[mitigation.Type][mitigation.Status]++
-			}
-			for mitigationType, statusCounts := range mitigationCount {
-				for status, count := range statusCounts {
-					c.mitigations.WithLabelValues(mitigationType, status).Set(float64(count))
-				}
-			}
+			c.collectEntityRiskMetrics(entity.entityType, entity.entityID, risk)
 		}
 	}
 

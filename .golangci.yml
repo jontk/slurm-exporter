@@ -228,10 +228,6 @@ linters:
           - funlen
         path: internal/collector/cluster_health_streaming\.go
         text: 'Function .collectStreamingMetrics'
-      - linters:
-          - gocognit
-        path: internal/collector/access_validation\.go
-        text: 'cognitive complexity.*collectRiskAssessmentMetrics'
       # Deep nesting - will be reduced through refactoring in Phase 5
       - linters:
           - nestif
