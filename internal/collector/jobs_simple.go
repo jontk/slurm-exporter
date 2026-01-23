@@ -237,6 +237,59 @@ func (c *JobsSimpleCollector) Collect(ctx context.Context, ch chan<- prometheus.
 }
 
 // collect gathers metrics from SLURM
+// jobContext holds extracted job information for metric collection
+type jobContext struct {
+	jobID     string
+	jobName   string
+	userName  string
+	partition string
+	jobState  string
+}
+
+// extractJobContext extracts and normalizes job fields with safe defaults
+func extractJobContext(job slurm.Job) jobContext {
+	ctx := jobContext{
+		jobID:     job.ID,
+		jobName:   job.Name,
+		userName:  job.UserID,
+		partition: job.Partition,
+		jobState:  job.State,
+	}
+
+	// Apply safe defaults
+	if ctx.jobName == "" {
+		ctx.jobName = "unknown"
+	}
+	if ctx.userName == "" {
+		ctx.userName = "unknown"
+	}
+	if ctx.partition == "" {
+		ctx.partition = "unknown"
+	}
+	if ctx.jobState == "" {
+		ctx.jobState = "UNKNOWN"
+	}
+
+	return ctx
+}
+
+// createJobLabels creates a labels map for cardinality checking
+func (ctx *jobContext) createJobLabels() map[string]string {
+	return map[string]string{
+		"job_id":    ctx.jobID,
+		"job_name":  ctx.jobName,
+		"user":      ctx.userName,
+		"partition": ctx.partition,
+	}
+}
+
+// createStateLabels creates a labels map including state
+func (ctx *jobContext) createStateLabels() map[string]string {
+	labels := ctx.createJobLabels()
+	labels["state"] = ctx.jobState
+	return labels
+}
+
 func (c *JobsSimpleCollector) collect(ch chan<- prometheus.Metric) error {
 	ctx := context.Background()
 
@@ -258,186 +311,183 @@ func (c *JobsSimpleCollector) collect(ch chan<- prometheus.Metric) error {
 	now := time.Now()
 
 	for _, job := range jobList.Jobs {
-		// Convert job ID to string
-		jobID := job.ID
-
-		// Get job details with safe defaults
-		jobName := job.Name
-		if jobName == "" {
-			jobName = "unknown"
-		}
-
-		userName := job.UserID
-		if userName == "" {
-			userName = "unknown"
-		}
-
-		partition := "unknown"
-		if job.Partition != "" {
-			partition = job.Partition
-		}
-
-		jobState := "UNKNOWN"
-		if job.State != "" {
-			jobState = job.State
-		}
-
-		// Job state metric
-		stateValue := 0.0
-		if isJobActive(jobState) {
-			stateValue = 1.0
-		}
-
-		// Create labels map for cardinality checking
-		stateLabels := map[string]string{
-			"job_id":    jobID,
-			"job_name":  jobName,
-			"user":      userName,
-			"partition": partition,
-			"state":     jobState,
-		}
-
-		if c.shouldCollectMetric("slurm_job_state", MetricTypeGauge, false, false) &&
-			c.shouldCollectWithCardinality("slurm_job_state", stateLabels) {
-			ch <- prometheus.MustNewConstMetric(
-				c.jobStates,
-				prometheus.GaugeValue,
-				stateValue,
-				jobID, jobName, userName, partition, jobState,
-			)
-		}
-
-		// Queue time (if job has started)
-		if job.StartTime != nil && !job.StartTime.IsZero() && !job.SubmitTime.IsZero() {
-			queueTime := job.StartTime.Sub(job.SubmitTime).Seconds()
-			// Only record positive queue times (sanity check)
-			if queueTime >= 0 {
-				timeLabels := map[string]string{
-					"job_id":    jobID,
-					"job_name":  jobName,
-					"user":      userName,
-					"partition": partition,
-				}
-				if c.shouldCollectMetric("slurm_job_queue_time_seconds", MetricTypeGauge, true, false) &&
-					c.shouldCollectWithCardinality("slurm_job_queue_time_seconds", timeLabels) {
-					ch <- prometheus.MustNewConstMetric(
-						c.jobQueueTime,
-						prometheus.GaugeValue,
-						queueTime,
-						jobID, jobName, userName, partition,
-					)
-				}
-			}
-		}
-
-		// Run time (if job is running)
-		if job.StartTime != nil && !job.StartTime.IsZero() && isJobActive(jobState) {
-			runTime := now.Sub(*job.StartTime).Seconds()
-			// Only record positive run times
-			if runTime >= 0 {
-				runLabels := map[string]string{
-					"job_id":    jobID,
-					"job_name":  jobName,
-					"user":      userName,
-					"partition": partition,
-				}
-				if c.shouldCollectMetric("slurm_job_run_time_seconds", MetricTypeGauge, true, false) &&
-					c.shouldCollectWithCardinality("slurm_job_run_time_seconds", runLabels) {
-					ch <- prometheus.MustNewConstMetric(
-						c.jobRunTime,
-						prometheus.GaugeValue,
-						runTime,
-						jobID, jobName, userName, partition,
-					)
-				}
-			}
-		}
-
-		// Resource metrics - use safe defaults
-		cpus := float64(0)
-		if job.CPUs > 0 && job.CPUs < 10000 { // Sanity check for reasonable CPU count
-			cpus = float64(job.CPUs)
-		} else if job.CPUs >= 10000 {
-			c.logger.WithFields(map[string]interface{}{
-				"job_id": jobID,
-				"cpus":   job.CPUs,
-			}).Warn("Unusually high CPU count detected, using 0")
-		}
-		resourceLabels := map[string]string{
-			"job_id":    jobID,
-			"job_name":  jobName,
-			"user":      userName,
-			"partition": partition,
-		}
-		if c.shouldCollectMetric("slurm_job_cpus", MetricTypeGauge, false, true) &&
-			c.shouldCollectWithCardinality("slurm_job_cpus", resourceLabels) {
-			ch <- prometheus.MustNewConstMetric(
-				c.jobCPUs,
-				prometheus.GaugeValue,
-				cpus,
-				jobID, jobName, userName, partition,
-			)
-		}
-
-		// Memory in bytes (from job.Memory field if available)
-		memoryBytes := float64(0)
-		if job.Memory > 0 && job.Memory < 1000000 { // Sanity check: < 1TB
-			memoryBytes = float64(job.Memory * 1024 * 1024) // Convert MB to bytes
-		}
-		if c.shouldCollectMetric("slurm_job_memory_bytes", MetricTypeGauge, false, true) &&
-			c.shouldCollectWithCardinality("slurm_job_memory_bytes", resourceLabels) {
-			ch <- prometheus.MustNewConstMetric(
-				c.jobMemory,
-				prometheus.GaugeValue,
-				memoryBytes,
-				jobID, jobName, userName, partition,
-			)
-		}
-
-		// Nodes (calculate from available data)
-		nodes := float64(1) // Default for single-node jobs
-		if len(job.Nodes) > 0 {
-			nodes = float64(len(job.Nodes))
-		}
-		if c.shouldCollectMetric("slurm_job_nodes", MetricTypeGauge, false, true) &&
-			c.shouldCollectWithCardinality("slurm_job_nodes", resourceLabels) {
-			ch <- prometheus.MustNewConstMetric(
-				c.jobNodes,
-				prometheus.GaugeValue,
-				nodes,
-				jobID, jobName, userName, partition,
-			)
-		}
-
-		// Job info
-		// These fields don't exist in interfaces.Job, use defaults
-		account := "default"
-		qos := "normal"
-
-		infoLabels := map[string]string{
-			"job_id":    jobID,
-			"job_name":  jobName,
-			"user":      userName,
-			"account":   account,
-			"partition": partition,
-			"qos":       qos,
-			"state":     jobState,
-		}
-		if c.shouldCollectMetric("slurm_job_info", MetricTypeInfo, false, false) &&
-			c.shouldCollectWithCardinality("slurm_job_info", infoLabels) {
-			ch <- prometheus.MustNewConstMetric(
-				c.jobInfo,
-				prometheus.GaugeValue,
-				1,
-				jobID, jobName, userName, account, partition, qos, jobState,
-			)
-		}
+		jobCtx := extractJobContext(job)
+		c.collectJobMetrics(ch, job, jobCtx, now)
 	}
 
 	return nil
 }
 
-// isJobActive returns true if the job is in an active state
+// collectJobMetrics collects all metrics for a single job
+func (c *JobsSimpleCollector) collectJobMetrics(ch chan<- prometheus.Metric, job slurm.Job, ctx jobContext, now time.Time) {
+	c.collectJobState(ch, ctx)
+	c.collectQueueTime(ch, job, ctx)
+	c.collectRunTime(ch, job, ctx, now)
+	c.collectResourceMetrics(ch, job, ctx)
+	c.collectJobInfo(ch, ctx)
+}
+
+// collectJobState collects job state metric
+func (c *JobsSimpleCollector) collectJobState(ch chan<- prometheus.Metric, ctx jobContext) {
+	stateValue := 0.0
+	if isJobActive(ctx.jobState) {
+		stateValue = 1.0
+	}
+
+	if c.shouldCollectMetric("slurm_job_state", MetricTypeGauge, false, false) &&
+		c.shouldCollectWithCardinality("slurm_job_state", ctx.createStateLabels()) {
+		ch <- prometheus.MustNewConstMetric(
+			c.jobStates,
+			prometheus.GaugeValue,
+			stateValue,
+			ctx.jobID, ctx.jobName, ctx.userName, ctx.partition, ctx.jobState,
+		)
+	}
+}
+
+// collectQueueTime collects queue time metric if applicable
+func (c *JobsSimpleCollector) collectQueueTime(ch chan<- prometheus.Metric, job slurm.Job, ctx jobContext) {
+	if job.StartTime == nil || job.StartTime.IsZero() || job.SubmitTime.IsZero() {
+		return
+	}
+
+	queueTime := job.StartTime.Sub(job.SubmitTime).Seconds()
+	if queueTime < 0 {
+		return // Skip negative queue times
+	}
+
+	if c.shouldCollectMetric("slurm_job_queue_time_seconds", MetricTypeGauge, true, false) &&
+		c.shouldCollectWithCardinality("slurm_job_queue_time_seconds", ctx.createJobLabels()) {
+		ch <- prometheus.MustNewConstMetric(
+			c.jobQueueTime,
+			prometheus.GaugeValue,
+			queueTime,
+			ctx.jobID, ctx.jobName, ctx.userName, ctx.partition,
+		)
+	}
+}
+
+// collectRunTime collects run time metric if job is active
+func (c *JobsSimpleCollector) collectRunTime(ch chan<- prometheus.Metric, job slurm.Job, ctx jobContext, now time.Time) {
+	if job.StartTime == nil || job.StartTime.IsZero() || !isJobActive(ctx.jobState) {
+		return
+	}
+
+	runTime := now.Sub(*job.StartTime).Seconds()
+	if runTime < 0 {
+		return // Skip negative run times
+	}
+
+	if c.shouldCollectMetric("slurm_job_run_time_seconds", MetricTypeGauge, true, false) &&
+		c.shouldCollectWithCardinality("slurm_job_run_time_seconds", ctx.createJobLabels()) {
+		ch <- prometheus.MustNewConstMetric(
+			c.jobRunTime,
+			prometheus.GaugeValue,
+			runTime,
+			ctx.jobID, ctx.jobName, ctx.userName, ctx.partition,
+		)
+	}
+}
+
+// collectResourceMetrics collects CPU, memory, and node metrics
+func (c *JobsSimpleCollector) collectResourceMetrics(ch chan<- prometheus.Metric, job slurm.Job, ctx jobContext) {
+	labels := ctx.createJobLabels()
+
+	// CPU count
+	cpus := c.sanitizeCPUCount(job.CPUs, ctx.jobID)
+	if c.shouldCollectMetric("slurm_job_cpus", MetricTypeGauge, false, true) &&
+		c.shouldCollectWithCardinality("slurm_job_cpus", labels) {
+		ch <- prometheus.MustNewConstMetric(
+			c.jobCPUs,
+			prometheus.GaugeValue,
+			float64(cpus),
+			ctx.jobID, ctx.jobName, ctx.userName, ctx.partition,
+		)
+	}
+
+	// Memory in bytes
+	memoryBytes := c.sanitizeMemory(job.Memory)
+	if c.shouldCollectMetric("slurm_job_memory_bytes", MetricTypeGauge, false, true) &&
+		c.shouldCollectWithCardinality("slurm_job_memory_bytes", labels) {
+		ch <- prometheus.MustNewConstMetric(
+			c.jobMemory,
+			prometheus.GaugeValue,
+			float64(memoryBytes),
+			ctx.jobID, ctx.jobName, ctx.userName, ctx.partition,
+		)
+	}
+
+	// Node count
+	nodes := c.calculateNodeCount(job.Nodes)
+	if c.shouldCollectMetric("slurm_job_nodes", MetricTypeGauge, false, true) &&
+		c.shouldCollectWithCardinality("slurm_job_nodes", labels) {
+		ch <- prometheus.MustNewConstMetric(
+			c.jobNodes,
+			prometheus.GaugeValue,
+			float64(nodes),
+			ctx.jobID, ctx.jobName, ctx.userName, ctx.partition,
+		)
+	}
+}
+
+// sanitizeCPUCount validates and sanitizes CPU count
+func (c *JobsSimpleCollector) sanitizeCPUCount(cpus int, jobID string) int {
+	if cpus <= 0 {
+		return 0
+	}
+	if cpus >= 10000 {
+		c.logger.WithFields(map[string]interface{}{
+			"job_id": jobID,
+			"cpus":   cpus,
+		}).Warn("Unusually high CPU count detected, using 0")
+		return 0
+	}
+	return cpus
+}
+
+// sanitizeMemory validates and converts memory from MB to bytes
+func (c *JobsSimpleCollector) sanitizeMemory(memoryMB int) int64 {
+	if memoryMB <= 0 || memoryMB >= 1000000 { // < 1TB sanity check
+		return 0
+	}
+	return int64(memoryMB) * 1024 * 1024
+}
+
+// calculateNodeCount determines node count from job node list
+func (c *JobsSimpleCollector) calculateNodeCount(nodes []string) int {
+	if len(nodes) == 0 {
+		return 1 // Default for single-node jobs
+	}
+	return len(nodes)
+}
+
+// collectJobInfo collects job info metric
+func (c *JobsSimpleCollector) collectJobInfo(ch chan<- prometheus.Metric, ctx jobContext) {
+	// These fields don't exist in interfaces.Job, use defaults
+	account := "default"
+	qos := "normal"
+
+	infoLabels := map[string]string{
+		"job_id":    ctx.jobID,
+		"job_name":  ctx.jobName,
+		"user":      ctx.userName,
+		"account":   account,
+		"partition": ctx.partition,
+		"qos":       qos,
+		"state":     ctx.jobState,
+	}
+
+	if c.shouldCollectMetric("slurm_job_info", MetricTypeGauge, false, false) &&
+		c.shouldCollectWithCardinality("slurm_job_info", infoLabels) {
+		ch <- prometheus.MustNewConstMetric(
+			c.jobInfo,
+			prometheus.GaugeValue,
+			1.0, // Info metric always has value 1
+			ctx.jobID, ctx.jobName, ctx.userName, account, ctx.partition, qos, ctx.jobState,
+		)
+	}
+}
+
 func isJobActive(state string) bool {
 	state = strings.ToUpper(state)
 	switch state {
