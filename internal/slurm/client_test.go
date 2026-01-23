@@ -310,3 +310,185 @@ func TestClientRateLimiting(t *testing.T) {
 		t.Errorf("Rate limiting not working properly, elapsed time: %v", elapsed)
 	}
 }
+
+// TestClientGettersAndSetters tests simple getter/setter methods
+func TestClientGettersAndSetters(t *testing.T) {
+	cfg := &config.SLURMConfig{
+		BaseURL:       "https://example.com:6820",
+		APIVersion:    "v0.0.42",
+		Timeout:       2 * time.Second,
+		RetryAttempts: 0,
+		RetryDelay:    1 * time.Second,
+		Auth: config.AuthConfig{
+			Type: "none",
+		},
+		RateLimit: config.RateLimitConfig{
+			RequestsPerSecond: 10.0,
+			BurstSize:         20,
+		},
+	}
+
+	client, err := NewClient(cfg)
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	defer func() { _ = client.Close() }()
+
+	// Test IsConnected
+	// Note: Connection might fail in test environment, but method should work
+	_ = client.IsConnected()
+
+	// Test GetLastError
+	// Note: Error might be present from failed connection test
+	_ = client.GetLastError()
+
+	// Test GetRetryCount and ResetRetryCount
+	initialCount := client.GetRetryCount()
+	if initialCount < 0 {
+		t.Errorf("GetRetryCount() = %d, should be non-negative", initialCount)
+	}
+
+	client.ResetRetryCount()
+	if client.GetRetryCount() != 0 {
+		t.Errorf("GetRetryCount() after reset = %d, want 0", client.GetRetryCount())
+	}
+
+	// Test GetSlurmClient
+	slurmClient := client.GetSlurmClient()
+	if slurmClient == nil {
+		t.Error("GetSlurmClient() returned nil")
+	}
+}
+
+// TestConnectionPoolRoundRobin tests connection pool round-robin behavior without network
+func TestConnectionPoolRoundRobin(t *testing.T) {
+	cfg := &config.SLURMConfig{
+		BaseURL:       "https://example.com:6820",
+		APIVersion:    "v0.0.42",
+		Timeout:       2 * time.Second,
+		RetryAttempts: 0,
+		RetryDelay:    1 * time.Second,
+		Auth: config.AuthConfig{
+			Type: "none",
+		},
+		RateLimit: config.RateLimitConfig{
+			RequestsPerSecond: 10.0,
+			BurstSize:         20,
+		},
+	}
+
+	pool, err := NewConnectionPool(cfg, 3)
+	if err != nil {
+		t.Fatalf("NewConnectionPool() error = %v", err)
+	}
+
+	if len(pool.clients) != 3 {
+		t.Errorf("Pool size = %d, want 3", len(pool.clients))
+	}
+
+	// Test round-robin behavior
+	clients := make([]*Client, 6)
+	for i := 0; i < 6; i++ {
+		clients[i] = pool.GetClient()
+		if clients[i] == nil {
+			t.Errorf("GetClient() %d returned nil", i)
+		}
+	}
+
+	// Verify round-robin: clients should repeat in order
+	if clients[0] != clients[3] {
+		t.Error("Pool should return first client again after 3 calls")
+	}
+	if clients[1] != clients[4] {
+		t.Error("Pool should return second client again after 3 calls")
+	}
+	if clients[2] != clients[5] {
+		t.Error("Pool should return third client again after 3 calls")
+	}
+}
+
+// TestConnectionPoolDefaultSize tests default pool size
+func TestConnectionPoolDefaultSize(t *testing.T) {
+	cfg := &config.SLURMConfig{
+		BaseURL:       "https://example.com:6820",
+		APIVersion:    "v0.0.42",
+		Timeout:       2 * time.Second,
+		RetryAttempts: 0,
+		RetryDelay:    1 * time.Second,
+		Auth: config.AuthConfig{
+			Type: "none",
+		},
+		RateLimit: config.RateLimitConfig{
+			RequestsPerSecond: 10.0,
+			BurstSize:         20,
+		},
+	}
+
+	tests := []struct {
+		name         string
+		poolSize     int
+		expectedSize int
+	}{
+		{
+			name:         "zero pool size uses default",
+			poolSize:     0,
+			expectedSize: 5,
+		},
+		{
+			name:         "negative pool size uses default",
+			poolSize:     -5,
+			expectedSize: 5,
+		},
+		{
+			name:         "explicit size",
+			poolSize:     10,
+			expectedSize: 10,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pool, err := NewConnectionPool(cfg, tt.poolSize)
+			if err != nil {
+				t.Fatalf("NewConnectionPool() error = %v", err)
+			}
+
+			if len(pool.clients) != tt.expectedSize {
+				t.Errorf("Pool size = %d, want %d", len(pool.clients), tt.expectedSize)
+			}
+		})
+	}
+}
+
+// TestClientClose tests the Close method
+func TestClientClose(t *testing.T) {
+	cfg := &config.SLURMConfig{
+		BaseURL:       "https://example.com:6820",
+		APIVersion:    "v0.0.42",
+		Timeout:       2 * time.Second,
+		RetryAttempts: 0,
+		RetryDelay:    1 * time.Second,
+		Auth: config.AuthConfig{
+			Type: "none",
+		},
+		RateLimit: config.RateLimitConfig{
+			RequestsPerSecond: 10.0,
+			BurstSize:         20,
+		},
+	}
+
+	client, err := NewClient(cfg)
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+
+	err = client.Close()
+	if err != nil {
+		t.Errorf("Close() error = %v", err)
+	}
+
+	// After close, connection should be marked as disconnected
+	if client.IsConnected() {
+		t.Error("Client should be disconnected after Close()")
+	}
+}
