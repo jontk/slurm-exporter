@@ -368,18 +368,21 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
-      
+      uses: actions/checkout@v6
+
     - name: Setup Go
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@v6
       with:
         go-version: ${{ env.GO_VERSION }}
-        
+        cache: true
+
     - name: Run golangci-lint
-      uses: golangci/golangci-lint-action@v3
+      uses: golangci/golangci-lint-action@v9
       with:
         version: latest
-        args: --timeout=5m
+        args: --timeout=5m --max-issues-per-linter=0 --max-same-issues=0
+      env:
+        NODE_OPTIONS: "--max-old-space-size=8192"
         
     - name: Run gofmt check
       run: |
