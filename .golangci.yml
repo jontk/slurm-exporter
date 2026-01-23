@@ -203,6 +203,45 @@ linters:
           - staticcheck
         path: _test\.go
         text: do not pass a nil Context
+      # Prometheus naming - intentional use of non-base time units for better UX
+      # Users prefer _hours, _days, _minutes over converting to _seconds
+      - linters:
+          - promlinter
+        path: ^internal/collector/
+        text: 'use base unit "seconds" instead of'
+      # Prometheus naming - intentional use of abbreviated units
+      # GB/MB are more readable than bytes for storage/memory metrics
+      - linters:
+          - promlinter
+        path: ^internal/collector/
+        text: 'metric names should not contain abbreviated units'
+      # Prometheus naming - _count suffix used intentionally for gauge metrics
+      # These represent current counts, not histogram/summary observations
+      - linters:
+          - promlinter
+        path: ^internal/collector/
+        text: 'non-histogram and non-summary metrics should not have "_count" suffix'
+      # Prometheus naming - _total suffix used intentionally for gauge metrics
+      # These represent total capacity/allocation, not monotonic counters
+      - linters:
+          - promlinter
+        path: ^internal/collector/
+        text: 'non-counter metrics should not have "_total" suffix'
+      # Prometheus naming - metric names include type for clarity
+      - linters:
+          - promlinter
+        path: ^internal/collector/
+        text: 'metric name should not include type'
+      # Performance and cardinality metrics - intentional naming
+      - linters:
+          - promlinter
+        path: ^internal/(performance|metrics)/
+        text: 'non-counter metrics should not have "_total" suffix'
+      # Spancheck - TraceAPICall returns cleanup function that calls span.End()
+      - linters:
+          - spancheck
+        path: internal/tracing/tracer\.go
+        text: 'return can be reached without calling span.End'
     paths:
       - .*\.pb\.go$
       - .*\.gen\.go$

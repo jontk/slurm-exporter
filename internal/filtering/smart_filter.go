@@ -112,8 +112,8 @@ func NewSmartFilter(cfg config.SmartFilteringConfig, logger *logrus.Logger) (*Sm
 	metrics := &FilterMetrics{
 		patternsLearned: prometheus.NewGaugeVec(
 			prometheus.GaugeOpts{
-				Name: "slurm_exporter_filter_patterns_learned_total",
-				Help: "Total number of metric patterns learned",
+				Name: "slurm_exporter_filter_patterns_learned",
+				Help: "Number of metric patterns learned",
 			},
 			[]string{"action"},
 		),

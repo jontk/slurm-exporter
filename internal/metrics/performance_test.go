@@ -109,6 +109,7 @@ func TestCardinalityTracker(t *testing.T) {
 	metrics := NewPerformanceMetrics("test")
 
 	// Register some test metrics
+	//nolint:promlinter // Test metric name is intentionally simple
 	testCounter := prometheus.NewCounter(prometheus.CounterOpts{
 		Name: "test_counter_total",
 		Help: "A test counter",

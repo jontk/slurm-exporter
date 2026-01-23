@@ -110,7 +110,7 @@ func (cm *CardinalityManager) createCardinalityMetrics() *CardinalityMetrics {
 	return &CardinalityMetrics{
 		SeriesCount: prometheus.NewGaugeVec(
 			prometheus.GaugeOpts{
-				Name: "slurm_exporter_cardinality_series_count",
+				Name: "slurm_exporter_cardinality_series",
 				Help: "Current number of metric series per metric name",
 			},
 			[]string{"metric_name"},
