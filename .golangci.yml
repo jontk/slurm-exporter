@@ -242,11 +242,7 @@ linters:
           - funlen
         path: internal/metrics/docgen\.go
         text: 'Function .GenerateHelmChart'
-      - linters:
-          - funlen
-          - gocognit
-        path: internal/collector/(accounts_simple|associations_simple)\.go
-        text: '(has too many statements|cognitive complexity.*collect)'
+      # accounts_simple and associations_simple refactored in Phase 5
       - linters:
           - funlen
           - gocognit
