@@ -218,21 +218,13 @@ linters:
           - funlen
         path: internal/config/config\.go
         text: 'Function .Default.'
-      # job.collectActiveJobs and cluster_health_streaming.collectStreamingMetrics refactored in Phase 5
-      # Phase 5: Functions close to threshold - candidates for refactoring
+      # job.collectActiveJobs, cluster_health_streaming.collectStreamingMetrics, collectAccountStats,
+      # collectPartitionInfo, handleGetProfile, handleDebugPerformance, GenerateHelmChart refactored in Phase 5
+      # Phase 5: Remaining functions close to threshold - candidates for future refactoring
       - linters:
           - funlen
         path: internal/collector/
-        text: 'Function .(collectStreamingMetrics|collectPartitionInfo|resetAllMetrics|collectAllMetrics|collectSecurityEvents|ReconfigureCollectors)'
-      # collectAccountStats refactored in Phase 5
-      - linters:
-          - funlen
-        path: internal/server/
-        text: 'Function .(handleGetProfile|handleDebugPerformance)'
-      - linters:
-          - funlen
-        path: internal/metrics/docgen\.go
-        text: 'Function .GenerateHelmChart'
+        text: 'Function .(collectStreamingMetrics|resetAllMetrics|collectAllMetrics|collectSecurityEvents|ReconfigureCollectors)'
       # accounts_simple and associations_simple refactored in Phase 5
       - linters:
           - funlen
