@@ -141,6 +141,7 @@ type ServiceAccountAuth struct {
 // NewServiceAccountAuth creates a new service account authentication provider
 func NewServiceAccountAuth(tokenPath string) *ServiceAccountAuth {
 	if tokenPath == "" {
+		//nolint:gosec // This is the standard Kubernetes service account token path, not a hardcoded credential
 		tokenPath = "/var/run/secrets/kubernetes.io/serviceaccount/token"
 	}
 	return &ServiceAccountAuth{

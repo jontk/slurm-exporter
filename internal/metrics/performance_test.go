@@ -72,7 +72,7 @@ func TestPerformanceMetrics(t *testing.T) {
 	// Check that we have some expected metrics
 	metricNames := make(map[string]bool)
 	for _, family := range families {
-		metricNames[*family.Name] = true
+		metricNames[family.GetName()] = true
 	}
 
 	// Verify key metrics exist
@@ -109,8 +109,9 @@ func TestCardinalityTracker(t *testing.T) {
 	metrics := NewPerformanceMetrics("test")
 
 	// Register some test metrics
+	//nolint:promlinter // Test metric name is intentionally simple
 	testCounter := prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "test_counter",
+		Name: "test_counter_total",
 		Help: "A test counter",
 	})
 	registry.MustRegister(testCounter)

@@ -36,13 +36,13 @@ type ProfileStorage interface {
 
 // ProfileMetadata represents profile metadata
 type ProfileMetadata struct {
-	ID            string
-	CollectorName string
-	StartTime     time.Time
-	EndTime       time.Time
-	Duration      time.Duration
-	Size          int64
-	Metadata      map[string]interface{}
+	ID            string                 `json:"id"`
+	CollectorName string                 `json:"collector_name"`
+	StartTime     time.Time              `json:"start_time"`
+	EndTime       time.Time              `json:"end_time"`
+	Duration      time.Duration          `json:"duration"`
+	Size          int64                  `json:"size"`
+	Metadata      map[string]interface{} `json:"metadata"`
 }
 
 // FileProfileStorage stores profiles in the filesystem

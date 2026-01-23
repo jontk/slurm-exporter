@@ -60,20 +60,20 @@ func GetMetricValue(collector prometheus.Collector, metricName string, labels pr
 
 		// Check labels
 		labelMatch := true
-		for _, labelPair := range dto.Label {
-			expectedValue, exists := labels[*labelPair.Name]
-			if exists && *labelPair.Value != expectedValue {
+		for _, labelPair := range dto.GetLabel() {
+			expectedValue, exists := labels[labelPair.GetName()]
+			if exists && labelPair.GetValue() != expectedValue {
 				labelMatch = false
 				break
 			}
 		}
 
 		if labelMatch {
-			if dto.Gauge != nil {
-				return *dto.Gauge.Value, nil
+			if dto.GetGauge() != nil {
+				return dto.GetGauge().GetValue(), nil
 			}
-			if dto.Counter != nil {
-				return *dto.Counter.Value, nil
+			if dto.GetCounter() != nil {
+				return dto.GetCounter().GetValue(), nil
 			}
 		}
 	}

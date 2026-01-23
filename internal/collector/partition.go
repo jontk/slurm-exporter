@@ -240,7 +240,7 @@ func (pc *PartitionCollector) collectPartitionInfo(ctx context.Context, ch chan<
 		}
 	}
 
-	pc.LogCollection("Collected info for %d partitions", len(partitions))
+	pc.LogCollectionf("Collected info for %d partitions", len(partitions))
 	return nil
 }
 
@@ -369,7 +369,7 @@ func (pc *PartitionCollector) collectPartitionUtilization(ctx context.Context, c
 		}
 	}
 
-	pc.LogCollection("Collected utilization for %d partitions", len(partitionUtilization))
+	pc.LogCollectionf("Collected utilization for %d partitions", len(partitionUtilization))
 	return nil
 }
 
@@ -473,7 +473,7 @@ func (pc *PartitionCollector) collectPartitionPolicies(ctx context.Context, ch c
 		))
 	}
 
-	pc.LogCollection("Collected policies for %d partitions", len(partitionPolicies))
+	pc.LogCollectionf("Collected policies for %d partitions", len(partitionPolicies))
 	return nil
 }
 

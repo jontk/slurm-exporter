@@ -336,7 +336,7 @@ func TestCardinalityManager(t *testing.T) {
 		// Look for at least one of our cardinality metrics
 		foundCardinalityMetric := false
 		for _, mf := range gathering {
-			if strings.Contains(*mf.Name, "cardinality") {
+			if strings.Contains(mf.GetName(), "cardinality") {
 				foundCardinalityMetric = true
 				break
 			}

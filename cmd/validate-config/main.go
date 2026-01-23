@@ -32,7 +32,9 @@ func main() {
 				"valid":  false,
 				"errors": []string{err.Error()},
 			}
-			_ = json.NewEncoder(os.Stdout).Encode(output)
+			if encErr := json.NewEncoder(os.Stdout).Encode(output); encErr != nil {
+				fmt.Fprintf(os.Stderr, "Failed to encode JSON output: %v\n", encErr)
+			}
 		} else {
 			fmt.Fprintf(os.Stderr, "❌ Configuration validation failed:\n%s\n", err.Error())
 		}
@@ -47,7 +49,10 @@ func main() {
 			"strict_mode": *strict,
 			"message":     "Configuration validation passed",
 		}
-		_ = json.NewEncoder(os.Stdout).Encode(output)
+		if encErr := json.NewEncoder(os.Stdout).Encode(output); encErr != nil {
+			fmt.Fprintf(os.Stderr, "Failed to encode JSON output: %v\n", encErr)
+			os.Exit(1)
+		}
 	} else {
 		fmt.Printf("✅ Configuration validation passed!\n")
 		fmt.Printf("📄 Config file: %s\n", *configFile)

@@ -2,6 +2,7 @@ package collector
 
 import (
 	"context"
+	"strconv"
 	"strings"
 	"time"
 
@@ -1058,9 +1059,10 @@ func (c *EventAggregationCorrelationCollector) collectActiveCorrelations(correla
 	c.activeCorrelations.Reset()
 
 	for _, corr := range correlations {
-		c.activeCorrelations.WithLabelValues(corr.CorrelationType, string(rune(corr.AnalysisDepth)), corr.Status).Set(1.0)
+		depthStr := strconv.Itoa(int(corr.AnalysisDepth))
+		c.activeCorrelations.WithLabelValues(corr.CorrelationType, depthStr, corr.Status).Set(1.0)
 		c.correlationConfidence.WithLabelValues(corr.CorrelationType, "analysis").Set(corr.ConfidenceScore)
-		c.correlationComplexity.WithLabelValues(corr.CorrelationType, string(rune(corr.AnalysisDepth))).Set(float64(corr.AnalysisDepth))
+		c.correlationComplexity.WithLabelValues(corr.CorrelationType, depthStr).Set(float64(corr.AnalysisDepth))
 	}
 }
 

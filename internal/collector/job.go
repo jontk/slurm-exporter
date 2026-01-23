@@ -386,7 +386,7 @@ func (jc *JobCollector) collectActiveJobs(ctx context.Context, ch chan<- prometh
 		}
 	}
 
-	jc.LogCollection("Collected metrics for %d active jobs", len(activeJobs))
+	jc.LogCollectionf("Collected metrics for %d active jobs", len(activeJobs))
 	return nil
 }
 
@@ -430,7 +430,7 @@ func (jc *JobCollector) collectJobQueueStats(ctx context.Context, ch chan<- prom
 		).Observe(stat.WaitTime)
 	}
 
-	jc.LogCollection("Collected queue statistics for %d partition/account combinations", len(queueStats))
+	jc.LogCollectionf("Collected queue statistics for %d partition/account combinations", len(queueStats))
 	return nil
 }
 
@@ -456,7 +456,7 @@ func (jc *JobCollector) collectJobStatesSummary(ctx context.Context, ch chan<- p
 		))
 	}
 
-	jc.LogCollection("Collected job states summary: %d states", len(jobStates))
+	jc.LogCollectionf("Collected job states summary: %d states", len(jobStates))
 	return nil
 }
 

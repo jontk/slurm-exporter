@@ -211,7 +211,7 @@ func (suite *RockyClusterTestSuite) TestMetricsEndpoint() {
 	totalMetrics := 0
 	slurmMetrics := 0
 	for name, family := range metricFamilies {
-		for range family.Metric {
+		for range family.GetMetric() {
 			totalMetrics++
 			if strings.HasPrefix(name, "slurm_") {
 				slurmMetrics++
@@ -268,11 +268,11 @@ func (suite *RockyClusterTestSuite) TestCollectorMetrics() {
 				require.True(suite.T(), exists, "Required metric %s not found", metric.name)
 			}
 			if exists {
-				assert.Equal(suite.T(), metric.metricType, *family.Type, "Wrong metric type for %s", metric.name)
-				assert.NotEmpty(suite.T(), family.Metric, "No samples for metric %s", metric.name)
+				assert.Equal(suite.T(), metric.metricType, family.GetType(), "Wrong metric type for %s", metric.name)
+				assert.NotEmpty(suite.T(), family.GetMetric(), "No samples for metric %s", metric.name)
 
 				// Count samples
-				collectorStats[metric.name] = len(family.Metric)
+				collectorStats[metric.name] = len(family.GetMetric())
 			}
 		})
 	}
@@ -356,9 +356,9 @@ func (suite *RockyClusterTestSuite) TestSLURMConnectivity() {
 
 	// Check controller status
 	if controllerFamily, exists := metricFamilies["slurm_controller_up"]; exists {
-		require.NotEmpty(suite.T(), controllerFamily.Metric, "No controller status metrics")
+		require.NotEmpty(suite.T(), controllerFamily.GetMetric(), "No controller status metrics")
 
-		controllerUp := controllerFamily.Metric[0].GetGauge().GetValue()
+		controllerUp := controllerFamily.GetMetric()[0].GetGauge().GetValue()
 		assert.Equal(suite.T(), float64(1), controllerUp, "SLURM controller is down")
 
 		suite.collectedStats["slurm_controller_up"] = controllerUp == 1
@@ -366,17 +366,17 @@ func (suite *RockyClusterTestSuite) TestSLURMConnectivity() {
 
 	// Check for job metrics (indicates successful SLURM API calls)
 	if jobsFamily, exists := metricFamilies["slurm_jobs_total"]; exists {
-		require.NotEmpty(suite.T(), jobsFamily.Metric, "No job metrics found")
+		require.NotEmpty(suite.T(), jobsFamily.GetMetric(), "No job metrics found")
 
 		totalJobs := 0
 		jobStates := make(map[string]int)
 
-		for _, metric := range jobsFamily.Metric {
+		for _, metric := range jobsFamily.GetMetric() {
 			value := int(metric.GetCounter().GetValue())
 			totalJobs += value
 
 			// Extract state label
-			for _, label := range metric.Label {
+			for _, label := range metric.GetLabel() {
 				if label.GetName() == "state" {
 					jobStates[label.GetValue()] += value
 				}
@@ -392,17 +392,17 @@ func (suite *RockyClusterTestSuite) TestSLURMConnectivity() {
 
 	// Check for node metrics
 	if nodesFamily, exists := metricFamilies["slurm_nodes_total"]; exists {
-		require.NotEmpty(suite.T(), nodesFamily.Metric, "No node metrics found")
+		require.NotEmpty(suite.T(), nodesFamily.GetMetric(), "No node metrics found")
 
 		totalNodes := 0
 		nodeStates := make(map[string]int)
 
-		for _, metric := range nodesFamily.Metric {
+		for _, metric := range nodesFamily.GetMetric() {
 			value := int(metric.GetGauge().GetValue())
 			totalNodes += value
 
 			// Extract state label
-			for _, label := range metric.Label {
+			for _, label := range metric.GetLabel() {
 				if label.GetName() == "state" {
 					nodeStates[label.GetValue()] += value
 				}

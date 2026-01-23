@@ -175,7 +175,7 @@ func PerformanceTest(t *testing.T) {
 
 			metricCount := 0
 			for _, family := range families {
-				metricCount += len(family.Metric)
+				metricCount += len(family.GetMetric())
 			}
 
 			results.RequestDurations[i] = duration
@@ -348,14 +348,14 @@ func minDuration(durations []time.Duration) time.Duration {
 		return 0
 	}
 
-	min := durations[0]
+	minVal := durations[0]
 	for _, d := range durations[1:] {
-		if d < min {
-			min = d
+		if d < minVal {
+			minVal = d
 		}
 	}
 
-	return min
+	return minVal
 }
 
 func maxDuration(durations []time.Duration) time.Duration {
@@ -363,14 +363,14 @@ func maxDuration(durations []time.Duration) time.Duration {
 		return 0
 	}
 
-	max := durations[0]
+	maxVal := durations[0]
 	for _, d := range durations[1:] {
-		if d > max {
-			max = d
+		if d > maxVal {
+			maxVal = d
 		}
 	}
 
-	return max
+	return maxVal
 }
 
 func percentileDuration(durations []time.Duration, percentile float64) time.Duration {
@@ -431,14 +431,14 @@ func minFloat64(values []float64) float64 {
 		return 0
 	}
 
-	min := values[0]
+	minVal := values[0]
 	for _, v := range values[1:] {
-		if v < min {
-			min = v
+		if v < minVal {
+			minVal = v
 		}
 	}
 
-	return min
+	return minVal
 }
 
 func maxFloat64(values []float64) float64 {
@@ -446,12 +446,12 @@ func maxFloat64(values []float64) float64 {
 		return 0
 	}
 
-	max := values[0]
+	maxVal := values[0]
 	for _, v := range values[1:] {
-		if v > max {
-			max = v
+		if v > maxVal {
+			maxVal = v
 		}
 	}
 
-	return max
+	return maxVal
 }

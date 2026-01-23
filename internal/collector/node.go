@@ -194,7 +194,7 @@ func (nc *NodeCollector) collectNodeInfo(ctx context.Context, ch chan<- promethe
 		))
 	}
 
-	nc.LogCollection("Collected info for %d nodes", len(nodes))
+	nc.LogCollectionf("Collected info for %d nodes", len(nodes))
 	return nil
 }
 
@@ -233,7 +233,7 @@ func (nc *NodeCollector) collectNodeStates(ctx context.Context, ch chan<- promet
 		}
 	}
 
-	nc.LogCollection("Collected states for %d nodes", len(nodeStates))
+	nc.LogCollectionf("Collected states for %d nodes", len(nodeStates))
 	return nil
 }
 
@@ -270,7 +270,7 @@ func (nc *NodeCollector) collectNodeUtilization(ctx context.Context, ch chan<- p
 		))
 	}
 
-	nc.LogCollection("Collected utilization for %d nodes", len(nodeUtilization))
+	nc.LogCollectionf("Collected utilization for %d nodes", len(nodeUtilization))
 	return nil
 }
 
@@ -383,7 +383,7 @@ func (nc *NodeCollector) collectNodeHealth(ctx context.Context, ch chan<- promet
 		}
 	}
 
-	nc.LogCollection("Collected health metrics for %d nodes", len(nodeHealth))
+	nc.LogCollectionf("Collected health metrics for %d nodes", len(nodeHealth))
 	return nil
 }
 

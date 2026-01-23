@@ -214,7 +214,7 @@ func (smc *SelfMonitoringCollector) collectRuntimeMetrics(ctx context.Context, c
 		))
 	}
 
-	smc.LogCollection("Collected runtime metrics for %d collectors", len(exporterMetrics))
+	smc.LogCollectionf("Collected runtime metrics for %d collectors", len(exporterMetrics))
 	return nil
 }
 
@@ -287,7 +287,7 @@ func (smc *SelfMonitoringCollector) collectPerformanceMetrics(ctx context.Contex
 		}
 	}
 
-	smc.LogCollection("Collected performance metrics for %d collectors", len(performanceData))
+	smc.LogCollectionf("Collected performance metrics for %d collectors", len(performanceData))
 	return nil
 }
 
@@ -348,7 +348,7 @@ func (smc *SelfMonitoringCollector) collectAPIMetrics(ctx context.Context, ch ch
 		}
 	}
 
-	smc.LogCollection("Collected API metrics for %d endpoints", len(apiMetrics))
+	smc.LogCollectionf("Collected API metrics for %d endpoints", len(apiMetrics))
 	return nil
 }
 
@@ -395,7 +395,7 @@ func (smc *SelfMonitoringCollector) collectCacheMetrics(ctx context.Context, ch 
 		smc.metrics.CacheMisses.WithLabelValues(cache.CacheType).Add(float64(cache.Misses))
 	}
 
-	smc.LogCollection("Collected cache metrics for %d cache types", len(cacheMetrics))
+	smc.LogCollectionf("Collected cache metrics for %d cache types", len(cacheMetrics))
 	return nil
 }
 

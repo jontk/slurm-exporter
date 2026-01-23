@@ -112,8 +112,8 @@ func NewSmartFilter(cfg config.SmartFilteringConfig, logger *logrus.Logger) (*Sm
 	metrics := &FilterMetrics{
 		patternsLearned: prometheus.NewGaugeVec(
 			prometheus.GaugeOpts{
-				Name: "slurm_exporter_filter_patterns_learned_total",
-				Help: "Total number of metric patterns learned",
+				Name: "slurm_exporter_filter_patterns_learned",
+				Help: "Number of metric patterns learned",
 			},
 			[]string{"action"},
 		),
@@ -286,15 +286,15 @@ func (sf *SmartFilter) ProcessMetrics(ctx context.Context, collector string, met
 
 // processMetricFamily processes a single metric family
 func (sf *SmartFilter) processMetricFamily(ctx context.Context, collector string, family *dto.MetricFamily) (*dto.MetricFamily, int, int) {
-	if family == nil || len(family.Metric) == 0 {
+	if family == nil || len(family.GetMetric()) == 0 {
 		return family, 0, 0
 	}
 
 	var filteredMetrics []*dto.Metric
-	totalCount := len(family.Metric)
+	totalCount := len(family.GetMetric())
 	filteredCount := 0
 
-	for _, metric := range family.Metric {
+	for _, metric := range family.GetMetric() {
 		if sf.shouldKeepMetric(ctx, collector, family.GetName(), metric) {
 			filteredMetrics = append(filteredMetrics, metric)
 		} else {
@@ -350,13 +350,13 @@ func (sf *SmartFilter) shouldKeepMetric(ctx context.Context, collector, metricNa
 
 // createMetricKey creates a unique key for a metric
 func (sf *SmartFilter) createMetricKey(name string, metric *dto.Metric) string {
-	if len(metric.Label) == 0 {
+	if len(metric.GetLabel()) == 0 {
 		return name
 	}
 
 	// Create deterministic key from labels
 	key := name
-	for _, label := range metric.Label {
+	for _, label := range metric.GetLabel() {
 		key += fmt.Sprintf("_%s=%s", label.GetName(), label.GetValue())
 	}
 	return key
@@ -409,7 +409,7 @@ func (sf *SmartFilter) getOrCreatePattern(key, name string, metric *dto.Metric) 
 	if !exists {
 		// Extract labels
 		labels := make(map[string]string)
-		for _, label := range metric.Label {
+		for _, label := range metric.GetLabel() {
 			labels[label.GetName()] = label.GetValue()
 		}
 
@@ -430,16 +430,16 @@ func (sf *SmartFilter) getOrCreatePattern(key, name string, metric *dto.Metric) 
 // extractValue extracts a numeric value from a metric
 func (sf *SmartFilter) extractValue(metric *dto.Metric) float64 {
 	switch {
-	case metric.Gauge != nil:
-		return metric.Gauge.GetValue()
-	case metric.Counter != nil:
-		return metric.Counter.GetValue()
-	case metric.Untyped != nil:
-		return metric.Untyped.GetValue()
-	case metric.Histogram != nil:
-		return float64(metric.Histogram.GetSampleCount())
-	case metric.Summary != nil:
-		return float64(metric.Summary.GetSampleCount())
+	case metric.GetGauge() != nil:
+		return metric.GetGauge().GetValue()
+	case metric.GetCounter() != nil:
+		return metric.GetCounter().GetValue()
+	case metric.GetUntyped() != nil:
+		return metric.GetUntyped().GetValue()
+	case metric.GetHistogram() != nil:
+		return float64(metric.GetHistogram().GetSampleCount())
+	case metric.GetSummary() != nil:
+		return float64(metric.GetSummary().GetSampleCount())
 	default:
 		return 0
 	}

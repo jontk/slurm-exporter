@@ -63,7 +63,7 @@ func TestFullCollectorIntegration(t *testing.T) {
 	// Check for specific metric families
 	metricNames := make(map[string]bool)
 	for _, mf := range metricFamilies {
-		metricNames[*mf.Name] = true
+		metricNames[mf.GetName()] = true
 	}
 
 	// Should have job metrics
@@ -184,7 +184,7 @@ func TestCollectorFiltering(t *testing.T) {
 
 	// All metrics should be job_state related
 	for _, mf := range metricFamilies {
-		metricName := *mf.Name
+		metricName := mf.GetName()
 		if contains(metricName, "slurm_job") {
 			assert.Contains(t, metricName, "state", "only job_state metrics should be collected")
 		}
@@ -224,9 +224,9 @@ func TestCollectorCustomLabels(t *testing.T) {
 	// Verify custom labels are present
 	foundCustomLabels := false
 	for _, mf := range metricFamilies {
-		for _, metric := range mf.Metric {
-			for _, labelPair := range metric.Label {
-				if *labelPair.Name == "cluster_name" && *labelPair.Value == "test-cluster" {
+		for _, metric := range mf.GetMetric() {
+			for _, labelPair := range metric.GetLabel() {
+				if labelPair.GetName() == "cluster_name" && labelPair.GetValue() == "test-cluster" {
 					foundCustomLabels = true
 					break
 				}
@@ -319,7 +319,7 @@ func TestPerformanceMonitoringIntegration(t *testing.T) {
 	// Should have performance metrics
 	hasPerformanceMetrics := false
 	for _, mf := range metricFamilies {
-		metricName := *mf.Name
+		metricName := mf.GetName()
 		if contains(metricName, "collection_duration") ||
 			contains(metricName, "collection_success") ||
 			contains(metricName, "metrics_collected") {
@@ -364,7 +364,7 @@ func TestCardinalityLimiting(t *testing.T) {
 	// Verify cardinality is managed (implementation dependent)
 	totalMetrics := 0
 	for _, mf := range metricFamilies {
-		totalMetrics += len(mf.Metric)
+		totalMetrics += len(mf.GetMetric())
 	}
 
 	assert.True(t, totalMetrics > 0, "should have collected some metrics despite cardinality limits")

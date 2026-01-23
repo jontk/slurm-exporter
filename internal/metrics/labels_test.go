@@ -6,7 +6,6 @@ import (
 )
 
 func TestLabelManager(t *testing.T) {
-
 	t.Run("ValidateLabels", func(t *testing.T) {
 		lm := NewLabelManager()
 		validLabels := map[string]string{

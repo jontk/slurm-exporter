@@ -60,7 +60,7 @@ func TestLoggingMiddleware(t *testing.T) {
 	handler := server.LoggingMiddleware(testHandler)
 
 	// Create request
-	req := httptest.NewRequest("GET", "/test", nil)
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
 	req.Header.Set("User-Agent", "test-agent")
 	w := httptest.NewRecorder()
 
@@ -119,7 +119,7 @@ func TestHeadersMiddleware(t *testing.T) {
 	handler := server.HeadersMiddleware(testHandler)
 
 	t.Run("StandardHeaders", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/test", nil)
+		req := httptest.NewRequest(http.MethodGet, "/test", nil)
 		w := httptest.NewRecorder()
 
 		handler.ServeHTTP(w, req)
@@ -140,7 +140,7 @@ func TestHeadersMiddleware(t *testing.T) {
 	})
 
 	t.Run("MetricsEndpointHeaders", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/metrics", nil)
+		req := httptest.NewRequest(http.MethodGet, "/metrics", nil)
 		w := httptest.NewRecorder()
 
 		handler.ServeHTTP(w, req)
@@ -169,7 +169,7 @@ func TestRecoveryMiddleware(t *testing.T) {
 	handler := server.RecoveryMiddleware(panicHandler)
 
 	// Create request
-	req := httptest.NewRequest("GET", "/test", nil)
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
 	w := httptest.NewRecorder()
 
 	// Execute request (should not panic)
@@ -213,7 +213,7 @@ func TestCombinedMiddleware(t *testing.T) {
 	handler := server.CombinedMiddleware(testHandler)
 
 	// Create request
-	req := httptest.NewRequest("GET", "/test", nil)
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
 	req.Header.Set("User-Agent", "test-agent")
 	w := httptest.NewRecorder()
 
@@ -251,7 +251,7 @@ func TestMetricsMiddleware(t *testing.T) {
 	handler := server.MetricsMiddleware(testHandler)
 
 	// Create request
-	req := httptest.NewRequest("GET", "/test", nil)
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
 	w := httptest.NewRecorder()
 
 	// Execute request
@@ -313,7 +313,7 @@ func TestBasicAuthMiddleware(t *testing.T) {
 
 		handler := server.BasicAuthMiddleware(testHandler)
 
-		req := httptest.NewRequest("GET", "/metrics", nil)
+		req := httptest.NewRequest(http.MethodGet, "/metrics", nil)
 		w := httptest.NewRecorder()
 
 		handler.ServeHTTP(w, req)
@@ -347,7 +347,7 @@ func TestBasicAuthMiddleware(t *testing.T) {
 		handler := server.BasicAuthMiddleware(testHandler)
 
 		// Test non-metrics endpoint (should not require auth)
-		req := httptest.NewRequest("GET", "/health", nil)
+		req := httptest.NewRequest(http.MethodGet, "/health", nil)
 		w := httptest.NewRecorder()
 
 		handler.ServeHTTP(w, req)
@@ -380,7 +380,7 @@ func TestBasicAuthMiddleware(t *testing.T) {
 
 		handler := server.BasicAuthMiddleware(testHandler)
 
-		req := httptest.NewRequest("GET", "/metrics", nil)
+		req := httptest.NewRequest(http.MethodGet, "/metrics", nil)
 		w := httptest.NewRecorder()
 
 		handler.ServeHTTP(w, req)
@@ -417,7 +417,7 @@ func TestBasicAuthMiddleware(t *testing.T) {
 
 		handler := server.BasicAuthMiddleware(testHandler)
 
-		req := httptest.NewRequest("GET", "/metrics", nil)
+		req := httptest.NewRequest(http.MethodGet, "/metrics", nil)
 		req.SetBasicAuth("wrong", "credentials")
 		w := httptest.NewRecorder()
 
@@ -451,7 +451,7 @@ func TestBasicAuthMiddleware(t *testing.T) {
 
 		handler := server.BasicAuthMiddleware(testHandler)
 
-		req := httptest.NewRequest("GET", "/metrics", nil)
+		req := httptest.NewRequest(http.MethodGet, "/metrics", nil)
 		req.SetBasicAuth("user", "pass")
 		w := httptest.NewRecorder()
 
@@ -480,7 +480,7 @@ func TestTimeoutMiddleware(t *testing.T) {
 		// Wrap with timeout middleware
 		handler := server.TimeoutMiddleware(testHandler)
 
-		req := httptest.NewRequest("GET", "/health", nil)
+		req := httptest.NewRequest(http.MethodGet, "/health", nil)
 		w := httptest.NewRecorder()
 
 		handler.ServeHTTP(w, req)
@@ -506,7 +506,7 @@ func TestTimeoutMiddleware(t *testing.T) {
 		// Wrap with timeout middleware
 		handler := server.TimeoutMiddleware(testHandler)
 
-		req := httptest.NewRequest("GET", "/health", nil)
+		req := httptest.NewRequest(http.MethodGet, "/health", nil)
 		w := httptest.NewRecorder()
 
 		start := time.Now()
@@ -538,7 +538,7 @@ func TestTimeoutMiddleware(t *testing.T) {
 
 		handler := server.TimeoutMiddleware(testHandler)
 
-		req := httptest.NewRequest("GET", "/metrics", nil)
+		req := httptest.NewRequest(http.MethodGet, "/metrics", nil)
 		w := httptest.NewRecorder()
 
 		start := time.Now()
@@ -568,7 +568,7 @@ func TestTimeoutMiddleware(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel() // Cancel immediately
 
-		req := httptest.NewRequest("GET", "/test", nil).WithContext(ctx)
+		req := httptest.NewRequest(http.MethodGet, "/test", nil).WithContext(ctx)
 		w := httptest.NewRecorder()
 
 		handler.ServeHTTP(w, req)

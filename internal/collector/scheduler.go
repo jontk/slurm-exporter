@@ -516,11 +516,3 @@ type ScheduleStats struct {
 	ErrorCount    int64
 	ErrorRate     float64
 }
-
-// max returns the maximum of two int64 values
-func max(a, b int64) int64 {
-	if a > b {
-		return a
-	}
-	return b
-}

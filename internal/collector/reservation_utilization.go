@@ -928,7 +928,7 @@ func NewReservationUtilizationCollector(client ReservationUtilizationSLURMClient
 		),
 		reservationTotalCost: prometheus.NewCounterVec(
 			prometheus.CounterOpts{
-				Name: "slurm_reservation_total_cost",
+				Name: "slurm_reservation_cost_total",
 				Help: "Total accumulated cost for reservation",
 			},
 			[]string{"reservation", "currency"},

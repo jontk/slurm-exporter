@@ -344,10 +344,10 @@ func (s *CollectorScheduler) calculateChangeRate(current map[string]interface{})
 }
 
 // compareValues compares two values and returns a change rate (0.0 to 1.0)
-func (s *CollectorScheduler) compareValues(old, new interface{}) float64 {
+func (s *CollectorScheduler) compareValues(old, newVal interface{}) float64 {
 	// Try to convert to numbers for comparison
 	oldFloat, oldOk := s.toFloat64(old)
-	newFloat, newOk := s.toFloat64(new)
+	newFloat, newOk := s.toFloat64(newVal)
 
 	if oldOk && newOk {
 		if oldFloat == 0 {
@@ -361,7 +361,7 @@ func (s *CollectorScheduler) compareValues(old, new interface{}) float64 {
 	}
 
 	// For non-numeric values, check if they're different
-	if fmt.Sprintf("%v", old) != fmt.Sprintf("%v", new) {
+	if fmt.Sprintf("%v", old) != fmt.Sprintf("%v", newVal) {
 		return 1.0
 	}
 	return 0.0
