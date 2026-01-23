@@ -232,12 +232,6 @@ linters:
           - gocognit
         path: internal/collector/access_validation\.go
         text: 'cognitive complexity.*collectRiskAssessmentMetrics'
-      - linters:
-          - funlen
-          - gocognit
-          - gocyclo
-        path: internal/collector/registry\.go
-        text: '(Function .CreateCollectorsFromConfig|(cognitive|cyclomatic) complexity.*CreateCollectorsFromConfig)'
       # Deep nesting - will be reduced through refactoring in Phase 5
       - linters:
           - nestif
