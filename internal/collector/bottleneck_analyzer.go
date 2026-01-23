@@ -479,7 +479,7 @@ func (b *BottleneckAnalyzer) identifyPrimaryBottleneck(data *ResourceUtilization
 
 	// Set minimum threshold for bottleneck detection
 	if maxScore < 0.3 {
-		primaryBottleneck = "StateNone"
+		primaryBottleneck = StateNone
 		maxScore = 0.0
 	}
 
