@@ -268,25 +268,82 @@ func (h *ProfilingDebugHandler) handleGetProfile(w http.ResponseWriter, r *http.
 
 	acceptJSON := r.Header.Get("Accept") == "application/json"
 	if acceptJSON {
-		w.Header().Set("Content-Type", "application/json")
-		// Convert profile to JSON-safe format
-		data := map[string]interface{}{
-			"collector_name": profile.CollectorName,
-			"start_time":     profile.StartTime,
-			"end_time":       profile.EndTime,
-			"duration":       profile.Duration,
-			"phases":         profile.Phases,
-			"metadata":       profile.Metadata,
-		}
-		if err := json.NewEncoder(w).Encode(data); err != nil {
-			h.logger.WithError(err).Error("Failed to encode profile data")
-			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-		}
+		h.renderProfileJSON(w, profile)
 		return
 	}
 
-	// HTML response
-	tmpl := `
+	h.renderProfileHTML(w, id, profile)
+}
+
+// renderProfileJSON renders the profile as JSON
+func (h *ProfilingDebugHandler) renderProfileJSON(w http.ResponseWriter, profile *performance.CollectorProfile) {
+	w.Header().Set("Content-Type", "application/json")
+	data := map[string]interface{}{
+		"collector_name": profile.CollectorName,
+		"start_time":     profile.StartTime,
+		"end_time":       profile.EndTime,
+		"duration":       profile.Duration,
+		"phases":         profile.Phases,
+		"metadata":       profile.Metadata,
+	}
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		h.logger.WithError(err).Error("Failed to encode profile data")
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+	}
+}
+
+// renderProfileHTML renders the profile as HTML
+func (h *ProfilingDebugHandler) renderProfileHTML(w http.ResponseWriter, id string, profile *performance.CollectorProfile) {
+	t, err := template.New("profile").Parse(profileDetailTemplate)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	data := h.buildProfileTemplateData(id, profile)
+	w.Header().Set("Content-Type", "text/html")
+	_ = t.Execute(w, data)
+}
+
+// buildProfileTemplateData builds the template data map with profile sizes
+func (h *ProfilingDebugHandler) buildProfileTemplateData(id string, profile *performance.CollectorProfile) map[string]interface{} {
+	data := map[string]interface{}{
+		"ID":            id,
+		"profile":       profile,
+		"metadata":      fmt.Sprintf("%+v", profile.Metadata),
+		"cpuSize":       0,
+		"heapSize":      0,
+		"goroutineSize": 0,
+		"blockSize":     0,
+		"mutexSize":     0,
+		"traceSize":     0,
+	}
+
+	// Calculate sizes for available profiles
+	if profile.CPUProfile != nil {
+		data["cpuSize"] = profile.CPUProfile.Len()
+	}
+	if profile.HeapProfile != nil {
+		data["heapSize"] = profile.HeapProfile.Len()
+	}
+	if profile.GoroutineProfile != nil {
+		data["goroutineSize"] = profile.GoroutineProfile.Len()
+	}
+	if profile.BlockProfile != nil {
+		data["blockSize"] = profile.BlockProfile.Len()
+	}
+	if profile.MutexProfile != nil {
+		data["mutexSize"] = profile.MutexProfile.Len()
+	}
+	if profile.TraceData != nil {
+		data["traceSize"] = profile.TraceData.Len()
+	}
+
+	return data
+}
+
+// profileDetailTemplate is the HTML template for displaying profile details
+const profileDetailTemplate = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -304,9 +361,9 @@ func (h *ProfilingDebugHandler) handleGetProfile(w http.ResponseWriter, r *http.
 </head>
 <body>
     <h1>Profile Details</h1>
-    
+
     <a href="/debug/profiling/list">← Back to List</a>
-    
+
     <div class="info">
         <label>ID:</label> {{.ID}}<br>
         <label>Collector:</label> {{.profile.CollectorName}}<br>
@@ -354,48 +411,6 @@ func (h *ProfilingDebugHandler) handleGetProfile(w http.ResponseWriter, r *http.
 </body>
 </html>
 `
-
-	t, err := template.New("profile").Parse(tmpl)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	data := map[string]interface{}{
-		"ID":            id,
-		"profile":       profile,
-		"metadata":      fmt.Sprintf("%+v", profile.Metadata),
-		"cpuSize":       0,
-		"heapSize":      0,
-		"goroutineSize": 0,
-		"blockSize":     0,
-		"mutexSize":     0,
-		"traceSize":     0,
-	}
-
-	// Calculate sizes
-	if profile.CPUProfile != nil {
-		data["cpuSize"] = profile.CPUProfile.Len()
-	}
-	if profile.HeapProfile != nil {
-		data["heapSize"] = profile.HeapProfile.Len()
-	}
-	if profile.GoroutineProfile != nil {
-		data["goroutineSize"] = profile.GoroutineProfile.Len()
-	}
-	if profile.BlockProfile != nil {
-		data["blockSize"] = profile.BlockProfile.Len()
-	}
-	if profile.MutexProfile != nil {
-		data["mutexSize"] = profile.MutexProfile.Len()
-	}
-	if profile.TraceData != nil {
-		data["traceSize"] = profile.TraceData.Len()
-	}
-
-	w.Header().Set("Content-Type", "text/html")
-	_ = t.Execute(w, data)
-}
 
 // handleEnableProfiling enables profiling for a collector
 func (h *ProfilingDebugHandler) handleEnableProfiling(w http.ResponseWriter, r *http.Request) {
