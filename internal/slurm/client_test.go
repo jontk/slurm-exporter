@@ -685,8 +685,6 @@ func TestClientRetryWithExponentialBackoff(t *testing.T) {
 	t.Skip("Skipping - HTTP mock approach not compatible with slurm-client library parsing")
 }
 
-var staticCallCount int
-
 // TestClientNewClientWithAdapters tests client creation with adapters enabled/disabled
 func TestClientNewClientWithAdapters(t *testing.T) {
 	tests := []struct {
