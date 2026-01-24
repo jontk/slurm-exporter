@@ -275,7 +275,9 @@ func TestProfiler(t *testing.T) {
 		require.NoError(t, err)
 
 		stats := profiler.GetStats()
-		assert.True(t, stats["enabled"].(bool))
+		enabled, ok := stats["enabled"].(bool)
+		require.True(t, ok, "enabled should be bool")
+		assert.True(t, enabled)
 		assert.NotNil(t, stats["config"])
 		assert.NotNil(t, stats["storage"])
 	})

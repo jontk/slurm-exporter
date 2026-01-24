@@ -365,8 +365,10 @@ func TestBatchProcessor_GetStats(t *testing.T) {
 
 	assert.Equal(t, 1, stats["batch_count"])
 
-	batchTypes := stats["batch_types"].(map[string]interface{})
-	testBatch := batchTypes["test"].(map[string]interface{})
+	batchTypes, ok := stats["batch_types"].(map[string]interface{})
+	require.True(t, ok, "batch_types should be map[string]interface{}")
+	testBatch, ok := batchTypes["test"].(map[string]interface{})
+	require.True(t, ok, "test batch should be map[string]interface{}")
 
 	assert.Equal(t, 2, testBatch["items"])
 	assert.Equal(t, 300, testBatch["total_size"])

@@ -261,7 +261,8 @@ func TestProfiledCollectorManager(t *testing.T) {
 			}
 		}()
 
-		pc := wrapped.(*ProfiledCollector)
+		pc, ok := wrapped.(*ProfiledCollector)
+		require.True(t, ok, "wrapped collector should be a ProfiledCollector")
 		err = pc.Collect(context.Background(), ch)
 		close(ch) // Close channel to allow goroutine to exit
 		require.NoError(t, err)

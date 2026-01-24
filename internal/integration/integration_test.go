@@ -376,6 +376,7 @@ func TestCardinalityLimiting(t *testing.T) {
 // Helper functions
 
 func setupMockSlurmClient(t *testing.T) *mocks.MockSlurmClient {
+	_ = t
 	mockClient := new(mocks.MockSlurmClient)
 	mockJobManager := new(mocks.MockJobManager)
 	mockNodeManager := new(mocks.MockNodeManager)
@@ -397,6 +398,7 @@ func setupMockSlurmClient(t *testing.T) *mocks.MockSlurmClient {
 }
 
 func setupSlowMockSlurmClient(t *testing.T) *mocks.MockSlurmClient {
+	_ = t
 	mockClient := new(mocks.MockSlurmClient)
 	mockJobManager := new(mocks.MockJobManager)
 

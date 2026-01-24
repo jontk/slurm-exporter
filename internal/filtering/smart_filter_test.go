@@ -444,7 +444,9 @@ func TestSmartFilter_GetStats(t *testing.T) {
 	require.NoError(t, err)
 
 	stats = filter.GetStats()
-	assert.True(t, stats["total_patterns"].(int) > 0)
+	totalPatterns, ok := stats["total_patterns"].(int)
+	require.True(t, ok, "total_patterns should be int")
+	assert.True(t, totalPatterns > 0)
 }
 
 func TestSmartFilter_GetPatterns(t *testing.T) {

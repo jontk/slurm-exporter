@@ -496,16 +496,24 @@ func (suite *RockyClusterTestSuite) TestCollectorHealth() {
 		}
 
 		if errors, exists := slurmExporter["collection_errors"]; exists {
-			errorCount := errors.(float64)
-			suite.T().Logf("Collection errors: %v", errorCount)
-			suite.collectedStats["collection_errors"] = errorCount
+			errorCount, ok := errors.(float64)
+			if !ok {
+				suite.T().Logf("Collection errors field is not float64, got type %T", errors)
+			} else {
+				suite.T().Logf("Collection errors: %v", errorCount)
+				suite.collectedStats["collection_errors"] = errorCount
+			}
 		}
 	}
 
 	// Check memory statistics
 	if memstats, ok := vars["memstats"].(map[string]interface{}); ok {
 		if alloc, exists := memstats["Alloc"]; exists {
-			allocBytes := alloc.(float64)
+			allocBytes, ok := alloc.(float64)
+			if !ok {
+				suite.T().Logf("Alloc field is not float64, got type %T", alloc)
+				return
+			}
 			allocMB := allocBytes / 1024 / 1024
 			suite.T().Logf("Memory allocation: %.2f MB", allocMB)
 			suite.collectedStats["memory_alloc_mb"] = allocMB

@@ -101,7 +101,9 @@ func (pc *PartitionCollector) collectPartitionMetrics(ctx context.Context, ch ch
 }
 
 // collectPartitionInfo collects basic partition information and configuration
+//nolint:unparam
 func (pc *PartitionCollector) collectPartitionInfo(ctx context.Context, ch chan<- prometheus.Metric) error {
+ _ = ctx
 	partitions := getTestPartitions()
 
 	for _, partition := range partitions {
@@ -266,7 +268,9 @@ func getTestPartitions() []partitionInfo {
 }
 
 // collectPartitionUtilization collects partition resource utilization
+//nolint:unparam
 func (pc *PartitionCollector) collectPartitionUtilization(ctx context.Context, ch chan<- prometheus.Metric) error {
+ _ = ctx
 	// Simulate partition utilization data
 	partitionUtilization := []struct {
 		Name            string
@@ -395,7 +399,9 @@ func (pc *PartitionCollector) collectPartitionUtilization(ctx context.Context, c
 }
 
 // collectPartitionPolicies collects partition policies and limits
+//nolint:unparam
 func (pc *PartitionCollector) collectPartitionPolicies(ctx context.Context, ch chan<- prometheus.Metric) error {
+ _ = ctx
 	// Simulate partition policy data
 	partitionPolicies := []struct {
 		Name              string

@@ -100,7 +100,8 @@ func TestLoggingMiddleware(t *testing.T) {
 		t.Errorf("Expected user_agent 'test-agent', got %v", logEntry["user_agent"])
 	}
 
-	if logEntry["status"].(float64) != 200 {
+	status, ok := logEntry["status"].(float64)
+	if !ok || status != 200 {
 		t.Errorf("Expected status 200, got %v", logEntry["status"])
 	}
 

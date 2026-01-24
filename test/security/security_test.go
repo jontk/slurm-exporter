@@ -468,7 +468,9 @@ func (s *SecurityTestSuite) addSecurityMiddleware(handler http.Handler) http.Han
 	})
 }
 
+//nolint:unparam
 func (s *SecurityTestSuite) makeRequest(method, path string, headers map[string]string, body interface{}) *http.Response {
+	_ = body
 	var reqBody io.Reader
 	if body != nil {
 		reqBody = strings.NewReader(fmt.Sprintf("%v", body))
