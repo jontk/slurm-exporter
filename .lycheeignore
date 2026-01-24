@@ -10,6 +10,10 @@ https://github.com/jontk/slurm-exporter/security/advisories.atom
 https://github.com/orgs/jontk/teams/maintainers
 https://jontk.github.io/slurm-exporter
 
+# External URLs with transient network issues
+# These are legitimate URLs but occasionally timeout during CI runs
+https://www.conventionalcommits.org/
+
 # Example/placeholder URLs in documentation
 https://example.pagerduty.com/
 

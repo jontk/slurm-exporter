@@ -68,15 +68,9 @@ func main() {
 	if err != nil {
 		logrus.WithError(err).Fatal("Failed to initialize logger")
 	}
-	defer func() {
-		if err := logger.Close(); err != nil {
-			logrus.WithError(err).Error("Failed to close logger")
-		}
-	}()
 
 	// Create context that can be cancelled
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	// Override config with command line flags if provided
 	if *addr != ":8080" {
@@ -122,24 +116,6 @@ func main() {
 	registry.StartPerformanceMonitoring(ctx, 5*time.Minute)
 	logger.WithComponent("main").Info("Performance monitoring started")
 
-	// Create configuration watcher for hot-reload
-	configWatcher, err := config.NewWatcher(*configFile, config.CreateReloadHandler(registry, logger.WithComponent("config-watcher")), logger.WithComponent("config-watcher"))
-	if err != nil {
-		logger.WithComponent("main").WithError(err).Error("Failed to create config watcher, hot-reload disabled")
-		// Continue without hot-reload
-	} else {
-		if err := configWatcher.Start(ctx); err != nil {
-			logger.WithComponent("main").WithError(err).Error("Failed to start config watcher")
-		} else {
-			logger.WithComponent("main").Info("Configuration hot-reload enabled")
-		}
-		defer func() {
-			if err := configWatcher.Stop(); err != nil {
-				logger.WithComponent("main").WithError(err).Error("Failed to stop config watcher")
-			}
-		}()
-	}
-
 	// Create and start the server
 	srv, err := server.New(cfg, logger.Logger, registry, promRegistry)
 	if err != nil {
@@ -159,6 +135,23 @@ func main() {
 		logger.WithComponent("shutdown").Info("Closing logger")
 		return logger.Close()
 	})
+
+	// Setup config watcher for hot-reload
+	configWatcher, err := config.NewWatcher(*configFile, config.CreateReloadHandler(registry, logger.WithComponent("config-watcher")), logger.WithComponent("config-watcher"))
+	if err != nil {
+		logger.WithComponent("main").WithError(err).Error("Failed to create config watcher, hot-reload disabled")
+		// Continue without hot-reload
+	} else {
+		if err := configWatcher.Start(ctx); err != nil {
+			logger.WithComponent("main").WithError(err).Error("Failed to start config watcher")
+		} else {
+			logger.WithComponent("main").Info("Configuration hot-reload enabled")
+			shutdown.AddShutdownHook("config-watcher", func(ctx context.Context) error {
+				logger.WithComponent("shutdown").Info("Stopping config watcher")
+				return configWatcher.Stop()
+			})
+		}
+	}
 
 	// Start the shutdown manager
 	shutdown.Start(ctx)
@@ -191,6 +184,11 @@ func main() {
 		logger.WithComponent("main").Info("Graceful shutdown completed successfully")
 	}
 
+	// Explicit cleanup before exit
+	cancel()
+	if err := logger.Close(); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to close logger: %v\n", err)
+	}
 	os.Exit(exitCode)
 }
 

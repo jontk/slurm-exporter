@@ -105,3 +105,5 @@ tmp/
 # Ignore generated docs, but not website/docs (MkDocs source)
 docs/
 !website/docs/
+
+plan/

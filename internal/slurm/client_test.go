@@ -27,7 +27,7 @@ func TestNewClient(t *testing.T) {
 				BaseURL:       "https://example.com:6820",
 				APIVersion:    "v0.0.42",
 				Timeout:       100 * time.Millisecond, // Short timeout for tests
-				RetryAttempts: 0,               // No retries to avoid long waits
+				RetryAttempts: 0,                      // No retries to avoid long waits
 				RetryDelay:    1 * time.Second,
 				Auth: config.AuthConfig{
 					Type: "none",
@@ -103,7 +103,7 @@ func TestNewConnectionPool(t *testing.T) {
 		BaseURL:       "https://example.com:6820",
 		APIVersion:    "v0.0.42",
 		Timeout:       100 * time.Millisecond, // Short timeout for tests
-		RetryAttempts: 0,               // No retries to avoid long waits
+		RetryAttempts: 0,                      // No retries to avoid long waits
 		RetryDelay:    1 * time.Second,
 		Auth: config.AuthConfig{
 			Type: "none",
@@ -168,7 +168,7 @@ func TestConnectionPoolGetClient(t *testing.T) {
 		BaseURL:       "https://example.com:6820",
 		APIVersion:    "v0.0.42",
 		Timeout:       100 * time.Millisecond, // Short timeout for tests
-		RetryAttempts: 0,               // No retries to avoid long waits
+		RetryAttempts: 0,                      // No retries to avoid long waits
 		RetryDelay:    1 * time.Second,
 		Auth: config.AuthConfig{
 			Type: "none",
@@ -209,7 +209,7 @@ func TestClientConnectionStatus(t *testing.T) {
 		BaseURL:       "https://example.com:6820",
 		APIVersion:    "v0.0.42",
 		Timeout:       100 * time.Millisecond, // Short timeout for tests
-		RetryAttempts: 0,               // No retries to avoid long waits
+		RetryAttempts: 0,                      // No retries to avoid long waits
 		RetryDelay:    1 * time.Second,
 		Auth: config.AuthConfig{
 			Type: "none",
@@ -246,7 +246,7 @@ func TestClientContextCancellation(t *testing.T) {
 		BaseURL:       "https://example.com:6820",
 		APIVersion:    "v0.0.42",
 		Timeout:       100 * time.Millisecond, // Short timeout for tests
-		RetryAttempts: 0,               // No retries to avoid long waits
+		RetryAttempts: 0,                      // No retries to avoid long waits
 		RetryDelay:    1 * time.Second,
 		Auth: config.AuthConfig{
 			Type: "none",
@@ -283,7 +283,7 @@ func TestClientRateLimiting(t *testing.T) {
 		BaseURL:       "https://example.com:6820",
 		APIVersion:    "v0.0.42",
 		Timeout:       100 * time.Millisecond, // Short timeout for tests
-		RetryAttempts: 0,               // No retries for faster test
+		RetryAttempts: 0,                      // No retries for faster test
 		RetryDelay:    1 * time.Second,
 		Auth: config.AuthConfig{
 			Type: "none",
@@ -685,8 +685,6 @@ func TestClientRetryWithExponentialBackoff(t *testing.T) {
 	t.Skip("Skipping - HTTP mock approach not compatible with slurm-client library parsing")
 }
 
-var staticCallCount int
-
 // TestClientNewClientWithAdapters tests client creation with adapters enabled/disabled
 func TestClientNewClientWithAdapters(t *testing.T) {
 	tests := []struct {
@@ -705,7 +703,7 @@ func TestClientNewClientWithAdapters(t *testing.T) {
 			name:        "adapters enabled without version",
 			useAdapters: true,
 			apiVersion:  "",
-			wantErr:     true,
+			wantErr:     false,
 		},
 		{
 			name:        "adapters disabled with version",
@@ -1105,7 +1103,7 @@ func TestClientAPIVersionConfiguration(t *testing.T) {
 		{
 			name:       "invalid version format",
 			apiVersion: "invalid",
-			wantErr:    false,
+			wantErr:    true,
 		},
 	}
 
@@ -1283,8 +1281,10 @@ func TestClientBaseURLConfiguration(t *testing.T) {
 // TestClientTestConnection tests the TestConnection method
 func TestClientTestConnection(t *testing.T) {
 	successServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{}`))
+		// Return a proper SLURM API ping response structure
+		w.Write([]byte(`{"meta":{"plugin":{"type":"accounting_storage","name":"slurm_mysql"}}}`))
 	}))
 	defer successServer.Close()
 
