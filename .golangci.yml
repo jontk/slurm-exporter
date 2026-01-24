@@ -422,15 +422,25 @@ linters:
       - linters:
           - mnd
         path: internal/(health|adaptive)/
-      # paralleltest/tparallel - Tests that modify environment variables or shared state
-      # These tests cannot run in parallel due to global state mutations (os.Setenv, registries, buffers)
-      # Also: metric_filter tests with loop-based subtests cause deadlocks when parallelized (Go testing framework limitation)
-      # label_helper_test subtests share parent state and cannot run in parallel
+      # paralleltest/tparallel - Tests with subtests that share parent state
+      # Go testing framework limitation: nested parallel calls with shared state create race conditions and deadlocks
+      # These tests have subtests that access/modify parent test state, so they cannot safely be parallelized
       - linters:
           - paralleltest
           - tparallel
-        path: _test\.go
-        text: '(TestEnvOverrides|TestEnvOverridesPrecedence|TestApplyEnvOverrides|TestInvalidEnvOverrides|TestRegistry|TestConcurrentCollector|TestDegradationManager|TestDegradedRegistry|TestLoggingCollector|TestCollectorLogger|TestStructuredLogger|TestDimensionalAnalysisReporter|TestLoggerMethods|TestMetricFilter|TestShouldCollectMetric|TestMatchesPattern|TestGetMetricType|TestCreateMetricInfo|TestMetricFilterCombined|TestGetLabelNames)'
+        path: ^internal/collector/.*_test\.go
+      # Config tests that modify environment variables - shared state across subtests
+      - linters:
+          - paralleltest
+          - tparallel
+        path: ^internal/config/config_test\.go
+        text: '(TestEnv|TestApplyEnv|subtests should call|Range statement|missing the call to method parallel)'
+      # Logging tests with shared test hooks - hook state is not safe for parallel execution
+      - linters:
+          - paralleltest
+          - tparallel
+        path: ^internal/logging/logger_test\.go
+        text: 'TestLoggerMethods'
       # Server middleware and utilities have timeout and size constants
       - linters:
           - mnd
