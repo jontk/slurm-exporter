@@ -56,7 +56,6 @@ func TestSecurityTestSuite(t *testing.T) {
 }
 
 func (s *SecurityTestSuite) TestSecurityHeaders() {
-
 	resp := s.makeRequest("GET", "/metrics", nil, nil)
 
 	expectedHeaders := map[string]string{
@@ -74,12 +73,10 @@ func (s *SecurityTestSuite) TestSecurityHeaders() {
 }
 
 func (s *SecurityTestSuite) TestHTTPSRedirect() {
-
 	s.T().Skip("HTTPS redirect testing requires TLS server setup")
 }
 
 func (s *SecurityTestSuite) TestAuthenticationBypass() {
-
 	bypassAttempts := []struct {
 		name     string
 		headers  map[string]string
@@ -158,7 +155,6 @@ func (s *SecurityTestSuite) TestAuthenticationBypass() {
 }
 
 func (s *SecurityTestSuite) TestPathTraversalAttacks() {
-
 	pathTraversalAttempts := []struct {
 		name string
 		path string
@@ -194,7 +190,6 @@ func (s *SecurityTestSuite) TestPathTraversalAttacks() {
 }
 
 func (s *SecurityTestSuite) TestXSSPrevention() {
-
 	xssPayloads := []string{
 		"<script>alert('xss')</script>",
 		"javascript:alert('xss')",
@@ -223,7 +218,6 @@ func (s *SecurityTestSuite) TestXSSPrevention() {
 }
 
 func (s *SecurityTestSuite) TestSQLInjection() {
-
 	sqlPayloads := []string{
 		"' OR '1'='1",
 		"'; DROP TABLE users; --",
@@ -259,7 +253,6 @@ func (s *SecurityTestSuite) TestSQLInjection() {
 }
 
 func (s *SecurityTestSuite) TestCSRFProtection() {
-
 	stateChangingRequests := []struct {
 		method string
 		path   string
@@ -283,7 +276,6 @@ func (s *SecurityTestSuite) TestCSRFProtection() {
 }
 
 func (s *SecurityTestSuite) TestRateLimiting() {
-
 	sensitiveEndpoints := []string{
 		"/debug/profiling",
 		"/debug/collectors",
@@ -320,7 +312,6 @@ func (s *SecurityTestSuite) TestRateLimiting() {
 }
 
 func (s *SecurityTestSuite) TestInputValidation() {
-
 	maliciousInputs := []struct {
 		name  string
 		value string
@@ -360,7 +351,6 @@ func (s *SecurityTestSuite) TestInputValidation() {
 }
 
 func (s *SecurityTestSuite) TestInformationDisclosure() {
-
 	resp := s.makeRequest("GET", "/debug/status", nil, nil)
 	body := s.readResponseBody(resp)
 
@@ -385,7 +375,6 @@ func (s *SecurityTestSuite) TestInformationDisclosure() {
 }
 
 func (s *SecurityTestSuite) TestHTTPMethodSecurity() {
-
 	methods := []string{"GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS", "TRACE"}
 
 	for _, method := range methods {
@@ -407,7 +396,6 @@ func (s *SecurityTestSuite) TestHTTPMethodSecurity() {
 }
 
 func (s *SecurityTestSuite) TestTimeoutAttacks() {
-
 	s.Run("slow_loris", func() {
 		// This would require more sophisticated testing
 		// For now, just verify basic timeout handling
