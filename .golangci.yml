@@ -49,6 +49,9 @@ linters:
     - wsl                       # Whitespace linter (deprecated version)
     - wsl_v5                    # Whitespace linter (new version) - very opinionated
   settings:
+    wrapcheck:
+      ignoreSigs:
+        - .(Context).Err()
     depguard:
       rules:
         main:
