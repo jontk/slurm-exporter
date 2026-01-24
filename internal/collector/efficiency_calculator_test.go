@@ -83,6 +83,7 @@ func TestCalculateEfficiency(t *testing.T) {
 		}
 		if metrics == nil {
 			t.Error("Expected metrics to be returned")
+			return
 		}
 		if metrics.OverallEfficiency <= 0.0 || metrics.OverallEfficiency > 1.0 {
 			t.Errorf("Overall efficiency out of range: %f", metrics.OverallEfficiency)
