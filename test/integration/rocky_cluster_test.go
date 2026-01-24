@@ -53,7 +53,7 @@ func (suite *RockyClusterTestSuite) TearDownSuite() {
 func (suite *RockyClusterTestSuite) waitForExporter() {
 	// Quick check if exporter is available, skip if not
 	quickCtx, quickCancel := context.WithTimeout(context.Background(), 5*time.Second)
-	req, err := http.NewRequestWithContext(quickCtx, http.MethodGet, suite.exporterURL+"/ready", nil)
+	req, _ := http.NewRequestWithContext(quickCtx, http.MethodGet, suite.exporterURL+"/ready", nil)
 	quickCancel()
 
 	resp, err := suite.client.Do(req)
@@ -83,7 +83,7 @@ func (suite *RockyClusterTestSuite) waitForExporter() {
 		case <-ticker.C:
 			reqCtx, reqCancel := context.WithTimeout(context.Background(), 5*time.Second)
 
-			req, err := http.NewRequestWithContext(reqCtx, http.MethodGet, suite.exporterURL+"/ready", nil)
+			req, _ := http.NewRequestWithContext(reqCtx, http.MethodGet, suite.exporterURL+"/ready", nil)
 
 			reqCancel()
 
@@ -183,7 +183,7 @@ func (suite *RockyClusterTestSuite) TestHealthEndpoints() {
 		suite.Run(test.name, func() {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
-			req, err := http.NewRequestWithContext(ctx, http.MethodGet, suite.exporterURL+test.endpoint, nil)
+			req, _ := http.NewRequestWithContext(ctx, http.MethodGet, suite.exporterURL+test.endpoint, nil)
 
 			cancel()
 
@@ -208,7 +208,7 @@ func (suite *RockyClusterTestSuite) TestHealthEndpoints() {
 func (suite *RockyClusterTestSuite) TestMetricsEndpoint() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, suite.exporterURL+"/metrics", nil)
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, suite.exporterURL+"/metrics", nil)
 
 	cancel()
 
@@ -260,7 +260,7 @@ func (suite *RockyClusterTestSuite) TestMetricsEndpoint() {
 func (suite *RockyClusterTestSuite) TestCollectorMetrics() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, suite.exporterURL+"/metrics", nil)
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, suite.exporterURL+"/metrics", nil)
 
 	cancel()
 
@@ -330,7 +330,7 @@ func (suite *RockyClusterTestSuite) TestCollectorPerformance() {
 		start := time.Now()
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, suite.exporterURL+"/metrics", nil)
+		req, _ := http.NewRequestWithContext(ctx, http.MethodGet, suite.exporterURL+"/metrics", nil)
 
 		cancel()
 
@@ -386,7 +386,7 @@ func (suite *RockyClusterTestSuite) TestCollectorPerformance() {
 func (suite *RockyClusterTestSuite) TestSLURMConnectivity() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, suite.exporterURL+"/metrics", nil)
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, suite.exporterURL+"/metrics", nil)
 
 	cancel()
 
@@ -470,7 +470,7 @@ func (suite *RockyClusterTestSuite) TestSLURMConnectivity() {
 func (suite *RockyClusterTestSuite) TestCollectorHealth() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, suite.exporterURL+"/debug/vars", nil)
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, suite.exporterURL+"/debug/vars", nil)
 
 	cancel()
 
@@ -521,7 +521,7 @@ func (suite *RockyClusterTestSuite) TestTracingIntegration() {
 	// Test tracing status endpoint
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, suite.exporterURL+"/debug/tracing/stats", nil)
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, suite.exporterURL+"/debug/tracing/stats", nil)
 
 	cancel()
 

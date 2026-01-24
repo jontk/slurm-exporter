@@ -25,11 +25,8 @@ func BenchmarkMetricsCollection(b *testing.B) {
 
 	// Warmup - ensure exporter is ready
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, exporterURL+"/ready", nil)
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, exporterURL+"/ready", nil)
 	cancel()
-	if err != nil {
-		b.Skip("Exporter not available for benchmarking")
-	}
 	resp, err := client.Do(req)
 	if err != nil {
 		b.Skip("Exporter not available for benchmarking")
@@ -41,7 +38,7 @@ func BenchmarkMetricsCollection(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, exporterURL+"/metrics", nil)
+		req, _ := http.NewRequestWithContext(ctx, http.MethodGet, exporterURL+"/metrics", nil)
 
 		cancel()
 
@@ -66,7 +63,7 @@ func BenchmarkMetricsParsing(b *testing.B) {
 	// Get metrics once
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, exporterURL+"/metrics", nil)
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, exporterURL+"/metrics", nil)
 
 	cancel()
 
@@ -105,7 +102,7 @@ func BenchmarkHealthCheck(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, exporterURL+"/health", nil)
+		req, _ := http.NewRequestWithContext(ctx, http.MethodGet, exporterURL+"/health", nil)
 
 		cancel()
 
@@ -137,7 +134,7 @@ func BenchmarkConcurrentMetrics(b *testing.B) {
 				for pb.Next() {
 					ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
-					req, err := http.NewRequestWithContext(ctx, http.MethodGet, exporterURL+"/metrics", nil)
+					req, _ := http.NewRequestWithContext(ctx, http.MethodGet, exporterURL+"/metrics", nil)
 
 					cancel()
 
@@ -168,7 +165,7 @@ func PerformanceTest(t *testing.T) {
 	// Warmup
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, exporterURL+"/ready", nil)
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, exporterURL+"/ready", nil)
 
 	cancel()
 
@@ -199,7 +196,7 @@ func PerformanceTest(t *testing.T) {
 			start := time.Now()
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
-			req, err := http.NewRequestWithContext(ctx, http.MethodGet, exporterURL+"/metrics", nil)
+			req, _ := http.NewRequestWithContext(ctx, http.MethodGet, exporterURL+"/metrics", nil)
 
 			cancel()
 
@@ -261,7 +258,7 @@ func PerformanceTest(t *testing.T) {
 							start := time.Now()
 							ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
-							req, err := http.NewRequestWithContext(ctx, http.MethodGet, exporterURL+"/metrics", nil)
+							req, _ := http.NewRequestWithContext(ctx, http.MethodGet, exporterURL+"/metrics", nil)
 
 							cancel()
 
@@ -329,7 +326,7 @@ func PerformanceTest(t *testing.T) {
 				// Get debug vars to check memory usage
 				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
-				req, err := http.NewRequestWithContext(ctx, http.MethodGet, exporterURL+"/debug/vars", nil)
+				req, _ := http.NewRequestWithContext(ctx, http.MethodGet, exporterURL+"/debug/vars", nil)
 
 				cancel()
 
