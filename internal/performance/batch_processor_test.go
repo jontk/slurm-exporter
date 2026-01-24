@@ -33,7 +33,6 @@ func (m *mockBatchItem) Priority() int        { return m.priority }
 func (m *mockBatchItem) Timestamp() time.Time { return m.timestamp }
 
 func TestNewBatchProcessor(t *testing.T) {
-	t.Parallel()
 	logger := logrus.NewEntry(logrus.New())
 
 	tests := []struct {
@@ -73,7 +72,6 @@ func TestNewBatchProcessor(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
 			bp, err := NewBatchProcessor(tt.config, logger)
 			require.NoError(t, err)
 			defer func() { _ = bp.Stop() }()

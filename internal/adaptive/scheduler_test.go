@@ -51,7 +51,6 @@ func TestNewCollectorScheduler_Enabled(t *testing.T) {
 }
 
 func TestNewCollectorScheduler_InvalidConfig(t *testing.T) {
-	t.Parallel()
 	logger := logrus.New()
 	logger.SetLevel(logrus.WarnLevel)
 
@@ -93,7 +92,6 @@ func TestNewCollectorScheduler_InvalidConfig(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 			scheduler, err := NewCollectorScheduler(tc.cfg, 30*time.Second, logger)
 			assert.Error(t, err)
 			assert.Nil(t, scheduler)
@@ -186,7 +184,6 @@ func TestCollectorScheduler_UpdateActivity(t *testing.T) {
 }
 
 func TestCollectorScheduler_ActivityScoreCalculation(t *testing.T) {
-	t.Parallel()
 	logger := logrus.New()
 	logger.SetLevel(logrus.WarnLevel)
 
@@ -243,7 +240,6 @@ func TestCollectorScheduler_ActivityScoreCalculation(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 			result := scheduler.calculateActivityScore(tc.jobCount, tc.nodeCount, tc.changeData)
 			assert.True(t, result.Score >= tc.expectedMin,
 				"Score %f should be >= %f", result.Score, tc.expectedMin)
@@ -418,7 +414,6 @@ func TestCollectorScheduler_RegisterMetrics_Disabled(t *testing.T) {
 }
 
 func TestCollectorScheduler_CompareValues(t *testing.T) {
-	t.Parallel()
 	logger := logrus.New()
 	logger.SetLevel(logrus.WarnLevel)
 
@@ -479,7 +474,6 @@ func TestCollectorScheduler_CompareValues(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 			result := scheduler.compareValues(tc.old, tc.new)
 			assert.InDelta(t, tc.expected, result, 0.01,
 				"Expected %f, got %f for comparing %v to %v", tc.expected, result, tc.old, tc.new)

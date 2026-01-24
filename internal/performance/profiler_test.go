@@ -17,11 +17,9 @@ import (
 )
 
 func TestProfiler(t *testing.T) {
-	t.Parallel()
 	logger := logrus.NewEntry(logrus.New())
 
 	t.Run("NewProfiler", func(t *testing.T) {
-		t.Parallel()
 		config := ProfilerConfig{
 			Enabled:          true,
 			CPUProfileRate:   100,
@@ -45,7 +43,6 @@ func TestProfiler(t *testing.T) {
 	})
 
 	t.Run("DisabledProfiler", func(t *testing.T) {
-		t.Parallel()
 		config := ProfilerConfig{
 			Enabled: false,
 		}
@@ -57,7 +54,6 @@ func TestProfiler(t *testing.T) {
 	})
 
 	t.Run("StartOperation", func(t *testing.T) {
-		t.Parallel()
 		config := ProfilerConfig{
 			Enabled: true,
 			Storage: ProfileStorageConfig{
@@ -82,7 +78,6 @@ func TestProfiler(t *testing.T) {
 	})
 
 	t.Run("Phases", func(t *testing.T) {
-		t.Parallel()
 		config := ProfilerConfig{
 			Enabled: true,
 			Storage: ProfileStorageConfig{
@@ -127,7 +122,6 @@ func TestProfiler(t *testing.T) {
 	})
 
 	t.Run("AutoProfile", func(t *testing.T) {
-		t.Parallel()
 		config := ProfilerConfig{
 			Enabled: true,
 			AutoProfile: AutoProfileConfig{
@@ -161,7 +155,6 @@ func TestProfiler(t *testing.T) {
 	})
 
 	t.Run("ProfileCollection", func(t *testing.T) {
-		t.Parallel()
 		config := ProfilerConfig{
 			Enabled:              true,
 			CPUProfileRate:       100,
@@ -199,7 +192,6 @@ func TestProfiler(t *testing.T) {
 	})
 
 	t.Run("Report", func(t *testing.T) {
-		t.Parallel()
 		config := ProfilerConfig{
 			Enabled: true,
 			Storage: ProfileStorageConfig{
@@ -223,7 +215,6 @@ func TestProfiler(t *testing.T) {
 	})
 
 	t.Run("ListProfiles", func(t *testing.T) {
-		t.Parallel()
 		config := ProfilerConfig{
 			Enabled: true,
 			Storage: ProfileStorageConfig{
@@ -248,7 +239,6 @@ func TestProfiler(t *testing.T) {
 	})
 
 	t.Run("Metrics", func(t *testing.T) {
-		t.Parallel()
 		config := ProfilerConfig{
 			Enabled: true,
 			Storage: ProfileStorageConfig{
@@ -274,7 +264,6 @@ func TestProfiler(t *testing.T) {
 	})
 
 	t.Run("Stats", func(t *testing.T) {
-		t.Parallel()
 		config := ProfilerConfig{
 			Enabled: true,
 			Storage: ProfileStorageConfig{
@@ -295,7 +284,6 @@ func TestProfiler(t *testing.T) {
 }
 
 func TestFileProfileStorage(t *testing.T) {
-	t.Parallel()
 	logger := logrus.NewEntry(logrus.New())
 	tmpDir := t.TempDir()
 
@@ -310,7 +298,6 @@ func TestFileProfileStorage(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("SaveAndLoad", func(t *testing.T) {
-		t.Parallel()
 		profile := &CollectorProfile{
 			CollectorName: "test_collector",
 			StartTime:     time.Now(),
@@ -341,7 +328,6 @@ func TestFileProfileStorage(t *testing.T) {
 	})
 
 	t.Run("Delete", func(t *testing.T) {
-		t.Parallel()
 		profile := &CollectorProfile{
 			CollectorName: "delete_test",
 			StartTime:     time.Now(),
@@ -371,10 +357,7 @@ func TestFileProfileStorage(t *testing.T) {
 	})
 
 	t.Run("Cleanup", func(t *testing.T) {
-		t.Parallel(
 		// Create an old profile
-		)
-
 		oldProfile := &CollectorProfile{
 			CollectorName: "old_test",
 			StartTime:     time.Now().Add(-2 * time.Hour),
@@ -401,7 +384,6 @@ func TestFileProfileStorage(t *testing.T) {
 	})
 
 	t.Run("Stats", func(t *testing.T) {
-		t.Parallel()
 		stats := storage.GetStats()
 		assert.Equal(t, "file", stats["type"])
 		assert.Equal(t, tmpDir, stats["path"])
@@ -411,7 +393,6 @@ func TestFileProfileStorage(t *testing.T) {
 }
 
 func TestMemoryProfileStorage(t *testing.T) {
-	t.Parallel()
 	logger := logrus.NewEntry(logrus.New())
 
 	config := ProfileStorageConfig{
@@ -423,7 +404,6 @@ func TestMemoryProfileStorage(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("SaveAndLoad", func(t *testing.T) {
-		t.Parallel()
 		profile := &CollectorProfile{
 			CollectorName: "test_collector",
 			StartTime:     time.Now(),
@@ -454,9 +434,7 @@ func TestMemoryProfileStorage(t *testing.T) {
 	})
 
 	t.Run("EnforceLimits", func(t *testing.T) {
-		t.Parallel(
 		// Create many profiles to exceed limit
-		)
 
 		for i := 0; i < 150; i++ {
 			profile := &CollectorProfile{
@@ -474,10 +452,7 @@ func TestMemoryProfileStorage(t *testing.T) {
 	})
 
 	t.Run("Cleanup", func(t *testing.T) {
-		t.Parallel(
 		// Create an old profile
-		)
-
 		oldProfile := &CollectorProfile{
 			CollectorName: "old_memory_test",
 			StartTime:     time.Now().Add(-2 * time.Hour),
@@ -506,7 +481,6 @@ func TestMemoryProfileStorage(t *testing.T) {
 	})
 
 	t.Run("Stats", func(t *testing.T) {
-		t.Parallel()
 		stats := storage.GetStats()
 		assert.Equal(t, "memory", stats["type"])
 		assert.NotNil(t, stats["profile_count"])

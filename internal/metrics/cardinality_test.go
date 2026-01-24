@@ -537,15 +537,12 @@ func TestFilterStrategies(t *testing.T) {
 }
 
 func TestCardinalityReport(t *testing.T) {
-	t.Parallel()
 	logger := logrus.New()
 	logger.SetLevel(logrus.ErrorLevel)
 	cm := NewCardinalityManager(logger)
 
 	t.Run("ReportStructure", func(t *testing.T) {
-		t.Parallel(
 		// Add test data
-		)
 
 		cm.ShouldCollectMetric("metric_a", map[string]string{"id": "1"})
 		cm.ShouldCollectMetric("metric_a", map[string]string{"id": "2"})
@@ -578,10 +575,7 @@ func TestCardinalityReport(t *testing.T) {
 	})
 
 	t.Run("ReportSorting", func(t *testing.T) {
-		t.Parallel(
 		// Clear previous usage
-		)
-
 		cm.usage = make(map[string]*CardinalityUsage)
 
 		// Add metrics with different cardinalities

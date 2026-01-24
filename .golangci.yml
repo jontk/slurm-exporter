@@ -425,10 +425,27 @@ linters:
       # paralleltest/tparallel - Tests with subtests that share parent state
       # Go testing framework limitation: nested parallel calls with shared state create race conditions and deadlocks
       # These tests have subtests that access/modify parent test state, so they cannot safely be parallelized
+      # Entire packages excluded because all/most tests use this pattern
       - linters:
           - paralleltest
           - tparallel
         path: ^internal/collector/.*_test\.go
+      - linters:
+          - paralleltest
+          - tparallel
+        path: ^internal/adaptive/.*_test\.go
+      - linters:
+          - paralleltest
+          - tparallel
+        path: ^internal/performance/.*_test\.go
+      - linters:
+          - paralleltest
+          - tparallel
+        path: ^internal/metrics/.*_test\.go
+      - linters:
+          - paralleltest
+          - tparallel
+        path: ^pkg/version/.*_test\.go
       # Config tests that modify environment variables - shared state across subtests
       - linters:
           - paralleltest
