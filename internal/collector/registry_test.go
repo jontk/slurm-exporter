@@ -63,7 +63,6 @@ func TestRegistry(t *testing.T) {
 	}
 
 	t.Run("RegisterAndGet", func(t *testing.T) {
-		t.Parallel()
 		collector := &mockRegistryCollector{
 			name:    "test_collector",
 			enabled: true,
@@ -126,7 +125,6 @@ func TestRegistry(t *testing.T) {
 	})
 
 	t.Run("EnableDisable", func(t *testing.T) {
-		t.Parallel()
 		collector := &mockRegistryCollector{
 			name:    "toggle_collector",
 			enabled: true,
@@ -163,7 +161,6 @@ func TestRegistry(t *testing.T) {
 	})
 
 	t.Run("Unregister", func(t *testing.T) {
-		t.Parallel()
 		collector := &mockRegistryCollector{
 			name:    "temp_collector",
 			enabled: true,

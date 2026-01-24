@@ -13,7 +13,6 @@ import (
 func TestMetricFilter(t *testing.T) {
 	t.Parallel()
 	t.Run("NewMetricFilter", func(t *testing.T) {
-		t.Parallel()
 		cfg := config.MetricFilterConfig{
 			EnableAll: true,
 		}
@@ -32,7 +31,6 @@ func TestMetricFilter(t *testing.T) {
 func TestShouldCollectMetric(t *testing.T) {
 	t.Parallel()
 	t.Run("DefaultConfig", func(t *testing.T) {
-		t.Parallel()
 		cfg := DefaultMetricFilterConfig()
 		filter := NewMetricFilter(cfg)
 
@@ -69,7 +67,6 @@ func TestShouldCollectMetric(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				t.Parallel()
 				result := filter.ShouldCollectMetric(tc.metric)
 				if result != tc.expected {
 					t.Errorf("Expected %v, got %v", tc.expected, result)
@@ -79,7 +76,6 @@ func TestShouldCollectMetric(t *testing.T) {
 	})
 
 	t.Run("IncludeFilter", func(t *testing.T) {
-		t.Parallel()
 		cfg := config.MetricFilterConfig{
 			IncludeMetrics: []string{"slurm_node_*", "slurm_job_*"},
 		}
@@ -98,7 +94,6 @@ func TestShouldCollectMetric(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				t.Parallel()
 				result := filter.ShouldCollectMetric(MetricInfo{Name: tc.metric})
 				if result != tc.expected {
 					t.Errorf("For metric '%s': expected %v, got %v", tc.metric, tc.expected, result)
@@ -108,7 +103,6 @@ func TestShouldCollectMetric(t *testing.T) {
 	})
 
 	t.Run("ExcludeFilter", func(t *testing.T) {
-		t.Parallel()
 		cfg := config.MetricFilterConfig{
 			ExcludeMetrics: []string{"*_info", "*_debug"},
 		}
@@ -126,7 +120,6 @@ func TestShouldCollectMetric(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				t.Parallel()
 				result := filter.ShouldCollectMetric(MetricInfo{Name: tc.metric})
 				if result != tc.expected {
 					t.Errorf("For metric '%s': expected %v, got %v", tc.metric, tc.expected, result)
@@ -136,7 +129,6 @@ func TestShouldCollectMetric(t *testing.T) {
 	})
 
 	t.Run("OnlyInfoFilter", func(t *testing.T) {
-		t.Parallel()
 		cfg := config.MetricFilterConfig{
 			OnlyInfo: true,
 		}
@@ -167,7 +159,6 @@ func TestShouldCollectMetric(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				t.Parallel()
 				result := filter.ShouldCollectMetric(tc.metric)
 				if result != tc.expected {
 					t.Errorf("Expected %v, got %v", tc.expected, result)
@@ -177,7 +168,6 @@ func TestShouldCollectMetric(t *testing.T) {
 	})
 
 	t.Run("OnlyCountersFilter", func(t *testing.T) {
-		t.Parallel()
 		cfg := config.MetricFilterConfig{
 			OnlyCounters: true,
 		}
@@ -216,7 +206,6 @@ func TestShouldCollectMetric(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				t.Parallel()
 				result := filter.ShouldCollectMetric(tc.metric)
 				if result != tc.expected {
 					t.Errorf("Expected %v, got %v", tc.expected, result)
@@ -226,7 +215,6 @@ func TestShouldCollectMetric(t *testing.T) {
 	})
 
 	t.Run("OnlyGaugesFilter", func(t *testing.T) {
-		t.Parallel()
 		cfg := config.MetricFilterConfig{
 			OnlyGauges: true,
 		}
@@ -257,7 +245,6 @@ func TestShouldCollectMetric(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				t.Parallel()
 				result := filter.ShouldCollectMetric(tc.metric)
 				if result != tc.expected {
 					t.Errorf("Expected %v, got %v", tc.expected, result)
@@ -267,7 +254,6 @@ func TestShouldCollectMetric(t *testing.T) {
 	})
 
 	t.Run("SkipHistogramsFilter", func(t *testing.T) {
-		t.Parallel()
 		cfg := config.MetricFilterConfig{
 			SkipHistograms: true,
 		}
@@ -298,7 +284,6 @@ func TestShouldCollectMetric(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				t.Parallel()
 				result := filter.ShouldCollectMetric(tc.metric)
 				if result != tc.expected {
 					t.Errorf("Expected %v, got %v", tc.expected, result)
@@ -308,7 +293,6 @@ func TestShouldCollectMetric(t *testing.T) {
 	})
 
 	t.Run("SkipTimingMetricsFilter", func(t *testing.T) {
-		t.Parallel()
 		cfg := config.MetricFilterConfig{
 			SkipTimingMetrics: true,
 		}
@@ -339,7 +323,6 @@ func TestShouldCollectMetric(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				t.Parallel()
 				result := filter.ShouldCollectMetric(tc.metric)
 				if result != tc.expected {
 					t.Errorf("Expected %v, got %v", tc.expected, result)
@@ -349,7 +332,6 @@ func TestShouldCollectMetric(t *testing.T) {
 	})
 
 	t.Run("SkipResourceMetricsFilter", func(t *testing.T) {
-		t.Parallel()
 		cfg := config.MetricFilterConfig{
 			SkipResourceMetrics: true,
 		}
@@ -388,7 +370,6 @@ func TestShouldCollectMetric(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				t.Parallel()
 				result := filter.ShouldCollectMetric(tc.metric)
 				if result != tc.expected {
 					t.Errorf("Expected %v, got %v", tc.expected, result)
@@ -421,7 +402,6 @@ func TestMatchesPattern(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 			result := filter.matchesPattern(tc.metric, tc.pattern)
 			if result != tc.expected {
 				t.Errorf("Pattern '%s' on metric '%s': expected %v, got %v",
@@ -448,7 +428,6 @@ func TestGetMetricType(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 			desc := prometheus.NewDesc(tc.metric, "test metric", nil, nil)
 			result := GetMetricType(desc)
 			if result != tc.expected {
@@ -461,7 +440,6 @@ func TestGetMetricType(t *testing.T) {
 func TestCreateMetricInfo(t *testing.T) {
 	t.Parallel()
 	t.Run("Counter metric", func(t *testing.T) {
-		t.Parallel()
 		info := CreateMetricInfo("slurm_jobs_total", MetricTypeCounter, "Total jobs")
 
 		if info.Name != "slurm_jobs_total" {
@@ -482,7 +460,6 @@ func TestCreateMetricInfo(t *testing.T) {
 	})
 
 	t.Run("Info metric", func(t *testing.T) {
-		t.Parallel()
 		info := CreateMetricInfo("slurm_node_info", MetricTypeInfo, "Node information")
 
 		if info.IsInfo != true {
@@ -491,7 +468,6 @@ func TestCreateMetricInfo(t *testing.T) {
 	})
 
 	t.Run("Timing metric", func(t *testing.T) {
-		t.Parallel()
 		testCases := []struct {
 			name     string
 			metric   string
@@ -505,7 +481,6 @@ func TestCreateMetricInfo(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				t.Parallel()
 				info := CreateMetricInfo(tc.metric, MetricTypeGauge, "Test metric")
 				if info.IsTiming != tc.isTiming {
 					t.Errorf("Metric '%s': expected IsTiming %v, got %v",
@@ -516,7 +491,6 @@ func TestCreateMetricInfo(t *testing.T) {
 	})
 
 	t.Run("Resource metric", func(t *testing.T) {
-		t.Parallel()
 		testCases := []struct {
 			name       string
 			metric     string
@@ -532,7 +506,6 @@ func TestCreateMetricInfo(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				t.Parallel()
 				info := CreateMetricInfo(tc.metric, MetricTypeGauge, "Test metric")
 				if info.IsResource != tc.isResource {
 					t.Errorf("Metric '%s': expected IsResource %v, got %v",
@@ -576,7 +549,6 @@ func TestDefaultMetricFilterConfig(t *testing.T) {
 func TestMetricFilterCombined(t *testing.T) {
 	t.Parallel()
 	t.Run("Include and Exclude combined", func(t *testing.T) {
-		t.Parallel()
 		cfg := config.MetricFilterConfig{
 			IncludeMetrics: []string{"slurm_*"},
 			ExcludeMetrics: []string{"*_debug", "*_info"},
@@ -595,7 +567,6 @@ func TestMetricFilterCombined(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				t.Parallel()
 				result := filter.ShouldCollectMetric(MetricInfo{Name: tc.metric})
 				if result != tc.expected {
 					t.Errorf("For metric '%s': expected %v, got %v", tc.metric, tc.expected, result)
@@ -605,7 +576,6 @@ func TestMetricFilterCombined(t *testing.T) {
 	})
 
 	t.Run("Type and pattern filters combined", func(t *testing.T) {
-		t.Parallel()
 		cfg := config.MetricFilterConfig{
 			IncludeMetrics: []string{"slurm_*"},
 			OnlyCounters:   true,
@@ -637,7 +607,6 @@ func TestMetricFilterCombined(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				t.Parallel()
 				result := filter.ShouldCollectMetric(tc.metric)
 				if result != tc.expected {
 					t.Errorf("Expected %v, got %v", tc.expected, result)

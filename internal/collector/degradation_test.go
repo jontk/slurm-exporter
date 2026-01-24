@@ -167,7 +167,6 @@ func TestDegradationManager(t *testing.T) {
 	}
 
 	t.Run("SuccessfulCollection", func(t *testing.T) {
-		t.Parallel()
 		ctx := context.Background()
 		testMetrics := []prometheus.Metric{
 			prometheus.MustNewConstMetric(
@@ -196,7 +195,6 @@ func TestDegradationManager(t *testing.T) {
 	})
 
 	t.Run("CachedMetricsAfterFailure", func(t *testing.T) {
-		t.Parallel()
 		ctx := context.Background()
 
 		// First successful collection to cache metrics
@@ -240,7 +238,6 @@ func TestDegradationManager(t *testing.T) {
 	})
 
 	t.Run("CacheExpiry", func(t *testing.T) {
-		t.Parallel()
 		ctx := context.Background()
 
 		// Create short-lived cache
@@ -292,10 +289,6 @@ func TestDegradationManager(t *testing.T) {
 	})
 
 	t.Run("DegradationModeTracking", func(t *testing.T) {
-		t.Parallel(
-		// Update degradation mode
-		)
-
 		dm.UpdateDegradationMode()
 
 		// Check degradation mode metric
@@ -307,7 +300,6 @@ func TestDegradationManager(t *testing.T) {
 	})
 
 	t.Run("GetDegradationStats", func(t *testing.T) {
-		t.Parallel()
 		stats := dm.GetDegradationStats()
 
 		// Should have stats for collectors we've used
@@ -331,10 +323,6 @@ func TestDegradationManager(t *testing.T) {
 	})
 
 	t.Run("ResetAllBreakers", func(t *testing.T) {
-		t.Parallel(
-		// Reset all breakers
-		)
-
 		dm.ResetAllBreakers()
 
 		// All breakers should be closed
