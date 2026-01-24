@@ -422,6 +422,13 @@ linters:
       - linters:
           - mnd
         path: internal/(health|adaptive)/
+      # paralleltest/tparallel - Tests that modify environment variables or shared state
+      # These tests cannot run in parallel due to global state mutations (os.Setenv, registries, buffers)
+      - linters:
+          - paralleltest
+          - tparallel
+        path: _test\.go
+        text: '(TestEnvOverrides|TestEnvOverridesPrecedence|TestApplyEnvOverrides|TestInvalidEnvOverrides|TestRegistry|TestConcurrentCollector|TestDegradationManager|TestDegradedRegistry|TestLoggingCollector|TestDimensionalAnalysisReporter|TestLoggerMethods)'
       # Server middleware and utilities have timeout and size constants
       - linters:
           - mnd
