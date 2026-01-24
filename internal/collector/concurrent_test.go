@@ -275,7 +275,6 @@ func TestConcurrentCollector(t *testing.T) {
 }
 
 func TestCollectionOrchestrator(t *testing.T) {
-	t.Parallel()
 	cfg := &config.CollectorsConfig{
 		Global: config.GlobalCollectorConfig{
 			DefaultInterval: 30 * time.Second,
@@ -294,7 +293,6 @@ func TestCollectionOrchestrator(t *testing.T) {
 	orchestrator := NewCollectionOrchestrator(registry, 3)
 
 	t.Run("SetInterval", func(t *testing.T) {
-		t.Parallel()
 		orchestrator.SetCollectorInterval("test", 100*time.Millisecond)
 
 		// Verify interval was set
@@ -311,7 +309,6 @@ func TestCollectionOrchestrator(t *testing.T) {
 	})
 
 	t.Run("CollectNow", func(t *testing.T) {
-		t.Parallel()
 		collected := false
 		collector := &mockCollector{
 			name:    "immediate",
@@ -350,7 +347,6 @@ func TestCollectionOrchestrator(t *testing.T) {
 	})
 
 	t.Run("ScheduledCollection", func(t *testing.T) {
-		t.Parallel()
 		var collectCount int32
 		collector := &mockCollector{
 			name:    "scheduled",
