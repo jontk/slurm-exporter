@@ -16,10 +16,7 @@ import (
 )
 
 func TestConcurrentCollector(t *testing.T) {
-	t.Parallel(
 	// Create registry
-	)
-
 	cfg := &config.CollectorsConfig{
 		Global: config.GlobalCollectorConfig{
 			DefaultInterval: 30 * time.Second,

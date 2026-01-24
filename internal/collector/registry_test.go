@@ -48,7 +48,6 @@ func (m *mockRegistryCollector) SetEnabled(enabled bool) {
 }
 
 func TestRegistry(t *testing.T) {
-	t.Parallel()
 	cfg := &config.CollectorsConfig{
 		Global: config.GlobalCollectorConfig{
 			DefaultInterval: 30 * time.Second,

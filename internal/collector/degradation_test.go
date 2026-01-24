@@ -152,7 +152,6 @@ func TestCircuitBreaker(t *testing.T) {
 }
 
 func TestDegradationManager(t *testing.T) {
-	t.Parallel()
 	cfg := &config.DegradationConfig{
 		Enabled:          true,
 		MaxFailures:      2,

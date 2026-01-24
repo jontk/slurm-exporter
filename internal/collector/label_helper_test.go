@@ -282,7 +282,6 @@ func TestLabelSetBuilder(t *testing.T) {
 }
 
 func TestDimensionalAnalysisReporter(t *testing.T) {
-	t.Parallel()
 	logger, hook := test.NewNullLogger()
 	logEntry := logrus.NewEntry(logger)
 	labelManager := metrics.NewLabelManager()

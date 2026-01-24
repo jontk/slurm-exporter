@@ -15,10 +15,7 @@ import (
 )
 
 func TestLoggingCollector(t *testing.T) {
-	t.Parallel(
 	// Create test logger with hook to capture logs
-	)
-
 	logger, hook := test.NewNullLogger()
 	logger.SetLevel(logrus.DebugLevel)
 	logEntry := logrus.NewEntry(logger)

@@ -185,10 +185,7 @@ func TestDegradedCollector(t *testing.T) {
 }
 
 func TestDegradedRegistry(t *testing.T) {
-	t.Parallel(
 	// Create test configuration
-	)
-
 	cfg := &config.CollectorsConfig{
 		Global: config.GlobalCollectorConfig{
 			DefaultInterval:     30 * time.Second,

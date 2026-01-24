@@ -228,7 +228,6 @@ func TestLoggerFileOutput(t *testing.T) {
 }
 
 func TestLoggerMethods(t *testing.T) {
-	t.Parallel()
 	var buf bytes.Buffer
 	cfg := &config.LoggingConfig{
 		Level:        "debug",
