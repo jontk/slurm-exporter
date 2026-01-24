@@ -18,7 +18,6 @@ linters:
     - funcorder                 # Function ordering is developer's choice
     - gochecknoglobals
     - gochecknoinits
-    - gocritic
     - godoclint                 # Doc comment style (v2.8+ only)
     - godot
     - gosmopolitan              # I18n linter - not needed for this project
@@ -117,6 +116,25 @@ linters:
         - octalLiteral
         - whyNoLint
         - wrapperFunc
+        # Style checks - require extensive refactoring, handled through phases
+        - commentedOutCode    # Many intentional commented APIs
+        - commentedOutImport  # To be cleaned up gradually
+        - paramTypeCombine    # Style preference
+        - unnamedResult       # Style preference
+        - appendAssign        # Style choice for clarity
+        - assignOp            # Style preference (x = x * y vs x *= y)
+        - dupBranchBody       # Rare edge cases
+        - nestingReduce       # Architecture-driven
+        - emptyStringTest     # Style preference
+        - httpNoBody          # Test code style
+        - sprintfQuotedString # Style preference
+        - regexpSimplify      # Minor optimization
+        - typeDefFirst        # Code organization choice
+        # Performance checks that require refactoring
+        - rangeValCopy        # Requires struct changes
+        - hugeParam           # Requires API changes
+        # Import naming
+        - importShadow        # Handled through careful parameter naming
       enabled-tags:
         - diagnostic
         - experimental
