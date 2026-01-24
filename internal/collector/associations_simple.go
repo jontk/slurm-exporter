@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/jontk/slurm-client"
+	"github.com/jontk/slurm-client/interfaces"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 )
@@ -127,6 +128,122 @@ func (c *AssociationsSimpleCollector) Collect(ctx context.Context, ch chan<- pro
 	return c.collect(ch)
 }
 
+// associationContext holds normalized association information
+type associationContext struct {
+	user      string
+	account   string
+	cluster   string
+	partition string
+	qos       string
+}
+
+// extractAssociationContext extracts and normalizes association fields with safe defaults
+func extractAssociationContext(assoc *interfaces.Association) associationContext {
+	ctx := associationContext{
+		user:      assoc.User,
+		account:   assoc.Account,
+		cluster:   assoc.Cluster,
+		partition: assoc.Partition,
+		qos:       assoc.DefaultQoS,
+	}
+
+	// Apply safe defaults
+	if ctx.user == "" {
+		ctx.user = "unknown"
+	}
+	if ctx.account == "" {
+		ctx.account = "default"
+	}
+	if ctx.cluster == "" {
+		ctx.cluster = "default"
+	}
+	if ctx.partition == "" {
+		ctx.partition = "default"
+	}
+	if ctx.qos == "" {
+		ctx.qos = "normal"
+	}
+
+	return ctx
+}
+
+// sendAssociationInfoMetric sends the association info metric
+func (c *AssociationsSimpleCollector) sendAssociationInfoMetric(ch chan<- prometheus.Metric, ctx associationContext) {
+	ch <- prometheus.MustNewConstMetric(
+		c.associationInfo,
+		prometheus.GaugeValue,
+		1,
+		ctx.user, ctx.account, ctx.cluster, ctx.partition, ctx.qos,
+	)
+}
+
+// sendTRESLimitsMetrics sends CPU and memory limit metrics from TRES
+func (c *AssociationsSimpleCollector) sendTRESLimitsMetrics(ch chan<- prometheus.Metric, assoc *interfaces.Association, ctx associationContext) {
+	if assoc.MaxTRESPerJob == nil {
+		return
+	}
+
+	// CPU limit
+	if cpuStr, ok := assoc.MaxTRESPerJob["cpu"]; ok {
+		var cpuLimit float64
+		if _, err := fmt.Sscanf(cpuStr, "%f", &cpuLimit); err == nil && cpuLimit > 0 {
+			ch <- prometheus.MustNewConstMetric(
+				c.associationCPULimit,
+				prometheus.GaugeValue,
+				cpuLimit,
+				ctx.user, ctx.account, ctx.cluster, ctx.partition,
+			)
+		}
+	}
+
+	// Memory limit
+	if memStr, ok := assoc.MaxTRESPerJob["mem"]; ok {
+		var memLimit float64
+		_, _ = fmt.Sscanf(memStr, "%f", &memLimit)
+		if memLimit > 0 {
+			ch <- prometheus.MustNewConstMetric(
+				c.associationMemoryLimit,
+				prometheus.GaugeValue,
+				memLimit*1024*1024, // Convert MB to bytes
+				ctx.user, ctx.account, ctx.cluster, ctx.partition,
+			)
+		}
+	}
+}
+
+// sendAssociationLimitMetrics sends time limit, priority, and shares metrics
+func (c *AssociationsSimpleCollector) sendAssociationLimitMetrics(ch chan<- prometheus.Metric, assoc *interfaces.Association, ctx associationContext) {
+	// Time limit
+	if assoc.MaxWallDuration != nil && *assoc.MaxWallDuration > 0 {
+		ch <- prometheus.MustNewConstMetric(
+			c.associationTimeLimit,
+			prometheus.GaugeValue,
+			float64(*assoc.MaxWallDuration),
+			ctx.user, ctx.account, ctx.cluster, ctx.partition,
+		)
+	}
+
+	// Priority
+	if assoc.Priority > 0 {
+		ch <- prometheus.MustNewConstMetric(
+			c.associationPriority,
+			prometheus.GaugeValue,
+			float64(assoc.Priority),
+			ctx.user, ctx.account, ctx.cluster, ctx.partition,
+		)
+	}
+
+	// Shares
+	if assoc.SharesRaw > 0 {
+		ch <- prometheus.MustNewConstMetric(
+			c.associationSharesRaw,
+			prometheus.GaugeValue,
+			float64(assoc.SharesRaw),
+			ctx.user, ctx.account, ctx.cluster, ctx.partition,
+		)
+	}
+}
+
 // collect gathers metrics from SLURM
 func (c *AssociationsSimpleCollector) collect(ch chan<- prometheus.Metric) error {
 	ctx := context.Background()
@@ -147,100 +264,17 @@ func (c *AssociationsSimpleCollector) collect(ch chan<- prometheus.Metric) error
 	c.logger.WithField("count", len(assocList.Associations)).Info("Collected association entries")
 
 	for _, assoc := range assocList.Associations {
-		// Get association details
-		user := assoc.User
-		if user == "" {
-			user = "unknown"
-		}
+		// Extract normalized association context
+		assocCtx := extractAssociationContext(assoc)
 
-		account := assoc.Account
-		if account == "" {
-			account = "default"
-		}
+		// Send association info metric
+		c.sendAssociationInfoMetric(ch, assocCtx)
 
-		cluster := assoc.Cluster
-		if cluster == "" {
-			cluster = "default"
-		}
+		// Send TRES resource limits
+		c.sendTRESLimitsMetrics(ch, assoc, assocCtx)
 
-		partition := assoc.Partition
-		if partition == "" {
-			partition = "default"
-		}
-
-		qos := assoc.DefaultQoS
-		if qos == "" {
-			qos = "normal"
-		}
-
-		// Association info metric
-		ch <- prometheus.MustNewConstMetric(
-			c.associationInfo,
-			prometheus.GaugeValue,
-			1,
-			user, account, cluster, partition, qos,
-		)
-
-		// Resource limits from TRES
-		if assoc.MaxTRESPerJob != nil {
-			// CPU limit
-			if cpuStr, ok := assoc.MaxTRESPerJob["cpu"]; ok {
-				var cpuLimit float64
-				if _, err := fmt.Sscanf(cpuStr, "%f", &cpuLimit); err == nil && cpuLimit > 0 {
-					ch <- prometheus.MustNewConstMetric(
-						c.associationCPULimit,
-						prometheus.GaugeValue,
-						cpuLimit,
-						user, account, cluster, partition,
-					)
-				}
-			}
-
-			// Memory limit
-			if memStr, ok := assoc.MaxTRESPerJob["mem"]; ok {
-				var memLimit float64
-				_, _ = fmt.Sscanf(memStr, "%f", &memLimit)
-				if memLimit > 0 {
-					ch <- prometheus.MustNewConstMetric(
-						c.associationMemoryLimit,
-						prometheus.GaugeValue,
-						memLimit*1024*1024, // Convert MB to bytes
-						user, account, cluster, partition,
-					)
-				}
-			}
-		}
-
-		if assoc.MaxWallDuration != nil && *assoc.MaxWallDuration > 0 {
-			ch <- prometheus.MustNewConstMetric(
-				c.associationTimeLimit,
-				prometheus.GaugeValue,
-				float64(*assoc.MaxWallDuration),
-				user, account, cluster, partition,
-			)
-		}
-
-		// Priority and shares
-		if assoc.Priority > 0 {
-			ch <- prometheus.MustNewConstMetric(
-				c.associationPriority,
-				prometheus.GaugeValue,
-				float64(assoc.Priority),
-				user, account, cluster, partition,
-			)
-		}
-
-		if assoc.SharesRaw > 0 {
-			ch <- prometheus.MustNewConstMetric(
-				c.associationSharesRaw,
-				prometheus.GaugeValue,
-				float64(assoc.SharesRaw),
-				user, account, cluster, partition,
-			)
-		}
-
-		// Note: SharesNorm and usage metrics are not in the Association struct
-		// They would need to be obtained from other API calls or calculated
+		// Send other limit metrics (time, priority, shares)
+		c.sendAssociationLimitMetrics(ch, assoc, assocCtx)
 	}
 
 	return nil

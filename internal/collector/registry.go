@@ -531,207 +531,139 @@ func RegisterCollectorFactory(name string, factory CollectorFactory) {
 	RegisteredCollectorFactories[name] = factory
 }
 
+// registerCollector registers a collector and logs success
+func (r *Registry) registerCollector(name string, collector Collector) error {
+	if err := r.Register(name, collector); err != nil {
+		return fmt.Errorf("failed to register %s collector: %w", name, err)
+	}
+	r.logger.Infof("%s collector registered successfully", name)
+	return nil
+}
+
+// configureCollectorFeatures configures optional collector features (filtering, cardinality, custom labels)
+func (r *Registry) configureCollectorFeatures(collector Collector, filterConfig config.FilterConfig, customLabels map[string]string) {
+	// Configure filtering
+	if filterableCollector, ok := collector.(FilterableCollector); ok {
+		hasFilters := len(filterConfig.Metrics.IncludeMetrics) > 0 || len(filterConfig.Metrics.ExcludeMetrics) > 0
+		if hasFilters {
+			filterableCollector.UpdateFilterConfig(filterConfig)
+		}
+	}
+
+	// Configure cardinality management
+	if cardinalityAware, ok := collector.(CardinalityAwareCollector); ok {
+		cardinalityAware.SetCardinalityManager(r.cardinalityManager)
+	}
+
+	// Configure custom labels
+	if customLabelsCollector, ok := collector.(CustomLabelsCollector); ok {
+		if len(customLabels) > 0 {
+			customLabelsCollector.SetCustomLabels(customLabels)
+		}
+	}
+}
+
+// registerSimpleCollectors registers collectors with no extra configuration
+func (r *Registry) registerSimpleCollectors(cfg *config.CollectorsConfig, client slurm.SlurmClient, logger *logrus.Entry) error {
+	collectors := []struct {
+		enabled bool
+		name    string
+		factory func() Collector
+	}{
+		{cfg.QoS.Enabled, "qos", func() Collector { return NewQoSCollector(client, logger) }},
+		{cfg.Reservations.Enabled, "reservations", func() Collector { return NewReservationCollector(client, logger) }},
+		{cfg.Partitions.Enabled, "partitions", func() Collector { return NewPartitionsSimpleCollector(client, logger) }},
+		{cfg.Cluster.Enabled, "cluster", func() Collector { return NewClusterSimpleCollector(client, logger) }},
+		{cfg.Users.Enabled, "users", func() Collector { return NewUsersSimpleCollector(client, logger) }},
+		{cfg.Accounts.Enabled, "accounts", func() Collector { return NewAccountsSimpleCollector(client, logger) }},
+		{cfg.Associations.Enabled, "associations", func() Collector { return NewAssociationsSimpleCollector(client, logger) }},
+	}
+
+	for _, c := range collectors {
+		if c.enabled {
+			if err := r.registerCollector(c.name, c.factory()); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// registerTimeoutCollectors registers collectors that require timeout parameter
+func (r *Registry) registerTimeoutCollectors(cfg *config.CollectorsConfig, client slurm.SlurmClient, logger *logrus.Entry, timeout time.Duration) error {
+	collectors := []struct {
+		enabled bool
+		name    string
+		factory func() Collector
+	}{
+		{cfg.Licenses.Enabled, "licenses", func() Collector { return NewLicensesCollector(client, logger, timeout) }},
+		{cfg.Shares.Enabled, "shares", func() Collector { return NewSharesCollector(client, logger, timeout) }},
+		{cfg.Diagnostics.Enabled, "diagnostics", func() Collector { return NewDiagnosticsCollector(client, logger, timeout) }},
+		{cfg.TRES.Enabled, "tres", func() Collector { return NewTRESCollector(client, logger, timeout) }},
+		{cfg.WCKeys.Enabled, "wckeys", func() Collector { return NewWCKeysCollector(client, logger, timeout) }},
+		{cfg.Clusters.Enabled, "clusters", func() Collector { return NewClustersCollector(client, logger, timeout) }},
+	}
+
+	for _, c := range collectors {
+		if c.enabled {
+			if err := r.registerCollector(c.name, c.factory()); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// registerConfigurableCollectors registers collectors with custom labels and/or filtering
+func (r *Registry) registerConfigurableCollectors(cfg *config.CollectorsConfig, client slurm.SlurmClient) error {
+	configurableCollectors := []struct {
+		enabled      bool
+		name         string
+		factory      func() Collector
+		filterConfig config.FilterConfig
+		labels       map[string]string
+	}{
+		{cfg.Jobs.Enabled, "jobs", func() Collector { return NewJobsSimpleCollector(client, r.logger) }, cfg.Jobs.Filters, cfg.Jobs.Labels},
+		{cfg.Nodes.Enabled, "nodes", func() Collector { return NewNodesSimpleCollector(client, r.logger) }, config.FilterConfig{}, cfg.Nodes.Labels},
+		{cfg.Performance.Enabled, "performance", func() Collector { return NewPerformanceSimpleCollector(client, r.logger) }, config.FilterConfig{}, cfg.Performance.Labels},
+		{cfg.System.Enabled, "system", func() Collector { return NewSystemSimpleCollector(client, r.logger) }, config.FilterConfig{}, cfg.System.Labels},
+	}
+
+	for _, c := range configurableCollectors {
+		if c.enabled {
+			collector := c.factory()
+			r.configureCollectorFeatures(collector, c.filterConfig, c.labels)
+			if err := r.registerCollector(c.name, collector); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 // CreateCollectorsFromConfig creates and registers collectors based on configuration
 func (r *Registry) CreateCollectorsFromConfig(cfg *config.CollectorsConfig, client interface{}) error {
 	r.logger.Info("Creating collectors from configuration")
 
 	// Cast client to the expected interface
-	_, ok := client.(slurm.SlurmClient)
+	slurmClient, ok := client.(slurm.SlurmClient)
 	if !ok {
 		return fmt.Errorf("invalid client type, expected slurm.SlurmClient")
 	}
 
-	// Create and register enabled collectors
-	slurmClient := client.(slurm.SlurmClient)
-	logger := r.logger
-
-	// Register collectors that have working constructors
-	if cfg.QoS.Enabled {
-		collector := NewQoSCollector(slurmClient, logger)
-		if err := r.Register("qos", collector); err != nil {
-			return fmt.Errorf("failed to register QoS collector: %w", err)
-		}
-		r.logger.Info("QoS collector registered successfully")
+	// Register simple collectors (no extra configuration)
+	if err := r.registerSimpleCollectors(cfg, slurmClient, r.logger); err != nil {
+		return err
 	}
 
-	if cfg.Reservations.Enabled {
-		collector := NewReservationCollector(slurmClient, logger)
-		if err := r.Register("reservations", collector); err != nil {
-			return fmt.Errorf("failed to register reservation collector: %w", err)
-		}
-		r.logger.Info("Reservations collector registered successfully")
+	// Register collectors with custom labels and/or filtering
+	if err := r.registerConfigurableCollectors(cfg, slurmClient); err != nil {
+		return err
 	}
 
-	// Jobs collector
-	if cfg.Jobs.Enabled {
-		collector := NewJobsSimpleCollector(slurmClient, logger)
-
-		// Configure filtering
-		if filterableCollector, ok := (Collector(collector)).(FilterableCollector); ok {
-			filterableCollector.UpdateFilterConfig(cfg.Jobs.Filters)
-		}
-
-		// Configure cardinality management
-		if cardinalityAware, ok := (Collector(collector)).(CardinalityAwareCollector); ok {
-			cardinalityAware.SetCardinalityManager(r.cardinalityManager)
-		}
-
-		// Configure custom labels
-		if customLabelsCollector, ok := (Collector(collector)).(CustomLabelsCollector); ok {
-			customLabelsCollector.SetCustomLabels(cfg.Jobs.Labels)
-		}
-
-		if err := r.Register("jobs", collector); err != nil {
-			return fmt.Errorf("failed to register jobs collector: %w", err)
-		}
-		r.logger.Info("Jobs collector registered successfully")
-	}
-
-	// Nodes collector
-	if cfg.Nodes.Enabled {
-		collector := NewNodesSimpleCollector(slurmClient, logger)
-
-		// Configure custom labels
-		if customLabelsCollector, ok := (Collector(collector)).(CustomLabelsCollector); ok {
-			customLabelsCollector.SetCustomLabels(cfg.Nodes.Labels)
-		}
-
-		if err := r.Register("nodes", collector); err != nil {
-			return fmt.Errorf("failed to register nodes collector: %w", err)
-		}
-		r.logger.Info("Nodes collector registered successfully")
-	}
-
-	// Partitions collector
-	if cfg.Partitions.Enabled {
-		collector := NewPartitionsSimpleCollector(slurmClient, logger)
-		if err := r.Register("partitions", collector); err != nil {
-			return fmt.Errorf("failed to register partitions collector: %w", err)
-		}
-		r.logger.Info("Partitions collector registered successfully")
-	}
-
-	// Cluster collector
-	if cfg.Cluster.Enabled {
-		collector := NewClusterSimpleCollector(slurmClient, logger)
-		if err := r.Register("cluster", collector); err != nil {
-			return fmt.Errorf("failed to register cluster collector: %w", err)
-		}
-		r.logger.Info("Cluster collector registered successfully")
-	}
-
-	// Users collector
-	if cfg.Users.Enabled {
-		collector := NewUsersSimpleCollector(slurmClient, logger)
-		if err := r.Register("users", collector); err != nil {
-			return fmt.Errorf("failed to register users collector: %w", err)
-		}
-		r.logger.Info("Users collector registered successfully")
-	}
-
-	// Accounts collector
-	if cfg.Accounts.Enabled {
-		collector := NewAccountsSimpleCollector(slurmClient, logger)
-		if err := r.Register("accounts", collector); err != nil {
-			return fmt.Errorf("failed to register accounts collector: %w", err)
-		}
-		r.logger.Info("Accounts collector registered successfully")
-	}
-
-	// Associations collector
-	if cfg.Associations.Enabled {
-		collector := NewAssociationsSimpleCollector(slurmClient, logger)
-		if err := r.Register("associations", collector); err != nil {
-			return fmt.Errorf("failed to register associations collector: %w", err)
-		}
-		r.logger.Info("Associations collector registered successfully")
-	}
-
-	// Performance collector
-	if cfg.Performance.Enabled {
-		collector := NewPerformanceSimpleCollector(slurmClient, logger)
-
-		// Configure custom labels
-		if customLabelsCollector, ok := (Collector(collector)).(CustomLabelsCollector); ok {
-			customLabelsCollector.SetCustomLabels(cfg.Performance.Labels)
-		}
-
-		if err := r.Register("performance", collector); err != nil {
-			return fmt.Errorf("failed to register performance collector: %w", err)
-		}
-		r.logger.Info("Performance collector registered successfully")
-	}
-
-	// System collector
-	if cfg.System.Enabled {
-		collector := NewSystemSimpleCollector(slurmClient, logger)
-
-		// Configure custom labels
-		if customLabelsCollector, ok := (Collector(collector)).(CustomLabelsCollector); ok {
-			customLabelsCollector.SetCustomLabels(cfg.System.Labels)
-		}
-
-		if err := r.Register("system", collector); err != nil {
-			return fmt.Errorf("failed to register system collector: %w", err)
-		}
-		r.logger.Info("System collector registered successfully")
-	}
-
-	// Register new standalone operation collectors if enabled
-	// Note: These collectors may need to be added to the config structure
-
-	// Licenses collector
-	if cfg.Licenses.Enabled {
-		collector := NewLicensesCollector(slurmClient, logger, cfg.CollectionTimeout)
-		if err := r.Register("licenses", collector); err != nil {
-			return fmt.Errorf("failed to register licenses collector: %w", err)
-		}
-		r.logger.Info("Licenses collector registered successfully")
-	}
-
-	// Shares collector (fairshare)
-	if cfg.Shares.Enabled {
-		collector := NewSharesCollector(slurmClient, logger, cfg.CollectionTimeout)
-		if err := r.Register("shares", collector); err != nil {
-			return fmt.Errorf("failed to register shares collector: %w", err)
-		}
-		r.logger.Info("Shares collector registered successfully")
-	}
-
-	// Diagnostics collector
-	if cfg.Diagnostics.Enabled {
-		collector := NewDiagnosticsCollector(slurmClient, logger, cfg.CollectionTimeout)
-		if err := r.Register("diagnostics", collector); err != nil {
-			return fmt.Errorf("failed to register diagnostics collector: %w", err)
-		}
-		r.logger.Info("Diagnostics collector registered successfully")
-	}
-
-	// TRES collector
-	if cfg.TRES.Enabled {
-		collector := NewTRESCollector(slurmClient, logger, cfg.CollectionTimeout)
-		if err := r.Register("tres", collector); err != nil {
-			return fmt.Errorf("failed to register TRES collector: %w", err)
-		}
-		r.logger.Info("TRES collector registered successfully")
-	}
-
-	// WCKeys collector
-	if cfg.WCKeys.Enabled {
-		collector := NewWCKeysCollector(slurmClient, logger, cfg.CollectionTimeout)
-		if err := r.Register("wckeys", collector); err != nil {
-			return fmt.Errorf("failed to register WCKeys collector: %w", err)
-		}
-		r.logger.Info("WCKeys collector registered successfully")
-	}
-
-	// Clusters collector
-	if cfg.Clusters.Enabled {
-		collector := NewClustersCollector(slurmClient, logger, cfg.CollectionTimeout)
-		if err := r.Register("clusters", collector); err != nil {
-			return fmt.Errorf("failed to register clusters collector: %w", err)
-		}
-		r.logger.Info("Clusters collector registered successfully")
+	// Register collectors that require timeout parameter
+	if err := r.registerTimeoutCollectors(cfg, slurmClient, r.logger, cfg.CollectionTimeout); err != nil {
+		return err
 	}
 
 	r.logger.WithField("count", len(r.collectors)).Info("Collectors created and registered")
