@@ -424,11 +424,13 @@ linters:
         path: internal/(health|adaptive)/
       # paralleltest/tparallel - Tests that modify environment variables or shared state
       # These tests cannot run in parallel due to global state mutations (os.Setenv, registries, buffers)
+      # Also: metric_filter tests with loop-based subtests cause deadlocks when parallelized (Go testing framework limitation)
+      # label_helper_test subtests share parent state and cannot run in parallel
       - linters:
           - paralleltest
           - tparallel
         path: _test\.go
-        text: '(TestEnvOverrides|TestEnvOverridesPrecedence|TestApplyEnvOverrides|TestInvalidEnvOverrides|TestRegistry|TestConcurrentCollector|TestDegradationManager|TestDegradedRegistry|TestLoggingCollector|TestCollectorLogger|TestStructuredLogger|TestDimensionalAnalysisReporter|TestLoggerMethods)'
+        text: '(TestEnvOverrides|TestEnvOverridesPrecedence|TestApplyEnvOverrides|TestInvalidEnvOverrides|TestRegistry|TestConcurrentCollector|TestDegradationManager|TestDegradedRegistry|TestLoggingCollector|TestCollectorLogger|TestStructuredLogger|TestDimensionalAnalysisReporter|TestLoggerMethods|TestMetricFilter|TestShouldCollectMetric|TestMatchesPattern|TestGetMetricType|TestCreateMetricInfo|TestMetricFilterCombined|TestGetLabelNames)'
       # Server middleware and utilities have timeout and size constants
       - linters:
           - mnd
