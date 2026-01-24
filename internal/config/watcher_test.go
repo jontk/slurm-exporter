@@ -46,10 +46,7 @@ func (m *MockReloadHandler) GetLastConfig() *Config {
 }
 
 func TestWatcher_New(t *testing.T) {
-	t.Parallel(
 	// Create temporary config file
-	)
-
 	tmpDir, err := os.MkdirTemp("", "watcher_test")
 	require.NoError(t, err)
 	defer func() { _ = os.RemoveAll(tmpDir) }()
@@ -76,10 +73,7 @@ slurm:
 }
 
 func TestWatcher_Start_Stop(t *testing.T) {
-	t.Parallel(
 	// Create temporary config file
-	)
-
 	tmpDir, err := os.MkdirTemp("", "watcher_test")
 	require.NoError(t, err)
 	defer func() { _ = os.RemoveAll(tmpDir) }()
@@ -123,10 +117,7 @@ slurm:
 }
 
 func TestWatcher_ConfigChange(t *testing.T) {
-	t.Parallel(
 	// Create temporary config file
-	)
-
 	tmpDir, err := os.MkdirTemp("", "watcher_test")
 	require.NoError(t, err)
 	defer func() { _ = os.RemoveAll(tmpDir) }()
@@ -187,10 +178,7 @@ slurm:
 }
 
 func TestWatcher_InvalidConfig(t *testing.T) {
-	t.Parallel(
 	// Create temporary config file
-	)
-
 	tmpDir, err := os.MkdirTemp("", "watcher_test")
 	require.NoError(t, err)
 	defer func() { _ = os.RemoveAll(tmpDir) }()
@@ -262,10 +250,7 @@ func TestWatcher_NonExistentFile(t *testing.T) {
 }
 
 func TestWatcher_GetConfig(t *testing.T) {
-	t.Parallel(
 	// Create temporary config file
-	)
-
 	tmpDir, err := os.MkdirTemp("", "watcher_test")
 	require.NoError(t, err)
 	defer func() { _ = os.RemoveAll(tmpDir) }()
@@ -307,10 +292,7 @@ slurm:
 }
 
 func TestWatcher_DebounceMultipleChanges(t *testing.T) {
-	t.Parallel(
 	// Create temporary config file
-	)
-
 	tmpDir, err := os.MkdirTemp("", "watcher_test")
 	require.NoError(t, err)
 	defer func() { _ = os.RemoveAll(tmpDir) }()
@@ -375,10 +357,7 @@ slurm:
 }
 
 func TestWatcher_ConcurrentAccess(t *testing.T) {
-	t.Parallel(
 	// Create temporary config file
-	)
-
 	tmpDir, err := os.MkdirTemp("", "watcher_test")
 	require.NoError(t, err)
 	defer func() { _ = os.RemoveAll(tmpDir) }()

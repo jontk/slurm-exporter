@@ -860,7 +860,6 @@ logging:
 }
 
 func TestInvalidEnvOverrides(t *testing.T) {
-	t.Parallel()
 	tests := []struct {
 		name   string
 		envVar string

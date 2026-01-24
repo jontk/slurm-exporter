@@ -446,12 +446,12 @@ linters:
           - paralleltest
           - tparallel
         path: ^pkg/version/.*_test\.go
-      # Config tests that modify environment variables - shared state across subtests
+      # Config tests that modify environment variables and file system - shared state
       - linters:
           - paralleltest
           - tparallel
-        path: ^internal/config/config_test\.go
-        text: '(TestEnv|TestApplyEnv|subtests should call|Range statement|missing the call to method parallel)'
+        path: ^internal/config/.*_test\.go
+        text: '(TestEnv|TestApplyEnv|TestInvalidEnvOverrides|TestWatcher|subtests should call|Range statement|missing the call to method parallel)'
       # Logging tests with shared test hooks - hook state is not safe for parallel execution
       - linters:
           - paralleltest
