@@ -109,7 +109,8 @@ func TestLoggingCollector(t *testing.T) {
 		}
 
 		// Should be a CollectionError
-		if _, ok := err.(*CollectionError); !ok {
+		var collErr *CollectionError
+		if !errors.As(err, &collErr) {
 			t.Errorf("Expected CollectionError, got %T", err)
 		}
 
@@ -395,7 +396,7 @@ func TestStructuredLogger(t *testing.T) {
 		// Test with regular error
 		regularErr := errors.New("regular error")
 		entry := structuredLogger.WithError(regularErr)
-		if entry.Data["error"] != regularErr {
+		if errData, ok := entry.Data["error"].(error); !ok || !errors.Is(errData, regularErr) {
 			t.Errorf("Expected error to be set")
 		}
 

@@ -278,7 +278,7 @@ func TestClientContextCancellation(t *testing.T) {
 	if err == nil {
 		t.Error("TestConnection should fail with cancelled context")
 	}
-	if err != context.Canceled {
+	if !errors.Is(err, context.Canceled) {
 		t.Errorf("Expected context.Canceled, got %v", err)
 	}
 }

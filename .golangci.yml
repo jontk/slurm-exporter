@@ -9,7 +9,6 @@ linters:
     - dupword
     - embeddedstructfieldcheck  # Embedded struct formatting is stylistic
     - err113
-    - errorlint
     - exhaustive
     - exhaustruct
     - forbidigo
@@ -25,7 +24,6 @@ linters:
     - lll
     - maintidx
     - modernize                 # Modernization suggestions (v2.8+ only) - not always appropriate
-    - nilerr
     - noinlineerr               # Inline error handling is idiomatic Go
     - nlreturn
     - nonamedreturns

@@ -5,6 +5,7 @@ package collector
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -390,7 +391,8 @@ func (ea *ErrorAnalyzer) AnalyzeError(err error, collector string) *CollectionEr
 	}
 
 	// If it's already a CollectionError, return as-is
-	if collErr, ok := err.(*CollectionError); ok {
+	var collErr *CollectionError
+	if errors.As(err, &collErr) {
 		return collErr
 	}
 
