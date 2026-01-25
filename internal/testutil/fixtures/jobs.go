@@ -7,130 +7,148 @@ import (
 	"github.com/jontk/slurm-client"
 )
 
+// createRunningTestJob creates a running test job
+func createRunningTestJob(now time.Time, startTime time.Time) slurm.Job {
+	return slurm.Job{
+		ID:         "12345",
+		Name:       "test-job-1",
+		State:      "RUNNING",
+		UserID:     "user1",
+		GroupID:    "group1",
+		Partition:  "compute",
+		Priority:   1000,
+		SubmitTime: now.Add(-2 * time.Hour),
+		StartTime:  &startTime,
+		CPUs:       16,
+		Memory:     32768,   // 32GB in MB
+		TimeLimit:  24 * 60, // 24 hours in minutes
+		WorkingDir: "/home/user1",
+		Command:    "test-job.sh",
+		Nodes:      []string{"node01", "node02"},
+		Metadata: map[string]interface{}{
+			"account": "research",
+			"qos":     "normal",
+		},
+	}
+}
+
+// createPendingTestJob creates a pending test job
+func createPendingTestJob(now time.Time) slurm.Job {
+	return slurm.Job{
+		ID:         "12346",
+		Name:       "test-job-2",
+		State:      "PENDING",
+		UserID:     "user2",
+		GroupID:    "group2",
+		Partition:  "compute",
+		Priority:   500,
+		SubmitTime: now.Add(-30 * time.Minute),
+		CPUs:       32,
+		Memory:     65536,   // 64GB in MB
+		TimeLimit:  48 * 60, // 48 hours in minutes
+		WorkingDir: "/home/user2",
+		Command:    "test-job.sh",
+		Metadata: map[string]interface{}{
+			"account": "engineering",
+			"qos":     "high",
+			"reason":  "Resources",
+		},
+	}
+}
+
+// createCompletedTestJob creates a completed test job
+func createCompletedTestJob(now time.Time, startTime, endTime time.Time) slurm.Job {
+	return slurm.Job{
+		ID:         "12347",
+		Name:       "test-job-3",
+		State:      "COMPLETED",
+		UserID:     "user1",
+		GroupID:    "group1",
+		Partition:  "gpu",
+		Priority:   750,
+		SubmitTime: now.Add(-4 * time.Hour),
+		StartTime:  &startTime,
+		EndTime:    &endTime,
+		CPUs:       8,
+		Memory:     16384,  // 16GB in MB
+		TimeLimit:  4 * 60, // 4 hours in minutes
+		WorkingDir: "/home/user1",
+		Command:    "gpu-job.sh",
+		Nodes:      []string{"gpu-node01"},
+		ExitCode:   0,
+		Metadata: map[string]interface{}{
+			"account": "research",
+			"qos":     "normal",
+			"gpus":    2,
+		},
+	}
+}
+
+// createFailedTestJob creates a failed test job
+func createFailedTestJob(now time.Time, startTime, endTime time.Time) slurm.Job {
+	return slurm.Job{
+		ID:         "12348",
+		Name:       "test-job-4",
+		State:      "FAILED",
+		UserID:     "user3",
+		GroupID:    "group3",
+		Partition:  "compute",
+		Priority:   250,
+		SubmitTime: now.Add(-2 * time.Hour),
+		StartTime:  &startTime,
+		EndTime:    &endTime,
+		CPUs:       4,
+		Memory:     8192,   // 8GB in MB
+		TimeLimit:  2 * 60, // 2 hours in minutes
+		WorkingDir: "/home/user3",
+		Command:    "test-job.sh",
+		Nodes:      []string{"node03"},
+		ExitCode:   1,
+		Metadata: map[string]interface{}{
+			"account": "finance",
+			"qos":     "low",
+			"reason":  "NonZeroExitCode",
+		},
+	}
+}
+
+// createArrayTestJob creates an array test job
+func createArrayTestJob(now time.Time, startTime time.Time) slurm.Job {
+	return slurm.Job{
+		ID:         "12349",
+		Name:       "array-job",
+		State:      "RUNNING",
+		UserID:     "user2",
+		GroupID:    "group2",
+		Partition:  "compute",
+		Priority:   600,
+		SubmitTime: now.Add(-1 * time.Hour),
+		StartTime:  &startTime,
+		CPUs:       2,
+		Memory:     4096,   // 4GB in MB
+		TimeLimit:  1 * 60, // 1 hour in minutes
+		WorkingDir: "/home/user2",
+		Command:    "array-job.sh",
+		Nodes:      []string{"node04"},
+		Metadata: map[string]interface{}{
+			"account":        "engineering",
+			"qos":            "normal",
+			"array_job_id":   12349,
+			"array_task_id":  1,
+			"array_task_str": "1-10",
+		},
+	}
+}
+
 // GetTestJobs returns test job data
 func GetTestJobs() []slurm.Job {
 	now := time.Now()
-	startTime1 := now.Add(-1 * time.Hour)
-	startTime2 := now.Add(-3 * time.Hour)
-	endTime1 := now.Add(-1 * time.Hour)
-	startTime3 := now.Add(-90 * time.Minute)
-	endTime2 := now.Add(-30 * time.Minute)
-	startTime4 := now.Add(-45 * time.Minute)
-
 	return []slurm.Job{
-		{
-			ID:         "12345",
-			Name:       "test-job-1",
-			State:      "RUNNING",
-			UserID:     "user1",
-			GroupID:    "group1",
-			Partition:  "compute",
-			Priority:   1000,
-			SubmitTime: now.Add(-2 * time.Hour),
-			StartTime:  &startTime1,
-			CPUs:       16,
-			Memory:     32768,   // 32GB in MB
-			TimeLimit:  24 * 60, // 24 hours in minutes
-			WorkingDir: "/home/user1",
-			Command:    "test-job.sh",
-			Nodes:      []string{"node01", "node02"},
-			Metadata: map[string]interface{}{
-				"account": "research",
-				"qos":     "normal",
-			},
-		},
-		{
-			ID:         "12346",
-			Name:       "test-job-2",
-			State:      "PENDING",
-			UserID:     "user2",
-			GroupID:    "group2",
-			Partition:  "compute",
-			Priority:   500,
-			SubmitTime: now.Add(-30 * time.Minute),
-			CPUs:       32,
-			Memory:     65536,   // 64GB in MB
-			TimeLimit:  48 * 60, // 48 hours in minutes
-			WorkingDir: "/home/user2",
-			Command:    "test-job.sh",
-			Metadata: map[string]interface{}{
-				"account": "engineering",
-				"qos":     "high",
-				"reason":  "Resources",
-			},
-		},
-		{
-			ID:         "12347",
-			Name:       "test-job-3",
-			State:      "COMPLETED",
-			UserID:     "user1",
-			GroupID:    "group1",
-			Partition:  "gpu",
-			Priority:   750,
-			SubmitTime: now.Add(-4 * time.Hour),
-			StartTime:  &startTime2,
-			EndTime:    &endTime1,
-			CPUs:       8,
-			Memory:     16384,  // 16GB in MB
-			TimeLimit:  4 * 60, // 4 hours in minutes
-			WorkingDir: "/home/user1",
-			Command:    "gpu-job.sh",
-			Nodes:      []string{"gpu-node01"},
-			ExitCode:   0,
-			Metadata: map[string]interface{}{
-				"account": "research",
-				"qos":     "normal",
-				"gpus":    2,
-			},
-		},
-		{
-			ID:         "12348",
-			Name:       "test-job-4",
-			State:      "FAILED",
-			UserID:     "user3",
-			GroupID:    "group3",
-			Partition:  "compute",
-			Priority:   250,
-			SubmitTime: now.Add(-2 * time.Hour),
-			StartTime:  &startTime3,
-			EndTime:    &endTime2,
-			CPUs:       4,
-			Memory:     8192,   // 8GB in MB
-			TimeLimit:  2 * 60, // 2 hours in minutes
-			WorkingDir: "/home/user3",
-			Command:    "test-job.sh",
-			Nodes:      []string{"node03"},
-			ExitCode:   1,
-			Metadata: map[string]interface{}{
-				"account": "finance",
-				"qos":     "low",
-				"reason":  "NonZeroExitCode",
-			},
-		},
-		{
-			ID:         "12349",
-			Name:       "array-job",
-			State:      "RUNNING",
-			UserID:     "user2",
-			GroupID:    "group2",
-			Partition:  "compute",
-			Priority:   600,
-			SubmitTime: now.Add(-1 * time.Hour),
-			StartTime:  &startTime4,
-			CPUs:       2,
-			Memory:     4096,   // 4GB in MB
-			TimeLimit:  1 * 60, // 1 hour in minutes
-			WorkingDir: "/home/user2",
-			Command:    "array-job.sh",
-			Nodes:      []string{"node04"},
-			Metadata: map[string]interface{}{
-				"account":        "engineering",
-				"qos":            "normal",
-				"array_job_id":   12349,
-				"array_task_id":  1,
-				"array_task_str": "1-10",
-			},
-		},
+		createRunningTestJob(now, now.Add(-1*time.Hour)),
+		createPendingTestJob(now),
+		createCompletedTestJob(now, now.Add(-3*time.Hour), now.Add(-1*time.Hour)),
+		createFailedTestJob(now, now.Add(-90*time.Minute), now.Add(-30*time.Minute)),
+		createArrayTestJob(now, now.Add(-45*time.Minute)),
 	}
 }
 

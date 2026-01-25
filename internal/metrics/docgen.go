@@ -233,74 +233,71 @@ func (dg *DocumentationGenerator) generateTroubleshootingGuide() string {
 	return doc.String()
 }
 
-// generateAPIMapping creates API endpoint mapping documentation
-func (dg *DocumentationGenerator) generateAPIMapping() string {
-	var doc strings.Builder
-
-	doc.WriteString("# SLURM API Endpoint Mapping\n\n")
-	doc.WriteString("This document describes how SLURM REST API endpoints map to Prometheus metrics.\n\n")
-
-	// Group metrics by endpoint
+// groupMetricsByEndpoint groups metrics by their SLURM endpoint
+func groupMetricsByEndpoint() map[string][]MetricMetadata {
 	endpointMetrics := make(map[string][]MetricMetadata)
 	for _, metadata := range MetricsRegistry {
 		if metadata.SlurmEndpoint != "" && metadata.SlurmEndpoint != "internal" {
 			endpointMetrics[metadata.SlurmEndpoint] = append(endpointMetrics[metadata.SlurmEndpoint], metadata)
 		}
 	}
+	return endpointMetrics
+}
 
+// writeEndpointOverview writes the endpoint overview section
+func writeEndpointOverview(doc *strings.Builder, endpointMetrics map[string][]MetricMetadata) {
 	doc.WriteString("## Endpoint Overview\n\n")
 	for endpoint, metrics := range endpointMetrics {
 		doc.WriteString(fmt.Sprintf("- **%s**: %d metrics\n", endpoint, len(metrics)))
 	}
 	doc.WriteString("\n")
+}
 
+// writeDetailedMapping writes detailed metric mappings for each endpoint
+func writeDetailedMapping(doc *strings.Builder, endpointMetrics map[string][]MetricMetadata) {
 	doc.WriteString("## Detailed Mapping\n\n")
-
 	for endpoint, metrics := range endpointMetrics {
 		doc.WriteString(fmt.Sprintf("### %s\n\n", endpoint))
 		doc.WriteString("**Metrics derived from this endpoint:**\n\n")
-
 		for _, metric := range metrics {
 			doc.WriteString(fmt.Sprintf("- **%s** (%s): %s\n", metric.Name, metric.Type, metric.Help))
 			if metric.CalculationMethod != "" {
 				doc.WriteString(fmt.Sprintf("  - *Calculation:* %s\n", metric.CalculationMethod))
 			}
 		}
-		doc.WriteString("\n")
-
-		doc.WriteString("**Sample API Response Structure:**\n")
-		doc.WriteString("```json\n")
-		doc.WriteString("{\n")
-		doc.WriteString("  \"meta\": {\n")
-		doc.WriteString("    \"plugin\": {\n")
-		doc.WriteString("      \"type\": \"openapi/v0.0.39\",\n")
-		doc.WriteString("      \"name\": \"Slurm OpenAPI\"\n")
-		doc.WriteString("    }\n")
-		doc.WriteString("  },\n")
-		doc.WriteString("  \"data\": {\n")
-		doc.WriteString("    // Endpoint-specific data structure\n")
-		doc.WriteString("  }\n")
-		doc.WriteString("}\n")
-		doc.WriteString("```\n\n")
+		doc.WriteString("\nSample API Response:\n```json\n{\"meta\": {...}, \"data\": {...}}\n```\n\n")
 	}
+}
 
-	// Internal metrics section
+// writeInternalMetrics writes internal metrics documentation
+func writeInternalMetrics(doc *strings.Builder) {
 	internalMetrics := []MetricMetadata{}
 	for _, metadata := range MetricsRegistry {
 		if metadata.SlurmEndpoint == "internal" || metadata.SlurmEndpoint == "" {
 			internalMetrics = append(internalMetrics, metadata)
 		}
 	}
-
-	if len(internalMetrics) > 0 {
-		doc.WriteString("## Internal Metrics\n\n")
-		doc.WriteString("These metrics are generated internally by the exporter and do not correspond to specific SLURM API endpoints:\n\n")
-
-		for _, metric := range internalMetrics {
-			doc.WriteString(fmt.Sprintf("- **%s**: %s\n", metric.Name, metric.Help))
-		}
-		doc.WriteString("\n")
+	if len(internalMetrics) == 0 {
+		return
 	}
+	doc.WriteString("## Internal Metrics\n\n")
+	doc.WriteString("These metrics are generated internally by the exporter:\n\n")
+	for _, metric := range internalMetrics {
+		doc.WriteString(fmt.Sprintf("- **%s**: %s\n", metric.Name, metric.Help))
+	}
+	doc.WriteString("\n")
+}
+
+// generateAPIMapping creates API endpoint mapping documentation
+func (dg *DocumentationGenerator) generateAPIMapping() string {
+	var doc strings.Builder
+	doc.WriteString("# SLURM API Endpoint Mapping\n\n")
+	doc.WriteString("This document describes how SLURM REST API endpoints map to Prometheus metrics.\n\n")
+
+	endpointMetrics := groupMetricsByEndpoint()
+	writeEndpointOverview(&doc, endpointMetrics)
+	writeDetailedMapping(&doc, endpointMetrics)
+	writeInternalMetrics(&doc)
 
 	doc.WriteString("## API Version Compatibility\n\n")
 	doc.WriteString("The exporter supports multiple SLURM REST API versions:\n\n")
@@ -480,10 +477,8 @@ serviceMonitor:
   scrapeTimeout: 10s
 `
 
-// GenerateMetricsHTML creates an HTML metrics browser
-func (dg *DocumentationGenerator) GenerateMetricsHTML() string {
-	var html strings.Builder
-
+// writeHTMLHeader writes the HTML header, styles, and search box
+func writeHTMLHeader(html *strings.Builder) {
 	html.WriteString(`<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -496,28 +491,18 @@ func (dg *DocumentationGenerator) GenerateMetricsHTML() string {
         .metric-name { font-weight: bold; color: #333; }
         .metric-type { color: #666; font-style: italic; }
         .metric-help { margin: 10px 0; }
-        .metric-labels { color: #555; }
-        .category { background-color: #f5f5f5; padding: 20px; margin: 20px 0; border-radius: 5px; }
         .stability { padding: 2px 6px; border-radius: 3px; font-size: 12px; }
         .stable { background-color: #d4edda; color: #155724; }
         .beta { background-color: #fff3cd; color: #856404; }
         .alpha { background-color: #f8d7da; color: #721c24; }
         .search { width: 100%; padding: 10px; margin-bottom: 20px; font-size: 16px; }
-        .toc { background-color: #f8f9fa; padding: 15px; margin-bottom: 20px; }
-        .example { background-color: #f8f8f8; padding: 10px; font-family: monospace; margin: 10px 0; }
+        .example { background-color: #f8f8f8; padding: 10px; font-family: monospace; }
     </style>
     <script>
         function filterMetrics() {
-            const searchTerm = document.getElementById('search').value.toLowerCase();
-            const metrics = document.querySelectorAll('.metric');
-
-            metrics.forEach(metric => {
-                const text = metric.textContent.toLowerCase();
-                if (text.includes(searchTerm)) {
-                    metric.style.display = 'block';
-                } else {
-                    metric.style.display = 'none';
-                }
+            const search = document.getElementById('search').value.toLowerCase();
+            document.querySelectorAll('.metric').forEach(m => {
+                m.style.display = m.textContent.toLowerCase().includes(search) ? 'block' : 'none';
             });
         }
     </script>
@@ -525,76 +510,82 @@ func (dg *DocumentationGenerator) GenerateMetricsHTML() string {
 <body>
     <h1>SLURM Exporter Metrics Browser</h1>
     <p>Interactive browser for all metrics exposed by the SLURM Prometheus exporter.</p>
+    <input type="text" id="search" class="search" placeholder="Search metrics..." onkeyup="filterMetrics()">`)
+}
 
-    <input type="text" id="search" class="search" placeholder="Search metrics..." onkeyup="filterMetrics()">
-
-    <div class="toc">
-        <h3>Categories</h3>
-        <ul>`)
-
-	titleCaser := cases.Title(language.English)
-	categories := []MetricCategory{CategoryCluster, CategoryNode, CategoryJob, CategoryUser, CategoryAccount, CategoryPartition, CategoryPerformance, CategoryExporter}
+// writeCategoryTOC writes table of contents with category links
+func writeCategoryTOC(html *strings.Builder, categories []MetricCategory, titleCaser cases.Caser) {
+	html.WriteString(`<div style="background-color: #f8f9fa; padding: 15px; margin-bottom: 20px;"><h3>Categories</h3><ul>`)
 	for _, category := range categories {
-		count := len(GetMetricsByCategory(category))
-		if count > 0 {
-			html.WriteString(fmt.Sprintf(`<li><a href="#%s">%s (%d metrics)</a></li>`, strings.ToLower(string(category)), titleCaser.String(string(category)), count))
+		if count := len(GetMetricsByCategory(category)); count > 0 {
+			html.WriteString(fmt.Sprintf(`<li><a href="#%s">%s (%d)</a></li>`,
+				strings.ToLower(string(category)), titleCaser.String(string(category)), count))
 		}
 	}
+	html.WriteString(`</ul></div>`)
+}
 
-	html.WriteString(`</ul>
-    </div>`)
-
+// writeMetricCategories writes all metric categories and their metrics
+func writeMetricCategories(html *strings.Builder, categories []MetricCategory, titleCaser cases.Caser) {
 	for _, category := range categories {
 		metrics := GetMetricsByCategory(category)
 		if len(metrics) == 0 {
 			continue
 		}
 
-		html.WriteString(fmt.Sprintf(`
-    <div class="category" id="%s">
-        <h2>%s Metrics</h2>`, strings.ToLower(string(category)), titleCaser.String(string(category))))
+		html.WriteString(fmt.Sprintf(`<div style="background-color: #f5f5f5; padding: 20px; margin: 20px 0;" id="%s">
+<h2>%s Metrics</h2>`, strings.ToLower(string(category)), titleCaser.String(string(category))))
 
 		for _, metric := range metrics {
-			stabilityClass := string(metric.StabilityLevel)
-			html.WriteString(fmt.Sprintf(`
-        <div class="metric">
-            <div class="metric-name">%s <span class="stability %s">%s</span></div>
-            <div class="metric-type">Type: %s</div>
-            <div class="metric-help">%s</div>
-            <div class="metric-description">%s</div>`,
-				metric.Name, stabilityClass, strings.ToUpper(string(metric.StabilityLevel)),
-				metric.Type, metric.Help, metric.Description))
-
-			if len(metric.Labels) > 0 {
-				html.WriteString(`<div class="metric-labels"><strong>Labels:</strong> `)
-				html.WriteString(strings.Join(metric.Labels, ", "))
-				html.WriteString(`</div>`)
-			}
-
-			if metric.ExampleValue != "" {
-				html.WriteString(`<div class="example">Example: `)
-				html.WriteString(metric.Name)
-				if len(metric.ExampleLabels) > 0 {
-					html.WriteString(`{`)
-					var labelPairs []string //nolint:prealloc
-					for key, value := range metric.ExampleLabels {
-						labelPairs = append(labelPairs, fmt.Sprintf(`%s="%s"`, key, value))
-					}
-					html.WriteString(strings.Join(labelPairs, ","))
-					html.WriteString(`}`)
-				}
-				html.WriteString(fmt.Sprintf(` %s</div>`, metric.ExampleValue))
-			}
-
-			html.WriteString(`</div>`)
+			writeMetricHTML(html, metric)
 		}
-
 		html.WriteString(`</div>`)
 	}
+}
 
-	html.WriteString(`
-</body>
-</html>`)
+// writeMetricHTML writes HTML for a single metric
+func writeMetricHTML(html *strings.Builder, metric MetricMetadata) {
+	html.WriteString(fmt.Sprintf(`<div style="border: 1px solid #ddd; margin: 10px 0; padding: 15px; border-radius: 5px;">
+<div style="font-weight: bold;"><span>%s</span></div>
+<div style="color: #666; font-style: italic;">Type: %s</div>
+<div style="margin: 10px 0;">%s</div>
+<div>%s</div>`,
+		metric.Name, metric.Type, metric.Help, metric.Description))
 
+	if len(metric.Labels) > 0 {
+		html.WriteString(`<div style="color: #555;"><strong>Labels:</strong> ` + strings.Join(metric.Labels, ", ") + `</div>`)
+	}
+	if metric.ExampleValue != "" {
+		writeMetricExample(html, metric)
+	}
+	html.WriteString(`</div>`)
+}
+
+// writeMetricExample writes metric example usage
+func writeMetricExample(html *strings.Builder, metric MetricMetadata) {
+	html.WriteString(`<div style="background-color: #f8f8f8; padding: 10px; font-family: monospace; margin: 10px 0;">Example: ` + metric.Name)
+	if len(metric.ExampleLabels) > 0 {
+		html.WriteString(`{`)
+		pairs := make([]string, 0, len(metric.ExampleLabels))
+		for key, value := range metric.ExampleLabels {
+			pairs = append(pairs, fmt.Sprintf(`%s="%s"`, key, value))
+		}
+		html.WriteString(strings.Join(pairs, ",") + `}`)
+	}
+	html.WriteString(` ` + metric.ExampleValue + `</div>`)
+}
+
+// GenerateMetricsHTML creates an HTML metrics browser
+func (dg *DocumentationGenerator) GenerateMetricsHTML() string {
+	var html strings.Builder
+	writeHTMLHeader(&html)
+
+	titleCaser := cases.Title(language.English)
+	categories := []MetricCategory{CategoryCluster, CategoryNode, CategoryJob, CategoryUser, CategoryAccount, CategoryPartition, CategoryPerformance, CategoryExporter}
+
+	writeCategoryTOC(&html, categories, titleCaser)
+	writeMetricCategories(&html, categories, titleCaser)
+
+	html.WriteString(`</body></html>`)
 	return html.String()
 }

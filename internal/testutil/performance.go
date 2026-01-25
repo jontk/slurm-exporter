@@ -240,6 +240,42 @@ type LoadTestResult struct {
 	Errors          []error
 }
 
+// requestResult holds the result of a single request
+type requestResult struct {
+	duration time.Duration
+	err      error
+}
+
+// updateResultStats updates result statistics with a new request result
+func updateResultStats(result *LoadTestResult, res requestResult) time.Duration {
+	result.TotalRequests++
+	totalTime := res.duration
+
+	if res.err != nil {
+		result.FailedRequests++
+		result.Errors = append(result.Errors, res.err)
+	} else {
+		result.SuccessfulReqs++
+	}
+
+	if res.duration > result.MaxResponseTime {
+		result.MaxResponseTime = res.duration
+	}
+	if res.duration < result.MinResponseTime {
+		result.MinResponseTime = res.duration
+	}
+
+	return totalTime
+}
+
+// calculateLoadTestStats calculates final statistics from collected data
+func calculateLoadTestStats(result *LoadTestResult, totalResponseTime time.Duration) {
+	if result.TotalRequests > 0 {
+		result.RequestsPerSec = float64(result.TotalRequests) / result.Duration.Seconds()
+		result.AvgResponseTime = totalResponseTime / time.Duration(result.TotalRequests)
+	}
+}
+
 // RunLoadTest executes a load test
 func (pts *PerformanceTestSuite) RunLoadTest(test LoadTest) *LoadTestResult {
 	pts.T().Helper()
@@ -251,11 +287,6 @@ func (pts *PerformanceTestSuite) RunLoadTest(test LoadTest) *LoadTestResult {
 		MinResponseTime: time.Hour, // Will be updated with actual minimum
 	}
 
-	// Channel for collecting results
-	type requestResult struct {
-		duration time.Duration
-		err      error
-	}
 	resultCh := make(chan requestResult, test.Concurrency*100)
 
 	// Start workers
@@ -287,30 +318,11 @@ func (pts *PerformanceTestSuite) RunLoadTest(test LoadTest) *LoadTestResult {
 	for {
 		select {
 		case res := <-resultCh:
-			result.TotalRequests++
-			totalResponseTime += res.duration
-
-			if res.err != nil {
-				result.FailedRequests++
-				result.Errors = append(result.Errors, res.err)
-			} else {
-				result.SuccessfulReqs++
-			}
-
-			// Update response time stats
-			if res.duration > result.MaxResponseTime {
-				result.MaxResponseTime = res.duration
-			}
-			if res.duration < result.MinResponseTime {
-				result.MinResponseTime = res.duration
-			}
+			totalResponseTime += updateResultStats(result, res)
 
 		case <-ctx.Done():
 			result.Duration = time.Since(start)
-			if result.TotalRequests > 0 {
-				result.RequestsPerSec = float64(result.TotalRequests) / result.Duration.Seconds()
-				result.AvgResponseTime = totalResponseTime / time.Duration(result.TotalRequests)
-			}
+			calculateLoadTestStats(result, totalResponseTime)
 			return result
 		}
 	}
