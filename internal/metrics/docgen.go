@@ -248,7 +248,7 @@ func groupMetricsByEndpoint() map[string][]MetricMetadata {
 func writeEndpointOverview(doc *strings.Builder, endpointMetrics map[string][]MetricMetadata) {
 	doc.WriteString("## Endpoint Overview\n\n")
 	for endpoint, metrics := range endpointMetrics {
-		doc.WriteString(fmt.Sprintf("- **%s**: %d metrics\n", endpoint, len(metrics)))
+		fmt.Fprintf(doc, "- **%s**: %d metrics\n", endpoint, len(metrics))
 	}
 	doc.WriteString("\n")
 }
@@ -257,12 +257,12 @@ func writeEndpointOverview(doc *strings.Builder, endpointMetrics map[string][]Me
 func writeDetailedMapping(doc *strings.Builder, endpointMetrics map[string][]MetricMetadata) {
 	doc.WriteString("## Detailed Mapping\n\n")
 	for endpoint, metrics := range endpointMetrics {
-		doc.WriteString(fmt.Sprintf("### %s\n\n", endpoint))
+		fmt.Fprintf(doc, "### %s\n\n", endpoint)
 		doc.WriteString("**Metrics derived from this endpoint:**\n\n")
 		for _, metric := range metrics {
-			doc.WriteString(fmt.Sprintf("- **%s** (%s): %s\n", metric.Name, metric.Type, metric.Help))
+			fmt.Fprintf(doc, "- **%s** (%s): %s\n", metric.Name, metric.Type, metric.Help)
 			if metric.CalculationMethod != "" {
-				doc.WriteString(fmt.Sprintf("  - *Calculation:* %s\n", metric.CalculationMethod))
+				fmt.Fprintf(doc, "  - *Calculation:* %s\n", metric.CalculationMethod)
 			}
 		}
 		doc.WriteString("\nSample API Response:\n```json\n{\"meta\": {...}, \"data\": {...}}\n```\n\n")
@@ -283,7 +283,7 @@ func writeInternalMetrics(doc *strings.Builder) {
 	doc.WriteString("## Internal Metrics\n\n")
 	doc.WriteString("These metrics are generated internally by the exporter:\n\n")
 	for _, metric := range internalMetrics {
-		doc.WriteString(fmt.Sprintf("- **%s**: %s\n", metric.Name, metric.Help))
+		fmt.Fprintf(doc, "- **%s**: %s\n", metric.Name, metric.Help)
 	}
 	doc.WriteString("\n")
 }
@@ -518,8 +518,8 @@ func writeCategoryTOC(html *strings.Builder, categories []MetricCategory, titleC
 	html.WriteString(`<div style="background-color: #f8f9fa; padding: 15px; margin-bottom: 20px;"><h3>Categories</h3><ul>`)
 	for _, category := range categories {
 		if count := len(GetMetricsByCategory(category)); count > 0 {
-			html.WriteString(fmt.Sprintf(`<li><a href="#%s">%s (%d)</a></li>`,
-				strings.ToLower(string(category)), titleCaser.String(string(category)), count))
+			fmt.Fprintf(html, `<li><a href="#%s">%s (%d)</a></li>`,
+				strings.ToLower(string(category)), titleCaser.String(string(category)), count)
 		}
 	}
 	html.WriteString(`</ul></div>`)
@@ -533,8 +533,8 @@ func writeMetricCategories(html *strings.Builder, categories []MetricCategory, t
 			continue
 		}
 
-		html.WriteString(fmt.Sprintf(`<div style="background-color: #f5f5f5; padding: 20px; margin: 20px 0;" id="%s">
-<h2>%s Metrics</h2>`, strings.ToLower(string(category)), titleCaser.String(string(category))))
+		fmt.Fprintf(html, `<div style="background-color: #f5f5f5; padding: 20px; margin: 20px 0;" id="%s">
+<h2>%s Metrics</h2>`, strings.ToLower(string(category)), titleCaser.String(string(category)))
 
 		for _, metric := range metrics {
 			writeMetricHTML(html, metric)
@@ -545,12 +545,12 @@ func writeMetricCategories(html *strings.Builder, categories []MetricCategory, t
 
 // writeMetricHTML writes HTML for a single metric
 func writeMetricHTML(html *strings.Builder, metric MetricMetadata) {
-	html.WriteString(fmt.Sprintf(`<div style="border: 1px solid #ddd; margin: 10px 0; padding: 15px; border-radius: 5px;">
+	fmt.Fprintf(html, `<div style="border: 1px solid #ddd; margin: 10px 0; padding: 15px; border-radius: 5px;">
 <div style="font-weight: bold;"><span>%s</span></div>
 <div style="color: #666; font-style: italic;">Type: %s</div>
 <div style="margin: 10px 0;">%s</div>
 <div>%s</div>`,
-		metric.Name, metric.Type, metric.Help, metric.Description))
+		metric.Name, metric.Type, metric.Help, metric.Description)
 
 	if len(metric.Labels) > 0 {
 		html.WriteString(`<div style="color: #555;"><strong>Labels:</strong> ` + strings.Join(metric.Labels, ", ") + `</div>`)
