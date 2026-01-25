@@ -9,11 +9,9 @@ import (
 	"testing"
 )
 
+//nolint:paralleltest // Cannot run in parallel due to global flag.CommandLine state
 func TestMainFlags(t *testing.T) {
-	t.Parallel(
-	// Save original args
-	)
-
+	// Cannot run in parallel due to global flag.CommandLine state
 	oldArgs := os.Args
 	defer func() { os.Args = oldArgs }()
 
@@ -69,11 +67,9 @@ func TestMainFlags(t *testing.T) {
 	}
 }
 
+//nolint:paralleltest // Cannot run in parallel due to global flag.CommandLine state
 func TestMainFlagsCustomValues(t *testing.T) {
-	t.Parallel(
-	// Save original args
-	)
-
+	// Cannot run in parallel due to global flag.CommandLine state
 	oldArgs := os.Args
 	defer func() { os.Args = oldArgs }()
 
