@@ -72,11 +72,9 @@ func TestMemoryOptimizer_MemoryStats(t *testing.T) {
 
 	t.Run("GetMemoryStats", func(t *testing.T) {
 		stats := mo.GetMemoryStats()
-		// Verify stats structure
-		assert.True(t, stats.Alloc >= 0)
-		assert.True(t, stats.TotalAlloc >= 0)
-		assert.True(t, stats.Sys >= 0)
-		assert.True(t, stats.NumGC >= 0)
+		// Verify stats structure is initialized (non-zero values indicate runtime has collected memory stats)
+		assert.NotNil(t, stats)
+		assert.Greater(t, stats.TotalAlloc, uint64(0))
 	})
 
 	t.Run("MemoryStats_String", func(t *testing.T) {
@@ -322,10 +320,8 @@ func TestMemoryOptimizer_MemoryStatsFields(t *testing.T) {
 	stats := mo.GetMemoryStats()
 
 	// Verify all fields are present and have reasonable values
-	assert.True(t, stats.Alloc >= 0, "Alloc should be >= 0")
-	assert.True(t, stats.TotalAlloc >= stats.Alloc, "TotalAlloc should be >= Alloc")
-	assert.True(t, stats.Sys >= 0, "Sys should be >= 0")
-	assert.True(t, stats.NumGC >= 0, "NumGC should be >= 0")
+	assert.NotNil(t, stats)
+	assert.GreaterOrEqual(t, stats.TotalAlloc, stats.Alloc, "TotalAlloc should be >= Alloc")
 
 	// Verify LastGC is set
 	assert.False(t, stats.LastGC.IsZero(), "LastGC should be set")
