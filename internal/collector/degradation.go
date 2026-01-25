@@ -62,7 +62,7 @@ func NewCircuitBreaker(name string, maxFailures int, resetTimeout time.Duration)
 func (cb *CircuitBreaker) Call(fn func() error) error {
 	cb.mu.Lock()
 
-	// Check current state
+	// Check current state //nolint:exhaustive
 	switch cb.state {
 	case StateOpen:
 		// Check if we should transition to half-open

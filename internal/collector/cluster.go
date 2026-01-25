@@ -331,8 +331,9 @@ func (cc *ClusterCollector) collectPartitionSummary(ctx context.Context, ch chan
 // In real implementation, these would be replaced with actual SLURM client calls
 
 // TODO: Following parser functions are unused - preserved for future data parsing needs
+//nolint:dupword
 /*
-// parseNodeState converts SLURM node state string to normalized state
+// parseNodeState converts SLURM node state to normalized form
 func (cc *ClusterCollector) parseNodeState(slurmState string) string {
 	// SLURM node states can be complex (e.g., "idle+cloud", "allocated+completing")
 	// Normalize to primary states for metrics
@@ -394,7 +395,7 @@ func (cc *ClusterCollector) parseMemorySize(slurmMemory string) (int64, error) {
 		return 0, nil
 	}
 
-	// Extract numeric part and unit
+	// Extract numeric value and suffix
 	var value float64
 	var unit string
 

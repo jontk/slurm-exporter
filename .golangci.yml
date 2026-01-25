@@ -6,10 +6,8 @@ linters:
     - containedctx
     - copyloopvar
     - cyclop
-    - dupword
     - embeddedstructfieldcheck  # Embedded struct formatting is stylistic
     - err113
-    - exhaustive
     - exhaustruct
     - forbidigo
     - funcorder                 # Function ordering is developer's choice
@@ -28,7 +26,6 @@ linters:
     - nlreturn
     - nonamedreturns
     - perfsprint
-    - prealloc
     - tagliatelle
     - testifylint
     - testpackage

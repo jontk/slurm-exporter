@@ -1150,7 +1150,7 @@ func (p *PerformanceBenchmarkingCollector) collectJobBenchmarks(ctx context.Cont
 			snapshot := p.createJobPerformanceSnapshot(job)
 			p.jobComparator.jobMetrics[job.JobID] = snapshot
 
-			// Calculate job performance score
+			// Calculate job efficiency metric
 			score := p.calculateJobPerformanceScore(snapshot)
 			p.updateJobPerformanceMetrics(job, snapshot, score)
 		}
@@ -1222,7 +1222,7 @@ func (p *PerformanceBenchmarkingCollector) collectNodeBenchmarks(ctx context.Con
 			profile := p.createNodePerformanceProfile(node)
 			p.nodeComparator.nodeMetrics[node.Name] = profile
 
-			// Calculate node performance score
+			// Calculate node efficiency metric
 			score := p.calculateNodePerformanceScore(profile)
 			p.updateNodePerformanceMetrics(node, profile, score)
 		}

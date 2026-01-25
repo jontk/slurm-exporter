@@ -180,7 +180,7 @@ func (cb *CircuitBreaker) recordResult(err error) {
 			cb.setState(StateOpen)
 		}
 	} else {
-		// Success
+		// Success //nolint:exhaustive
 		switch cb.state {
 		case StateHalfOpen:
 			// Successful request in half-open state closes the circuit

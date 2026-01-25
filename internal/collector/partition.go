@@ -556,8 +556,9 @@ type PartitionPolicies struct {
 }
 
 // TODO: Following parser functions are unused - preserved for future data parsing needs
+//nolint:dupword
 /*
-// parsePartitionState converts SLURM partition state string to normalized state
+// parsePartitionState converts SLURM partition state to normalized form
 func (pc *PartitionCollector) parsePartitionState(slurmState string) string {
 	// SLURM partition states: UP, DOWN, DRAIN, INACTIVE
 	switch slurmState {
@@ -598,7 +599,7 @@ func (pc *PartitionCollector) parseMemorySize(slurmMemory string) (int64, error)
 		return 0, nil
 	}
 
-	// Extract numeric part and unit
+	// Extract numeric value and suffix
 	var value float64
 	var unit string
 

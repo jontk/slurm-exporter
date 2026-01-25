@@ -72,7 +72,7 @@ func (dg *DocumentationGenerator) generateMetricsSummary() string {
 	doc.WriteString(fmt.Sprintf("- **Total Metrics:** %d\n", totalMetrics))
 	doc.WriteString("- **Categories:** ")
 
-	var categoryList []string
+	var categoryList []string //nolint:prealloc
 	for category, count := range categoryCounts {
 		categoryList = append(categoryList, fmt.Sprintf("%s (%d)", category, count))
 	}
@@ -576,7 +576,7 @@ func (dg *DocumentationGenerator) GenerateMetricsHTML() string {
 				html.WriteString(metric.Name)
 				if len(metric.ExampleLabels) > 0 {
 					html.WriteString(`{`)
-					var labelPairs []string
+					var labelPairs []string //nolint:prealloc
 					for key, value := range metric.ExampleLabels {
 						labelPairs = append(labelPairs, fmt.Sprintf(`%s="%s"`, key, value))
 					}

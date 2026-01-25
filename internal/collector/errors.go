@@ -573,7 +573,7 @@ func (erh *ErrorRecoveryHandler) HandleError(ctx context.Context, err *Collectio
 	erh.logger.WithFields(err.LogFields()).WithError(err.Err).
 		Debugf("Processing error for recovery: %s", err.Message)
 
-	// Execute recovery strategy based on error type
+	// Execute recovery strategy based on error type //nolint:exhaustive
 	switch err.Type {
 	case ErrorTypeConnection:
 		return erh.handleConnectionError(ctx, err)

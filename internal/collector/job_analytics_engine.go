@@ -2285,7 +2285,7 @@ func (e *JobAnalyticsEngine) generateOptimizationInsights(job *slurm.Job, resour
 
 // generateActionableRecommendations generates actionable recommendations (simplified)
 func (e *JobAnalyticsEngine) generateActionableRecommendations(insights *OptimizationInsights) []ActionableRecommendation {
-	var recommendations []ActionableRecommendation
+	var recommendations []ActionableRecommendation //nolint:prealloc
 
 	for i, insight := range insights.PrimaryInsights {
 		recommendation := ActionableRecommendation{

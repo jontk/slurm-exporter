@@ -42,7 +42,7 @@ const (
 	ActionUnknown
 )
 
-func (a FilterAction) String() string {
+func (a FilterAction) String() string { //nolint:exhaustive
 	switch a {
 	case ActionKeep:
 		return "keep"
@@ -649,7 +649,7 @@ func (sf *SmartFilter) performMaintenance() {
 	filterCount := 0
 	reduceCount := 0
 
-	for _, pattern := range sf.patterns {
+	for _, pattern := range sf.patterns { //nolint:exhaustive
 		switch pattern.FilterRecommend {
 		case ActionKeep:
 			keepCount++

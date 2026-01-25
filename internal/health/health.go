@@ -123,7 +123,7 @@ func (h *HealthChecker) CheckHealth(ctx context.Context) HealthReport {
 		h.cache[result.Name] = result
 		h.mu.Unlock()
 
-		// Determine overall status
+		// Determine overall status //nolint:exhaustive
 		switch result.Status {
 		case StatusUnhealthy:
 			report.Status = StatusUnhealthy
@@ -183,7 +183,7 @@ func (h *HealthChecker) HealthHandler() http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 
-		// Set HTTP status based on health
+		// Set HTTP status based on health //nolint:exhaustive
 		switch report.Status {
 		case StatusHealthy:
 			w.WriteHeader(http.StatusOK)

@@ -321,7 +321,7 @@ func stringPtr(s string) *string {
 
 // SimulateNoisyMetrics creates metrics that will be identified as noisy
 func SimulateNoisyMetrics() []*dto.MetricFamily {
-	var families []*dto.MetricFamily
+	families := make([]*dto.MetricFamily, 0, 2)
 
 	// Create a metric with high variance (should be filtered)
 	noisyValue := float64(time.Now().UnixNano() % 10000)

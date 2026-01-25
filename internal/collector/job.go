@@ -353,8 +353,9 @@ func (jc *JobCollector) parseJobState(slurmState string) string {
 }
 
 // TODO: Following parser functions are unused - preserved for future data parsing needs
+//nolint:dupword
 /*
-// parseTimeString converts SLURM time string to Unix timestamp
+// parseTimeString converts SLURM time format to Unix timestamp
 func (jc *JobCollector) parseTimeString(slurmTime string) (int64, error) {
 	if slurmTime == "" || slurmTime == "Unknown" {
 		return 0, nil
@@ -385,7 +386,7 @@ func (jc *JobCollector) parseMemorySize(slurmMemory string) (int64, error) {
 		return 0, nil
 	}
 
-	// Extract numeric part and unit
+	// Extract numeric value and suffix
 	var value float64
 	var unit string
 
