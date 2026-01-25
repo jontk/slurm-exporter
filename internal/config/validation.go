@@ -372,6 +372,70 @@ func validateCollectorLabels(collectorName string, labels map[string]string) Val
 }
 
 // validateMetricFilters validates metric filter configurations
+// validateNoMetricsFiltered checks if metric filters would result in no metrics collected
+func validateNoMetricsFiltered(filters MetricFilterConfig, collectorName string) []ValidationError {
+	var errors []ValidationError
+	if !filters.EnableAll && len(filters.IncludeMetrics) == 0 && len(filters.ExcludeMetrics) == 0 {
+		hasTypeFilters := filters.OnlyInfo || filters.OnlyCounters || filters.OnlyGauges ||
+			filters.OnlyHistograms || filters.SkipHistograms || filters.SkipTimingMetrics ||
+			filters.SkipResourceMetrics
+		if !hasTypeFilters {
+			errors = append(errors, ValidationError{
+				Field:   fmt.Sprintf("collectors.%s.filters.metrics", collectorName),
+				Message: "no metrics will be collected with current filter configuration",
+				Code:    "NO_METRICS_FILTERED",
+			})
+		}
+	}
+	return errors
+}
+
+// validateMutuallyExclusiveFilters checks for conflicting 'only_*' filters
+func validateMutuallyExclusiveFilters(filters MetricFilterConfig, collectorName string) []ValidationError {
+	var errors []ValidationError
+	exclusiveFilters := []bool{filters.OnlyInfo, filters.OnlyCounters, filters.OnlyGauges, filters.OnlyHistograms}
+	enabledCount := 0
+	for _, enabled := range exclusiveFilters {
+		if enabled {
+			enabledCount++
+		}
+	}
+	if enabledCount > 1 {
+		errors = append(errors, ValidationError{
+			Field:   fmt.Sprintf("collectors.%s.filters.metrics", collectorName),
+			Message: "only one 'only_*' filter can be enabled at a time",
+			Code:    "CONFLICTING_FILTERS",
+		})
+	}
+	return errors
+}
+
+// validateMetricPatterns validates include and exclude metric patterns
+func validateMetricPatterns(filters MetricFilterConfig, collectorName string) []ValidationError {
+	var errors []ValidationError
+	for _, pattern := range filters.IncludeMetrics {
+		if err := validateMetricPattern(pattern); err != nil {
+			errors = append(errors, ValidationError{
+				Field:   fmt.Sprintf("collectors.%s.filters.metrics.include_metrics", collectorName),
+				Value:   pattern,
+				Message: err.Error(),
+				Code:    "INVALID_METRIC_PATTERN",
+			})
+		}
+	}
+	for _, pattern := range filters.ExcludeMetrics {
+		if err := validateMetricPattern(pattern); err != nil {
+			errors = append(errors, ValidationError{
+				Field:   fmt.Sprintf("collectors.%s.filters.metrics.exclude_metrics", collectorName),
+				Value:   pattern,
+				Message: err.Error(),
+				Code:    "INVALID_METRIC_PATTERN",
+			})
+		}
+	}
+	return errors
+}
+
 func (c *Config) validateMetricFilters() ValidationErrors {
 	var errors ValidationErrors
 
@@ -394,61 +458,10 @@ func (c *Config) validateMetricFilters() ValidationErrors {
 			continue
 		}
 
-		// Check for conflicting filter settings
 		filters := collector.Filters.Metrics
-		if !filters.EnableAll && len(filters.IncludeMetrics) == 0 && len(filters.ExcludeMetrics) == 0 {
-			// Check if any type-specific filters are enabled
-			hasTypeFilters := filters.OnlyInfo || filters.OnlyCounters || filters.OnlyGauges ||
-				filters.OnlyHistograms || filters.SkipHistograms || filters.SkipTimingMetrics ||
-				filters.SkipResourceMetrics
-
-			if !hasTypeFilters {
-				errors = append(errors, ValidationError{
-					Field:   fmt.Sprintf("collectors.%s.filters.metrics", collectorName),
-					Message: "no metrics will be collected with current filter configuration",
-					Code:    "NO_METRICS_FILTERED",
-				})
-			}
-		}
-
-		// Check for mutually exclusive filters
-		exclusiveFilters := []bool{filters.OnlyInfo, filters.OnlyCounters, filters.OnlyGauges, filters.OnlyHistograms}
-		enabledCount := 0
-		for _, enabled := range exclusiveFilters {
-			if enabled {
-				enabledCount++
-			}
-		}
-		if enabledCount > 1 {
-			errors = append(errors, ValidationError{
-				Field:   fmt.Sprintf("collectors.%s.filters.metrics", collectorName),
-				Message: "only one 'only_*' filter can be enabled at a time",
-				Code:    "CONFLICTING_FILTERS",
-			})
-		}
-
-		// Validate metric name patterns
-		for _, pattern := range filters.IncludeMetrics {
-			if err := validateMetricPattern(pattern); err != nil {
-				errors = append(errors, ValidationError{
-					Field:   fmt.Sprintf("collectors.%s.filters.metrics.include_metrics", collectorName),
-					Value:   pattern,
-					Message: err.Error(),
-					Code:    "INVALID_METRIC_PATTERN",
-				})
-			}
-		}
-
-		for _, pattern := range filters.ExcludeMetrics {
-			if err := validateMetricPattern(pattern); err != nil {
-				errors = append(errors, ValidationError{
-					Field:   fmt.Sprintf("collectors.%s.filters.metrics.exclude_metrics", collectorName),
-					Value:   pattern,
-					Message: err.Error(),
-					Code:    "INVALID_METRIC_PATTERN",
-				})
-			}
-		}
+		errors = append(errors, validateNoMetricsFiltered(filters, collectorName)...)
+		errors = append(errors, validateMutuallyExclusiveFilters(filters, collectorName)...)
+		errors = append(errors, validateMetricPatterns(filters, collectorName)...)
 	}
 
 	return errors
