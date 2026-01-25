@@ -20,10 +20,10 @@ func TestNewPerformanceMonitor(t *testing.T) {
 	logger := testutil.GetTestLogger()
 
 	slaConfig := SLAConfig{
-		MaxCollectionDuration:  30 * time.Second,
-		MaxErrorRate:           5.0,
-		MinSuccessRate:         95.0,
-		MaxMemoryUsage:         100 * 1024 * 1024,
+		MaxCollectionDuration:   30 * time.Second,
+		MaxErrorRate:            5.0,
+		MinSuccessRate:          95.0,
+		MaxMemoryUsage:          100 * 1024 * 1024,
 		MaxMetricsPerCollection: 10000,
 	}
 
@@ -40,9 +40,9 @@ func TestPerformanceMonitor_RegisterMetrics(t *testing.T) {
 	logger := testutil.GetTestLogger()
 
 	slaConfig := SLAConfig{
-		MaxCollectionDuration:  30 * time.Second,
-		MaxErrorRate:           5.0,
-		MinSuccessRate:         95.0,
+		MaxCollectionDuration: 30 * time.Second,
+		MaxErrorRate:          5.0,
+		MinSuccessRate:        95.0,
 	}
 
 	pm := NewPerformanceMonitor("test", "collector", slaConfig, logger.WithField("component", "test"))
@@ -443,10 +443,10 @@ func TestPerformanceMonitor_SLAConfig(t *testing.T) {
 	t.Parallel()
 
 	slaConfig := SLAConfig{
-		MaxCollectionDuration:  30 * time.Second,
-		MaxErrorRate:           5.0,
-		MinSuccessRate:         95.0,
-		MaxMemoryUsage:         100 * 1024 * 1024,
+		MaxCollectionDuration:   30 * time.Second,
+		MaxErrorRate:            5.0,
+		MinSuccessRate:          95.0,
+		MaxMemoryUsage:          100 * 1024 * 1024,
 		MaxMetricsPerCollection: 10000,
 	}
 

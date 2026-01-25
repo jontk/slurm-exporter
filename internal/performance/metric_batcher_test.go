@@ -184,9 +184,9 @@ func TestMetricBatcher_BatchMetric(t *testing.T) {
 
 	config := MetricBatcherConfig{
 		BatchConfig: BatchConfig{
-			MaxBatchSize:     1000,
-			MaxBatchWait: 5 * time.Second,
-			MaxConcurrency:      2,
+			MaxBatchSize:   1000,
+			MaxBatchWait:   5 * time.Second,
+			MaxConcurrency: 2,
 		},
 		EnableSampling: false,
 	}
@@ -208,9 +208,9 @@ func TestMetricBatcher_BatchMetric_WithSampling(t *testing.T) {
 
 	config := MetricBatcherConfig{
 		BatchConfig: BatchConfig{
-			MaxBatchSize:     1000,
-			MaxBatchWait: 5 * time.Second,
-			MaxConcurrency:      2,
+			MaxBatchSize:   1000,
+			MaxBatchWait:   5 * time.Second,
+			MaxConcurrency: 2,
 		},
 		EnableSampling: true,
 		SamplingRates: map[string]float64{
@@ -277,9 +277,9 @@ func TestMetricBatcher_GetStats(t *testing.T) {
 
 	config := MetricBatcherConfig{
 		BatchConfig: BatchConfig{
-			MaxBatchSize:     1000,
-			MaxBatchWait: 5 * time.Second,
-			MaxConcurrency:      2,
+			MaxBatchSize:   1000,
+			MaxBatchWait:   5 * time.Second,
+			MaxConcurrency: 2,
 		},
 		EnableSampling:    true,
 		EnableAggregation: true,
@@ -314,9 +314,9 @@ func TestMetricBatcher_Stop(t *testing.T) {
 
 	config := MetricBatcherConfig{
 		BatchConfig: BatchConfig{
-			MaxBatchSize:     1000,
-			MaxBatchWait: 5 * time.Second,
-			MaxConcurrency:      2,
+			MaxBatchSize:   1000,
+			MaxBatchWait:   5 * time.Second,
+			MaxConcurrency: 2,
 		},
 	}
 
@@ -370,7 +370,7 @@ func TestHashSample_PartialSampling(t *testing.T) {
 
 	// Verify that we have a mix (not all kept or all dropped)
 	assert.Greater(t, kept+dropped, 0)
-	assert.Equal(t, 100, kept+dropped) // All samples accounted for
+	assert.Equal(t, 100, kept+dropped)      // All samples accounted for
 	assert.True(t, kept > 0 || dropped > 0) // At least one of each is reasonable
 }
 
@@ -461,9 +461,9 @@ func TestMetricBatcher_MultipleMetrics(t *testing.T) {
 
 	config := MetricBatcherConfig{
 		BatchConfig: BatchConfig{
-			MaxBatchSize:     1000,
-			MaxBatchWait: 5 * time.Second,
-			MaxConcurrency:      2,
+			MaxBatchSize:   1000,
+			MaxBatchWait:   5 * time.Second,
+			MaxConcurrency: 2,
 		},
 	}
 
@@ -511,9 +511,9 @@ func TestMetricBatcher_NilRegistry(t *testing.T) {
 
 	config := MetricBatcherConfig{
 		BatchConfig: BatchConfig{
-			MaxBatchSize:     1000,
-			MaxBatchWait: 5 * time.Second,
-			MaxConcurrency:      2,
+			MaxBatchSize:   1000,
+			MaxBatchWait:   5 * time.Second,
+			MaxConcurrency: 2,
 		},
 	}
 
@@ -598,9 +598,9 @@ func TestMetricBatcher_Concurrent_BatchMetrics(t *testing.T) {
 
 	config := MetricBatcherConfig{
 		BatchConfig: BatchConfig{
-			MaxBatchSize:     1000,
-			MaxBatchWait: 5 * time.Second,
-			MaxConcurrency:      4,
+			MaxBatchSize:   1000,
+			MaxBatchWait:   5 * time.Second,
+			MaxConcurrency: 4,
 		},
 	}
 

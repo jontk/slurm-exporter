@@ -627,4 +627,3 @@ func TestBaseCollectorConcurrentOperations(t *testing.T) {
 		_ = base.IsEnabled()
 	})
 }
-

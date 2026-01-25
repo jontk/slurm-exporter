@@ -565,4 +565,3 @@ func TestRegistryReconfiguration(t *testing.T) {
 		_ = err
 	})
 }
-
