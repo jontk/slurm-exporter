@@ -922,7 +922,8 @@ func (s *SLURMConfig) Validate() error {
 func validateFileExists(path, field string) error {
 	if path != "" {
 		if _, err := os.Stat(path); os.IsNotExist(err) {
-			return fmt.Errorf("%s '%s' does not exist", field, path)
+			// Don't expose the actual file path in error messages (security)
+			return fmt.Errorf("%s configuration points to a file that does not exist", field)
 		}
 	}
 	return nil

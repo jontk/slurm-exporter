@@ -218,7 +218,7 @@ func (dh *DebugHandler) withAuth(handler http.HandlerFunc) http.HandlerFunc {
 			}
 		}
 
-		// Log access (sanitize RemoteAddr to prevent log injection attacks)
+		// Log access (sanitize user input to prevent log injection attacks)
 		var remoteAddr string
 		if r.RemoteAddr != "" {
 			// Extract only the IP portion to avoid log injection from user-controlled values
@@ -228,8 +228,11 @@ func (dh *DebugHandler) withAuth(handler http.HandlerFunc) http.HandlerFunc {
 				remoteAddr = r.RemoteAddr
 			}
 		}
+		// Sanitize endpoint path to prevent log injection (remove control characters)
+		endpoint := strings.ReplaceAll(r.URL.Path, "\n", "")
+		endpoint = strings.ReplaceAll(endpoint, "\r", "")
 		dh.logger.WithFields(logrus.Fields{
-			"endpoint": r.URL.Path,
+			"endpoint": endpoint,
 			"method":   r.Method,
 			"remote":   remoteAddr,
 		}).Debug("Debug endpoint accessed")
