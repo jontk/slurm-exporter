@@ -269,11 +269,15 @@ linters:
           - funlen
         path: cmd/.*/main\.go
         text: 'Function .main.'
-      # Collector package - common duplication patterns
+      # Collector package - extensive duplication due to:
+      # 1) Streaming collectors define different interfaces with similar structure (necessary)
+      # 2) Metric types are structurally similar but are different types with different fields
+      # 3) Common metric initialization patterns across multiple collectors
+      # Extracting these would require breaking encapsulation or introducing unnecessary abstractions
       - linters:
           - dupl
         path: ^internal/collector/
-      # Mock and test utilities
+      # Test utilities - fixtures and mocks naturally have similar test data patterns
       - linters:
           - dupl
         path: ^internal/testutil/
