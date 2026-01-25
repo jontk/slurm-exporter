@@ -210,6 +210,7 @@ linters:
         - (github.com/jontk/slurm-client/interfaces.WCKeyManager).List(
         - (github.com/jontk/slurm-client/interfaces.ReservationManager).List(
         - (github.com/jontk/slurm-client/interfaces.UserManager).List(
+        - (github.com/jontk/slurm-client/interfaces.ClusterManager).List(
         - (github.com/jontk/slurm-client/interfaces.InfoManager).Get(
         - (github.com/jontk/slurm-client/interfaces.InfoManager).Ping(
         - (github.com/jontk/slurm-client/interfaces.SlurmClient).GetDiagnostics(
@@ -227,6 +228,23 @@ linters:
         - os.MkdirTemp(
         - io.Copy(
         - path/filepath.Walk(
+        # Standard library and well-documented library operations with clear contracts
+        - errors.New(  # Test error creation, no wrapping needed
+        - (io.Closer).Close()  # Idiomatic Go cleanup, context is clear
+        - (*html/template.Template).ExecuteTemplate(  # Template execution, context is clear
+        - (*net/http.Server).ListenAndServe(  # HTTP server operation, context is clear
+        - (*net/http.Server).Shutdown(  # HTTP server shutdown, context is clear
+        - (*github.com/fsnotify/fsnotify.Watcher).Close()  # File watcher cleanup, context is clear
+        - github.com/sirupsen/logrus.ParseLevel(  # Log level parsing, context is clear
+        - github.com/shirou/gopsutil/v3/process.NewProcess(  # Process info, context is clear
+        - (*github.com/prometheus/client_golang/prometheus.Registry).Gather()  # Metrics gathering, context is clear
+        - go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp.New(  # Tracing setup, context is clear
+        - (*go.opentelemetry.io/otel/sdk/trace.TracerProvider).Shutdown(  # Tracing shutdown, context is clear
+        # Test and example code - special handling
+        - (github.com/stretchr/testify/mock.Arguments).Error(  # Test mock, context is clear
+        - (github.com/jontk/slurm-exporter/internal/tracing.ExampleSLURMClient).ListJobs(  # Example code, context is clear
+        # Internal method delegations to other packages
+        - (*github.com/jontk/slurm-exporter/internal/performance.Profiler).ListProfiles(  # Delegate method, errors already wrapped
   exclusions:
     generated: lax
     presets:
