@@ -133,7 +133,7 @@ func parseVersionString(version string) (string, string, string, string) {
 		version = "unknown"
 	}
 	var maj, minorV, pat int
-	fmt.Sscanf(version, "%d.%d.%d", &maj, &minorV, &pat)
+	_, _ = fmt.Sscanf(version, "%d.%d.%d", &maj, &minorV, &pat)
 	return version, fmt.Sprintf("%d", maj), fmt.Sprintf("%d", minorV), fmt.Sprintf("%d", pat)
 }
 

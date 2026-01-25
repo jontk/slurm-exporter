@@ -144,8 +144,6 @@ func (cc *ClusterCollector) collectClusterInfo(ctx context.Context, ch chan<- pr
 }
 
 // collectNodeSummary collects node summary information for cluster aggregates
-//
-//nolint:unparam
 // sendCapacityMetrics sends cluster capacity metrics
 func (cc *ClusterCollector) sendCapacityMetrics(ch chan<- prometheus.Metric, totalNodes int, totalCPUs int, totalMemory int64) {
 	cc.SendMetric(ch, cc.BuildMetric(cc.metrics.ClusterCapacityNodes.WithLabelValues(cc.clusterName).Desc(),
@@ -184,6 +182,7 @@ func (cc *ClusterCollector) sendNodeStateMetrics(ch chan<- prometheus.Metric, st
 	}
 }
 
+//nolint:unparam
 func (cc *ClusterCollector) collectNodeSummary(ctx context.Context, ch chan<- prometheus.Metric) error {
 	_ = ctx
 	// Simulate node data - in real implementation this would come from SLURM API

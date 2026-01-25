@@ -270,7 +270,6 @@ func getTestPartitions() []partitionInfo {
 
 // collectPartitionUtilization collects partition resource utilization
 //
-//nolint:unparam
 // publishPartitionMetrics publishes utilization metrics for a single partition
 func (pc *PartitionCollector) publishPartitionMetrics(ch chan<- prometheus.Metric, name string, jobCount, allocCPUs, totalCPUs, allocNodes, totalNodes int, allocMem, totalMem int64) {
 	pc.SendMetric(ch, pc.BuildMetric(pc.metrics.PartitionJobCount.WithLabelValues(pc.clusterName, name).Desc(),
@@ -298,6 +297,7 @@ func (pc *PartitionCollector) publishPartitionMetrics(ch chan<- prometheus.Metri
 	}
 }
 
+//nolint:unparam
 func (pc *PartitionCollector) collectPartitionUtilization(ctx context.Context, ch chan<- prometheus.Metric) error {
 	_ = ctx
 

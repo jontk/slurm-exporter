@@ -186,7 +186,6 @@ func (pc *PerformanceCollector) collectThroughputMetrics(ctx context.Context, ch
 
 // collectEfficiencyMetrics collects system efficiency metrics
 //
-//nolint:unparam
 // publishEfficiencyMetrics publishes efficiency metrics for all data points
 func (pc *PerformanceCollector) publishEfficiencyMetrics(ch chan<- prometheus.Metric, data []struct {
 	EfficiencyType string
@@ -214,6 +213,7 @@ func (pc *PerformanceCollector) publishResourceMetrics(ch chan<- prometheus.Metr
 	}
 }
 
+//nolint:unparam
 func (pc *PerformanceCollector) collectEfficiencyMetrics(ctx context.Context, ch chan<- prometheus.Metric) error {
 	_ = ctx
 

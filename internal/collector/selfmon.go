@@ -104,7 +104,6 @@ func (smc *SelfMonitoringCollector) collectSelfMonitoringMetrics(ctx context.Con
 
 // collectRuntimeMetrics collects exporter runtime and health metrics
 //
-//nolint:unparam
 // publishCollectorMetrics publishes metrics for a single collector
 func (smc *SelfMonitoringCollector) publishCollectorMetrics(ch chan<- prometheus.Metric, name string, isUp bool, lastTime time.Time, metricsCount int) {
 	upValue := float64(0)
@@ -119,6 +118,7 @@ func (smc *SelfMonitoringCollector) publishCollectorMetrics(ch chan<- prometheus
 		prometheus.GaugeValue, float64(metricsCount), name, "total"))
 }
 
+//nolint:unparam
 func (smc *SelfMonitoringCollector) collectRuntimeMetrics(ctx context.Context, ch chan<- prometheus.Metric) error {
 	_ = ctx
 
