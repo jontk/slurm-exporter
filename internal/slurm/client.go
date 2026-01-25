@@ -235,21 +235,25 @@ func (c *Client) executeWithRetry(ctx context.Context, operation func() error) e
 	return fmt.Errorf("operation failed after %d attempts: %w", c.config.RetryAttempts+1, lastErr)
 }
 
+// executeListOperation is a generic helper for executing SLURM List operations with retry logic
+func (c *Client) executeListOperation(ctx context.Context, listFunc func(context.Context) error) error {
+	return c.executeWithRetry(ctx, func() error {
+		reqCtx, cancel := context.WithTimeout(ctx, c.config.Timeout)
+		defer cancel()
+		return listFunc(reqCtx)
+	})
+}
+
 // GetJobs retrieves job information from SLURM
 func (c *Client) GetJobs(ctx context.Context) (*slurm.JobList, error) {
 	var result *slurm.JobList
 
-	err := c.executeWithRetry(ctx, func() error {
-		reqCtx, cancel := context.WithTimeout(ctx, c.config.Timeout)
-		defer cancel()
-
-		var err error
+	err := c.executeListOperation(ctx, func(reqCtx context.Context) error {
 		jobList, err := c.client.Jobs().List(reqCtx, nil)
 		if err != nil {
 			return fmt.Errorf("failed to get jobs: %w", err)
 		}
 		result = jobList
-
 		return nil
 	})
 
@@ -260,17 +264,12 @@ func (c *Client) GetJobs(ctx context.Context) (*slurm.JobList, error) {
 func (c *Client) GetNodes(ctx context.Context) (*slurm.NodeList, error) {
 	var result *slurm.NodeList
 
-	err := c.executeWithRetry(ctx, func() error {
-		reqCtx, cancel := context.WithTimeout(ctx, c.config.Timeout)
-		defer cancel()
-
-		var err error
+	err := c.executeListOperation(ctx, func(reqCtx context.Context) error {
 		nodeList, err := c.client.Nodes().List(reqCtx, nil)
 		if err != nil {
 			return fmt.Errorf("failed to get nodes: %w", err)
 		}
 		result = nodeList
-
 		return nil
 	})
 
@@ -281,17 +280,12 @@ func (c *Client) GetNodes(ctx context.Context) (*slurm.NodeList, error) {
 func (c *Client) GetPartitions(ctx context.Context) (*slurm.PartitionList, error) {
 	var result *slurm.PartitionList
 
-	err := c.executeWithRetry(ctx, func() error {
-		reqCtx, cancel := context.WithTimeout(ctx, c.config.Timeout)
-		defer cancel()
-
-		var err error
+	err := c.executeListOperation(ctx, func(reqCtx context.Context) error {
 		partitionList, err := c.client.Partitions().List(reqCtx, nil)
 		if err != nil {
 			return fmt.Errorf("failed to get partitions: %w", err)
 		}
 		result = partitionList
-
 		return nil
 	})
 
