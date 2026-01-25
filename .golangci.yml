@@ -195,9 +195,10 @@ linters:
         - (context.Context).Err()
         # Standard library HTTP - ResponseWriter errors are contextual to HTTP semantics
         - (net/http.ResponseWriter).Write(
-        # Prometheus external API - Registry errors have clear contract, wrapping is noise
+        # Prometheus external API - Registry/Registerer errors have clear contract, wrapping is noise
         - (*github.com/prometheus/client_golang/prometheus.Registry).Register(
         - (*github.com/prometheus/client_golang/prometheus.Registerer).Register(
+        - (github.com/prometheus/client_golang/prometheus.Registerer).Register(
         # SLURM client external API - Manager.List() and similar methods
         # Error context is clear from caller's perspective; wrapping adds noise
         - (github.com/jontk/slurm-client/interfaces.JobManager).List(
