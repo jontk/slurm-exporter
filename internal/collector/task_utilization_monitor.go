@@ -1311,7 +1311,7 @@ func (t *TaskUtilizationMonitor) simulateMessagesSent(job *slurm.Job, task *Task
 
 // simulateMessagesReceived simulates messages received by a task
 func (t *TaskUtilizationMonitor) simulateMessagesReceived(job *slurm.Job, task *TaskInfo) int64 {
-	// Usually similar to messages sent
+	// Usually similar to message count
 	sent := t.simulateMessagesSent(job, task)
 	return sent + int64(len(task.TaskID)%100) - 50 // Add some variation
 }

@@ -5,6 +5,7 @@ package collector
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -390,7 +391,8 @@ func (ea *ErrorAnalyzer) AnalyzeError(err error, collector string) *CollectionEr
 	}
 
 	// If it's already a CollectionError, return as-is
-	if collErr, ok := err.(*CollectionError); ok {
+	var collErr *CollectionError
+	if errors.As(err, &collErr) {
 		return collErr
 	}
 
@@ -581,8 +583,10 @@ func (erh *ErrorRecoveryHandler) HandleError(ctx context.Context, err *Collectio
 		return erh.handleRateLimitError(ctx, err)
 	case ErrorTypeAuth:
 		return erh.handleAuthError(ctx, err)
-	default:
+	case ErrorTypeAPI, ErrorTypeParsing, ErrorTypeInternal, ErrorTypeConfiguration, ErrorTypePermission, ErrorTypeNotFound:
 		// For other errors, just log and return
+		return err
+	default:
 		return err
 	}
 }

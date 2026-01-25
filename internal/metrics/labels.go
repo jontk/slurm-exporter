@@ -486,7 +486,7 @@ func (lm *LabelManager) ExportDimensionalAnalysis() string {
 	analysis := lm.GetDimensionalAnalysis()
 
 	// Sort by utilization percentage
-	var sorted []CardinalityInfo
+	var sorted []CardinalityInfo //nolint:prealloc
 	for _, info := range analysis {
 		sorted = append(sorted, info)
 	}

@@ -189,7 +189,7 @@ func (c *TRESCollector) collectNodeTRES(ctx context.Context, ch chan<- prometheu
 						c.tresAllocated,
 						prometheus.GaugeValue,
 						float64(value),
-						tresType, tresType, nodeName, clusterName,
+						tresType, value, nodeName, clusterName,
 					)
 				}
 			}
@@ -201,7 +201,7 @@ func (c *TRESCollector) collectNodeTRES(ctx context.Context, ch chan<- prometheu
 						c.tresConfigured,
 						prometheus.GaugeValue,
 						float64(value),
-						tresType, tresType, nodeName, clusterName,
+						tresType, value, nodeName, clusterName,
 					)
 				}
 			}
@@ -216,7 +216,7 @@ func (c *TRESCollector) collectNodeTRES(ctx context.Context, ch chan<- prometheu
 						c.tresAvailable,
 						prometheus.GaugeValue,
 						float64(available),
-						tresType, tresType, nodeName, clusterName,
+						tresType, value, nodeName, clusterName,
 					)
 				}
 			}

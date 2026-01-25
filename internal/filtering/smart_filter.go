@@ -50,6 +50,8 @@ func (a FilterAction) String() string {
 		return "filter"
 	case ActionReduce:
 		return "reduce"
+	case ActionUnknown:
+		return "unknown"
 	default:
 		return "unknown"
 	}
@@ -657,6 +659,8 @@ func (sf *SmartFilter) performMaintenance() {
 			filterCount++
 		case ActionReduce:
 			reduceCount++
+		case ActionUnknown:
+			// Unknown actions are not counted
 		}
 	}
 

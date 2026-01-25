@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"net/http"
@@ -169,7 +170,7 @@ func main() {
 	// Start server in a goroutine
 	errChan := make(chan error, 1)
 	go func() {
-		if err := srv.Start(ctx); err != nil && err != http.ErrServerClosed {
+		if err := srv.Start(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			errChan <- err
 		}
 	}()

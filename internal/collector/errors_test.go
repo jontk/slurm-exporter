@@ -33,7 +33,7 @@ func TestCollectionError(t *testing.T) {
 		}
 
 		// Test Unwrap() method
-		if collErr.Unwrap() != baseErr {
+		if !errors.Is(collErr.Unwrap(), baseErr) {
 			t.Error("Unwrap should return the base error")
 		}
 
@@ -355,7 +355,7 @@ func TestErrorRecoveryHandler(t *testing.T) {
 
 		err := handler.HandleError(ctx, collErr)
 		// Connection errors are returned as-is for circuit breaker handling
-		if err != collErr {
+		if !errors.Is(err, collErr) {
 			t.Error("Should return original connection error")
 		}
 	})
@@ -372,7 +372,7 @@ func TestErrorRecoveryHandler(t *testing.T) {
 
 		err := handler.HandleError(ctx, collErr)
 		// Timeout errors are returned as-is for circuit breaker handling
-		if err != collErr {
+		if !errors.Is(err, collErr) {
 			t.Error("Should return original timeout error")
 		}
 	})
@@ -398,7 +398,7 @@ func TestErrorRecoveryHandler(t *testing.T) {
 
 		err := handler.HandleError(ctx, collErr)
 		// Should return context error due to cancellation
-		if err != context.Canceled {
+		if !errors.Is(err, context.Canceled) {
 			t.Errorf("Expected context.Canceled, got %v", err)
 		}
 	})
@@ -415,7 +415,7 @@ func TestErrorRecoveryHandler(t *testing.T) {
 
 		err := handler.HandleError(ctx, collErr)
 		// Auth errors require manual intervention
-		if err != collErr {
+		if !errors.Is(err, collErr) {
 			t.Error("Should return original auth error")
 		}
 	})
@@ -432,7 +432,7 @@ func TestErrorRecoveryHandler(t *testing.T) {
 
 		err := handler.HandleError(ctx, collErr)
 		// Other errors are returned as-is
-		if err != collErr {
+		if !errors.Is(err, collErr) {
 			t.Error("Should return original parsing error")
 		}
 	})

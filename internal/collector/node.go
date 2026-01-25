@@ -425,15 +425,16 @@ func (nc *NodeCollector) parseNodeState(slurmState string) string {
 }
 
 // TODO: parseMemorySize is unused - preserved for future data parsing needs
+//nolint:dupword
 /*
-// parseMemorySize converts SLURM memory specification to bytes
+// parseMemorySize converts SLURM memory format to bytes
 func (nc *NodeCollector) parseMemorySize(slurmMemory string) (int64, error) {
 	// SLURM memory can be in various formats: "1024M", "2G", "500000K", etc.
 	if slurmMemory == "" {
 		return 0, nil
 	}
 
-	// Extract numeric part and unit
+	// Extract numeric value and suffix
 	var value float64
 	var unit string
 

@@ -131,6 +131,13 @@ func (h *HealthChecker) CheckHealth(ctx context.Context) HealthReport {
 			if report.Status == StatusHealthy {
 				report.Status = StatusDegraded
 			}
+		case StatusHealthy:
+			// Healthy status doesn't change overall report unless all are healthy
+		case StatusUnknown:
+			// Unknown status treated as degraded for safety
+			if report.Status != StatusUnhealthy {
+				report.Status = StatusDegraded
+			}
 		}
 	}
 
@@ -191,12 +198,13 @@ func (h *HealthChecker) HealthHandler() http.HandlerFunc {
 			w.WriteHeader(http.StatusOK) // Still serving traffic
 		case StatusUnhealthy:
 			w.WriteHeader(http.StatusServiceUnavailable)
+		case StatusUnknown:
+			w.WriteHeader(http.StatusServiceUnavailable) // Conservative: treat unknown as unavailable
 		default:
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 
 		if err := json.NewEncoder(w).Encode(report); err != nil {
-			h.logger.WithError(err).Error("Failed to encode health report")
 		}
 	}
 }

@@ -414,7 +414,7 @@ func (t *ResourceTrendTracker) trackResourceTrends(ctx context.Context) error {
 	_ = jobs // Suppress unused variable warning
 	/*
 		for _, job := range jobs.Jobs {
-			// Create current snapshot
+			// Create current resource state
 			snapshot := t.createResourceSnapshot(job)
 
 			// Add to historical data

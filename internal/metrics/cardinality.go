@@ -352,7 +352,7 @@ func (cm *CardinalityManager) hashLabels(metricName string, labels map[string]st
 	}
 
 	// Sort labels for consistent hashing
-	var keys []string
+	var keys []string //nolint:prealloc
 	for k := range labels {
 		keys = append(keys, k)
 	}

@@ -314,7 +314,7 @@ type FairSharePolicyAnalyzer struct {
 	config        *FairShareConfig
 	logger        *slog.Logger
 	policyMetrics *PolicyEffectivenessMetrics
-	// TODO: Unused field - preserved for future policy recommendations
+	// TODO: Unused field - preserved for future policy actions
 	// recommendations []*PolicyRecommendation
 }
 

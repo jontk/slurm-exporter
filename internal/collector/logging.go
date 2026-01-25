@@ -5,6 +5,7 @@ package collector
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -265,7 +266,8 @@ func (sl *StructuredLogger) WithDuration(duration time.Duration) *logrus.Entry {
 
 // WithError adds error context to logger
 func (sl *StructuredLogger) WithError(err error) *logrus.Entry {
-	if collErr, ok := err.(*CollectionError); ok {
+	var collErr *CollectionError
+	if errors.As(err, &collErr) {
 		return sl.logger.WithFields(collErr.LogFields()).WithError(collErr.Err)
 	}
 	return sl.logger.WithError(err)

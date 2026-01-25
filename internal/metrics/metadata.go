@@ -431,7 +431,7 @@ func generateMetricDocumentation(metadata MetricMetadata) string {
 		doc.WriteString(metadata.Name)
 		if len(metadata.ExampleLabels) > 0 {
 			doc.WriteString("{")
-			var labelPairs []string
+			var labelPairs []string //nolint:prealloc
 			for key, value := range metadata.ExampleLabels {
 				labelPairs = append(labelPairs, fmt.Sprintf(`%s="%s"`, key, value))
 			}
