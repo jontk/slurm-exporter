@@ -897,67 +897,70 @@ func (c *AccountHierarchyCollector) collectAssociationMetrics() {
 	c.lastCollectionTime.WithLabelValues("associations").Set(float64(time.Now().Unix()))
 }
 
+// publishAccountPermissions publishes permission metrics for an account (assumes permissions is non-nil)
+func (c *AccountHierarchyCollector) publishAccountPermissions(accountName string, adminUsers, operatorUsers, viewOnlyUsers, submitUsers []string, customRoles map[string][]string, inheritedPerms map[string]bool, effectivePerms map[string][]string) {
+	c.accountPermissionUsers.WithLabelValues(accountName, "admin").Set(float64(len(adminUsers)))
+	c.accountPermissionUsers.WithLabelValues(accountName, "operator").Set(float64(len(operatorUsers)))
+	c.accountPermissionUsers.WithLabelValues(accountName, "view_only").Set(float64(len(viewOnlyUsers)))
+	c.accountPermissionUsers.WithLabelValues(accountName, "submit").Set(float64(len(submitUsers)))
+	c.accountCustomRoles.WithLabelValues(accountName).Set(float64(len(customRoles)))
+	for perm, inherited := range inheritedPerms {
+		value := 0.0
+		if inherited {
+			value = 1.0
+		}
+		c.accountInheritedPerms.WithLabelValues(accountName, perm).Set(value)
+	}
+	for permType, users := range effectivePerms {
+		c.accountEffectivePerms.WithLabelValues(accountName, permType).Set(float64(len(users)))
+	}
+}
+
+// publishAccessMatrixMetrics publishes access matrix metrics
+func (c *AccountHierarchyCollector) publishAccessMatrixMetrics(ctx context.Context) {
+	matrix, err := c.client.GetAccountAccessMatrix(ctx)
+	if err != nil || matrix == nil {
+		return
+	}
+	c.accessMatrixPermissions.WithLabelValues().Set(float64(matrix.TotalPermissions))
+	c.accessMatrixConflicts.WithLabelValues().Set(float64(matrix.ConflictingPerms))
+	for user, accounts := range matrix.EffectivePerms {
+		for account, hasPerm := range accounts {
+			permCount := 0
+			if hasPerm {
+				permCount = 1
+			}
+			c.effectivePermissions.WithLabelValues(user, account).Set(float64(permCount))
+		}
+	}
+}
+
+// publishConflictMetrics publishes permission conflict metrics
+func (c *AccountHierarchyCollector) publishConflictMetrics(ctx context.Context) {
+	conflicts, err := c.client.GetAccountConflicts(ctx)
+	if err != nil || conflicts == nil {
+		return
+	}
+	c.permissionConflicts.WithLabelValues("permission").Set(float64(len(conflicts.PermissionConflicts)))
+	c.permissionConflicts.WithLabelValues("quota").Set(float64(len(conflicts.QuotaConflicts)))
+	c.permissionConflicts.WithLabelValues("hierarchy").Set(float64(len(conflicts.HierarchyConflicts)))
+}
+
 func (c *AccountHierarchyCollector) collectPermissionMetrics() {
 	ctx := context.Background()
 	start := time.Now()
 
-	// Sample accounts for permission metrics
 	sampleAccounts := []string{"research", "engineering", "finance", "admin"}
 	for _, accountName := range sampleAccounts {
 		permissions, err := c.client.GetAccountPermissions(ctx, accountName)
-		if err != nil {
+		if err != nil || permissions == nil {
 			continue
 		}
-
-		if permissions != nil {
-			c.accountPermissionUsers.WithLabelValues(accountName, "admin").Set(float64(len(permissions.AdminUsers)))
-			c.accountPermissionUsers.WithLabelValues(accountName, "operator").Set(float64(len(permissions.OperatorUsers)))
-			c.accountPermissionUsers.WithLabelValues(accountName, "view_only").Set(float64(len(permissions.ViewOnlyUsers)))
-			c.accountPermissionUsers.WithLabelValues(accountName, "submit").Set(float64(len(permissions.SubmitUsers)))
-
-			c.accountCustomRoles.WithLabelValues(accountName).Set(float64(len(permissions.CustomRoles)))
-
-			// Count inherited permissions
-			for perm, inherited := range permissions.InheritedPerms {
-				value := 0.0
-				if inherited {
-					value = 1.0
-				}
-				c.accountInheritedPerms.WithLabelValues(accountName, perm).Set(value)
-			}
-
-			// Count effective permissions by type
-			for permType, users := range permissions.EffectivePerms {
-				c.accountEffectivePerms.WithLabelValues(accountName, permType).Set(float64(len(users)))
-			}
-		}
+		c.publishAccountPermissions(accountName, permissions.AdminUsers, permissions.OperatorUsers, permissions.ViewOnlyUsers, permissions.SubmitUsers, permissions.CustomRoles, permissions.InheritedPerms, permissions.EffectivePerms)
 	}
 
-	// Get access matrix for conflict detection
-	matrix, err := c.client.GetAccountAccessMatrix(ctx)
-	if err == nil && matrix != nil {
-		c.accessMatrixPermissions.WithLabelValues().Set(float64(matrix.TotalPermissions))
-		c.accessMatrixConflicts.WithLabelValues().Set(float64(matrix.ConflictingPerms))
-
-		// Sample effective permissions
-		for user, accounts := range matrix.EffectivePerms {
-			for account, hasPerm := range accounts {
-				permCount := 0
-				if hasPerm {
-					permCount = 1
-				}
-				c.effectivePermissions.WithLabelValues(user, account).Set(float64(permCount))
-			}
-		}
-	}
-
-	// Get conflicts
-	conflicts, err := c.client.GetAccountConflicts(ctx)
-	if err == nil && conflicts != nil {
-		c.permissionConflicts.WithLabelValues("permission").Set(float64(len(conflicts.PermissionConflicts)))
-		c.permissionConflicts.WithLabelValues("quota").Set(float64(len(conflicts.QuotaConflicts)))
-		c.permissionConflicts.WithLabelValues("hierarchy").Set(float64(len(conflicts.HierarchyConflicts)))
-	}
+	c.publishAccessMatrixMetrics(ctx)
+	c.publishConflictMetrics(ctx)
 
 	duration := time.Since(start).Seconds()
 	c.collectionDuration.WithLabelValues("permissions").Observe(duration)

@@ -131,8 +131,8 @@ func NewBatchedCollector(
 }
 
 // registerProcessors registers batch processors for different entity types
-func (bc *BatchedCollector) registerProcessors() {
-	// Job batch processor
+// registerJobProcessor registers the job batch processor
+func (bc *BatchedCollector) registerJobProcessor() {
 	bc.processor.ProcessBatch("job", func(ctx context.Context, items []performance.BatchItem) error {
 		jobs := make([]*slurm.Job, 0, len(items))
 		for _, item := range items {
@@ -144,8 +144,10 @@ func (bc *BatchedCollector) registerProcessors() {
 		}
 		return bc.processJobBatch(ctx, jobs)
 	})
+}
 
-	// Node batch processor
+// registerNodeProcessor registers the node batch processor
+func (bc *BatchedCollector) registerNodeProcessor() {
 	bc.processor.ProcessBatch("node", func(ctx context.Context, items []performance.BatchItem) error {
 		nodes := make([]*slurm.Node, 0, len(items))
 		for _, item := range items {
@@ -157,8 +159,10 @@ func (bc *BatchedCollector) registerProcessors() {
 		}
 		return bc.processNodeBatch(ctx, nodes)
 	})
+}
 
-	// Partition batch processor
+// registerPartitionProcessor registers the partition batch processor
+func (bc *BatchedCollector) registerPartitionProcessor() {
 	bc.processor.ProcessBatch("partition", func(ctx context.Context, items []performance.BatchItem) error {
 		partitions := make([]*slurm.Partition, 0, len(items))
 		for _, item := range items {
@@ -170,6 +174,12 @@ func (bc *BatchedCollector) registerProcessors() {
 		}
 		return bc.processPartitionBatch(ctx, partitions)
 	})
+}
+
+func (bc *BatchedCollector) registerProcessors() {
+	bc.registerJobProcessor()
+	bc.registerNodeProcessor()
+	bc.registerPartitionProcessor()
 }
 
 // processBatchItems processes items from the channel

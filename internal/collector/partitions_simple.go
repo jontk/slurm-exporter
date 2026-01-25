@@ -172,6 +172,45 @@ func (c *PartitionsSimpleCollector) Collect(ctx context.Context, ch chan<- prome
 	return c.collect(ctx, ch)
 }
 
+// publishPartitionMetrics publishes all metrics for a single partition
+func (c *PartitionsSimpleCollector) publishPartitionMetrics(ch chan<- prometheus.Metric, partition slurm.Partition) {
+	stateValue := 0.0
+	if isPartitionUp(partition.State) {
+		stateValue = 1.0
+	}
+	ch <- prometheus.MustNewConstMetric(c.partitionState, prometheus.GaugeValue, stateValue, partition.Name, partition.State)
+	ch <- prometheus.MustNewConstMetric(c.partitionNodesTotal, prometheus.GaugeValue, float64(partition.TotalNodes), partition.Name)
+
+	allocatedNodes := partition.TotalNodes
+	if partition.TotalNodes > 0 {
+		allocatedNodes = partition.TotalNodes - getIdleNodes(partition) - getDownNodes(partition)
+		if allocatedNodes < 0 {
+			allocatedNodes = 0
+		}
+	}
+	ch <- prometheus.MustNewConstMetric(c.partitionNodesAllocated, prometheus.GaugeValue, float64(allocatedNodes), partition.Name)
+	ch <- prometheus.MustNewConstMetric(c.partitionNodesIdle, prometheus.GaugeValue, float64(getIdleNodes(partition)), partition.Name)
+	ch <- prometheus.MustNewConstMetric(c.partitionNodesDown, prometheus.GaugeValue, float64(getDownNodes(partition)), partition.Name)
+
+	ch <- prometheus.MustNewConstMetric(c.partitionCPUsTotal, prometheus.GaugeValue, float64(partition.TotalCPUs), partition.Name)
+
+	allocatedCPUs := getPartitionAllocatedCPUs(partition)
+	ch <- prometheus.MustNewConstMetric(c.partitionCPUsAllocated, prometheus.GaugeValue, float64(allocatedCPUs), partition.Name)
+
+	idleCPUs := partition.TotalCPUs - allocatedCPUs
+	if idleCPUs < 0 {
+		idleCPUs = 0
+	}
+	ch <- prometheus.MustNewConstMetric(c.partitionCPUsIdle, prometheus.GaugeValue, float64(idleCPUs), partition.Name)
+
+	ch <- prometheus.MustNewConstMetric(c.partitionJobsPending, prometheus.GaugeValue, float64(getPartitionPendingJobs(partition)), partition.Name)
+	ch <- prometheus.MustNewConstMetric(c.partitionJobsRunning, prometheus.GaugeValue, float64(getPartitionRunningJobs(partition)), partition.Name)
+
+	maxTime := formatTimeLimit(uint32(partition.MaxTime))
+	defaultTime := formatTimeLimit(uint32(partition.DefaultTime))
+	ch <- prometheus.MustNewConstMetric(c.partitionInfo, prometheus.GaugeValue, 1, partition.Name, partition.State, "default", maxTime, defaultTime)
+}
+
 // collect gathers metrics from SLURM
 func (c *PartitionsSimpleCollector) collect(ctx context.Context, ch chan<- prometheus.Metric) error {
 	// Get Partitions manager from client
@@ -190,112 +229,7 @@ func (c *PartitionsSimpleCollector) collect(ctx context.Context, ch chan<- prome
 	c.logger.WithField("count", len(partitionList.Partitions)).Info("Collected partition entries")
 
 	for _, partition := range partitionList.Partitions {
-		// Partition state metric
-		stateValue := 0.0
-		if isPartitionUp(partition.State) {
-			stateValue = 1.0
-		}
-
-		ch <- prometheus.MustNewConstMetric(
-			c.partitionState,
-			prometheus.GaugeValue,
-			stateValue,
-			partition.Name, partition.State,
-		)
-
-		// Node metrics
-		ch <- prometheus.MustNewConstMetric(
-			c.partitionNodesTotal,
-			prometheus.GaugeValue,
-			float64(partition.TotalNodes),
-			partition.Name,
-		)
-
-		// Calculate allocated nodes (total - idle - down)
-		allocatedNodes := partition.TotalNodes
-		if partition.TotalNodes > 0 {
-			// Some APIs might provide these counts directly
-			allocatedNodes = partition.TotalNodes - getIdleNodes(partition) - getDownNodes(partition)
-			if allocatedNodes < 0 {
-				allocatedNodes = 0
-			}
-		}
-
-		ch <- prometheus.MustNewConstMetric(
-			c.partitionNodesAllocated,
-			prometheus.GaugeValue,
-			float64(allocatedNodes),
-			partition.Name,
-		)
-
-		ch <- prometheus.MustNewConstMetric(
-			c.partitionNodesIdle,
-			prometheus.GaugeValue,
-			float64(getIdleNodes(partition)),
-			partition.Name,
-		)
-
-		ch <- prometheus.MustNewConstMetric(
-			c.partitionNodesDown,
-			prometheus.GaugeValue,
-			float64(getDownNodes(partition)),
-			partition.Name,
-		)
-
-		// CPU metrics
-		ch <- prometheus.MustNewConstMetric(
-			c.partitionCPUsTotal,
-			prometheus.GaugeValue,
-			float64(partition.TotalCPUs),
-			partition.Name,
-		)
-
-		// Note: These might need to be calculated based on node states
-		// or fetched from different API fields
-		allocatedCPUs := getPartitionAllocatedCPUs(partition)
-		ch <- prometheus.MustNewConstMetric(
-			c.partitionCPUsAllocated,
-			prometheus.GaugeValue,
-			float64(allocatedCPUs),
-			partition.Name,
-		)
-
-		idleCPUs := partition.TotalCPUs - allocatedCPUs
-		if idleCPUs < 0 {
-			idleCPUs = 0
-		}
-		ch <- prometheus.MustNewConstMetric(
-			c.partitionCPUsIdle,
-			prometheus.GaugeValue,
-			float64(idleCPUs),
-			partition.Name,
-		)
-
-		// Job metrics (these might be available in partition stats)
-		ch <- prometheus.MustNewConstMetric(
-			c.partitionJobsPending,
-			prometheus.GaugeValue,
-			float64(getPartitionPendingJobs(partition)),
-			partition.Name,
-		)
-
-		ch <- prometheus.MustNewConstMetric(
-			c.partitionJobsRunning,
-			prometheus.GaugeValue,
-			float64(getPartitionRunningJobs(partition)),
-			partition.Name,
-		)
-
-		// Partition info
-		maxTime := formatTimeLimit(uint32(partition.MaxTime))
-		defaultTime := formatTimeLimit(uint32(partition.DefaultTime))
-
-		ch <- prometheus.MustNewConstMetric(
-			c.partitionInfo,
-			prometheus.GaugeValue,
-			1,
-			partition.Name, partition.State, "default", maxTime, defaultTime,
-		)
+		c.publishPartitionMetrics(ch, partition)
 	}
 
 	return nil
