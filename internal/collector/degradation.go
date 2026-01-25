@@ -62,7 +62,7 @@ func NewCircuitBreaker(name string, maxFailures int, resetTimeout time.Duration)
 func (cb *CircuitBreaker) Call(fn func() error) error {
 	cb.mu.Lock()
 
-	// Check current state //nolint:exhaustive
+	// Check current state
 	switch cb.state {
 	case StateOpen:
 		// Check if we should transition to half-open
@@ -77,6 +77,10 @@ func (cb *CircuitBreaker) Call(fn func() error) error {
 	case StateHalfOpen:
 		// In half-open, we allow one call through
 		cb.logger.Debug("Circuit breaker in half-open state, testing call")
+
+	case StateClosed:
+		// Normal operation, proceed with call
+		cb.logger.Debug("Circuit breaker is closed, executing call")
 	}
 
 	cb.mu.Unlock()

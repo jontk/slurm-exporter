@@ -573,7 +573,7 @@ func (erh *ErrorRecoveryHandler) HandleError(ctx context.Context, err *Collectio
 	erh.logger.WithFields(err.LogFields()).WithError(err.Err).
 		Debugf("Processing error for recovery: %s", err.Message)
 
-	// Execute recovery strategy based on error type //nolint:exhaustive
+	// Execute recovery strategy based on error type
 	switch err.Type {
 	case ErrorTypeConnection:
 		return erh.handleConnectionError(ctx, err)
@@ -583,8 +583,10 @@ func (erh *ErrorRecoveryHandler) HandleError(ctx context.Context, err *Collectio
 		return erh.handleRateLimitError(ctx, err)
 	case ErrorTypeAuth:
 		return erh.handleAuthError(ctx, err)
-	default:
+	case ErrorTypeAPI, ErrorTypeParsing, ErrorTypeInternal, ErrorTypeConfiguration, ErrorTypePermission, ErrorTypeNotFound:
 		// For other errors, just log and return
+		return err
+	default:
 		return err
 	}
 }

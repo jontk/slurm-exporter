@@ -42,7 +42,7 @@ const (
 	ActionUnknown
 )
 
-func (a FilterAction) String() string { //nolint:exhaustive
+func (a FilterAction) String() string {
 	switch a {
 	case ActionKeep:
 		return "keep"
@@ -50,6 +50,8 @@ func (a FilterAction) String() string { //nolint:exhaustive
 		return "filter"
 	case ActionReduce:
 		return "reduce"
+	case ActionUnknown:
+		return "unknown"
 	default:
 		return "unknown"
 	}
@@ -649,7 +651,7 @@ func (sf *SmartFilter) performMaintenance() {
 	filterCount := 0
 	reduceCount := 0
 
-	for _, pattern := range sf.patterns { //nolint:exhaustive
+	for _, pattern := range sf.patterns {
 		switch pattern.FilterRecommend {
 		case ActionKeep:
 			keepCount++
@@ -657,6 +659,8 @@ func (sf *SmartFilter) performMaintenance() {
 			filterCount++
 		case ActionReduce:
 			reduceCount++
+		case ActionUnknown:
+			// Unknown actions are not counted
 		}
 	}
 

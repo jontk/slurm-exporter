@@ -180,7 +180,7 @@ func (cb *CircuitBreaker) recordResult(err error) {
 			cb.setState(StateOpen)
 		}
 	} else {
-		// Success //nolint:exhaustive
+		// Success
 		switch cb.state {
 		case StateHalfOpen:
 			// Successful request in half-open state closes the circuit
@@ -189,6 +189,10 @@ func (cb *CircuitBreaker) recordResult(err error) {
 		case StateClosed:
 			// Reset failure count on success in closed state
 			cb.failures = 0
+		case StateOpen:
+			// Unexpected success while open - should not happen due to earlier check
+			// But if it does, transition to half-open
+			cb.setState(StateHalfOpen)
 		}
 	}
 }
