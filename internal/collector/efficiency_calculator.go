@@ -422,64 +422,77 @@ func (e *EfficiencyCalculator) determineEfficiencyCategory(efficiency float64) s
 }
 
 // generateRecommendations provides actionable recommendations for improvement
-func (e *EfficiencyCalculator) generateRecommendations(data *ResourceUtilizationData, metrics *EfficiencyMetrics) []string {
-	recommendations := []string{}
-
-	// CPU recommendations
-	if metrics.CPUEfficiency < 0.6 {
-		if data.CPUAllocated > 0 {
-			cpuUtil := data.CPUUsed / data.CPUAllocated
-			if cpuUtil < e.config.CPUIdleThreshold {
-				recommendations = append(recommendations, "Consider reducing CPU allocation - current usage is very low")
-			} else if cpuUtil > e.config.CPUOptimalThreshold {
-				recommendations = append(recommendations, "Consider increasing CPU allocation or optimizing CPU-intensive operations")
-			}
-		}
+// addCPURecommendations adds CPU efficiency recommendations
+func (e *EfficiencyCalculator) addCPURecommendations(recs []string, data *ResourceUtilizationData, metrics *EfficiencyMetrics) []string {
+	if metrics.CPUEfficiency >= 0.6 || data.CPUAllocated <= 0 {
+		return recs
 	}
-
-	// Memory recommendations
-	if metrics.MemoryEfficiency < 0.6 {
-		if data.MemoryAllocated > 0 {
-			memoryUtil := float64(data.MemoryUsed) / float64(data.MemoryAllocated)
-			if memoryUtil < 0.5 {
-				recommendations = append(recommendations, "Consider reducing memory allocation - significant memory waste detected")
-			} else if memoryUtil > e.config.MemoryPressureThreshold {
-				recommendations = append(recommendations, "Consider increasing memory allocation - memory pressure detected")
-			}
-		}
+	cpuUtil := data.CPUUsed / data.CPUAllocated
+	if cpuUtil < e.config.CPUIdleThreshold {
+		return append(recs, "Consider reducing CPU allocation - current usage is very low")
 	}
-
-	// I/O recommendations
-	if metrics.IOEfficiency < 0.6 {
-		if data.IOWaitTime > 0 && data.WallTime > 0 {
-			ioWaitRatio := data.IOWaitTime / data.WallTime
-			if ioWaitRatio > 0.1 {
-				recommendations = append(recommendations, "High I/O wait time detected - consider optimizing I/O patterns or using faster storage")
-			}
-		}
+	if cpuUtil > e.config.CPUOptimalThreshold {
+		return append(recs, "Consider increasing CPU allocation or optimizing CPU-intensive operations")
 	}
+	return recs
+}
 
-	// Network recommendations
-	if metrics.NetworkEfficiency < 0.6 {
-		if data.NetworkRxBytes > 0 || data.NetworkTxBytes > 0 {
-			recommendations = append(recommendations, "Network efficiency is low - consider optimizing data transfer patterns")
-		}
+// addMemoryRecommendations adds memory efficiency recommendations
+func (e *EfficiencyCalculator) addMemoryRecommendations(recs []string, data *ResourceUtilizationData, metrics *EfficiencyMetrics) []string {
+	if metrics.MemoryEfficiency >= 0.6 || data.MemoryAllocated <= 0 {
+		return recs
 	}
+	memoryUtil := float64(data.MemoryUsed) / float64(data.MemoryAllocated)
+	if memoryUtil < 0.5 {
+		return append(recs, "Consider reducing memory allocation - significant memory waste detected")
+	}
+	if memoryUtil > e.config.MemoryPressureThreshold {
+		return append(recs, "Consider increasing memory allocation - memory pressure detected")
+	}
+	return recs
+}
 
-	// Overall recommendations
+// addIORecommendations adds I/O efficiency recommendations
+func (e *EfficiencyCalculator) addIORecommendations(recs []string, data *ResourceUtilizationData, metrics *EfficiencyMetrics) []string {
+	if metrics.IOEfficiency >= 0.6 || data.IOWaitTime <= 0 || data.WallTime <= 0 {
+		return recs
+	}
+	if data.IOWaitTime/data.WallTime > 0.1 {
+		return append(recs, "High I/O wait time detected - consider optimizing I/O patterns or using faster storage")
+	}
+	return recs
+}
+
+// addNetworkRecommendations adds network efficiency recommendations
+func (e *EfficiencyCalculator) addNetworkRecommendations(recs []string, data *ResourceUtilizationData, metrics *EfficiencyMetrics) []string {
+	if metrics.NetworkEfficiency >= 0.6 || (data.NetworkRxBytes <= 0 && data.NetworkTxBytes <= 0) {
+		return recs
+	}
+	return append(recs, "Network efficiency is low - consider optimizing data transfer patterns")
+}
+
+// addOverallRecommendations adds overall efficiency recommendations
+func (e *EfficiencyCalculator) addOverallRecommendations(recs []string, metrics *EfficiencyMetrics) []string {
 	if metrics.OverallEfficiency < 0.5 {
-		recommendations = append(recommendations, "Overall efficiency is critical - review resource allocation and job configuration")
+		recs = append(recs, "Overall efficiency is critical - review resource allocation and job configuration")
 	}
-
 	if metrics.WasteRatio > 0.4 {
-		recommendations = append(recommendations, "High resource waste detected - consider right-sizing resource requests")
+		recs = append(recs, "High resource waste detected - consider right-sizing resource requests")
 	}
-
-	if len(recommendations) == 0 {
-		recommendations = append(recommendations, "Job efficiency is good - continue current configuration")
+	if len(recs) == 0 {
+		recs = append(recs, "Job efficiency is good - continue current configuration")
 	}
+	return recs
+}
 
-	return recommendations
+func (e *EfficiencyCalculator) generateRecommendations(data *ResourceUtilizationData, metrics *EfficiencyMetrics) []string {
+	recs := []string{}
+	recs = e.addCPURecommendations(recs, data, metrics)
+	recs = e.addMemoryRecommendations(recs, data, metrics)
+	recs = e.addIORecommendations(recs, data, metrics)
+	recs = e.addNetworkRecommendations(recs, data, metrics)
+	recs = e.addOverallRecommendations(recs, metrics)
+	return recs
 }
 
 // CreateResourceUtilizationDataFromJob creates utilization data from basic job information

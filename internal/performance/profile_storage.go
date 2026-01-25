@@ -85,6 +85,19 @@ func NewFileProfileStorage(config ProfileStorageConfig, logger *logrus.Entry) (*
 }
 
 // Save saves a profile to disk
+// saveProfileBuffer saves a profile buffer if it exists and is not empty
+func (fs *FileProfileStorage) saveProfileBuffer(profileDir, filename, profileType string, buffer *bytes.Buffer) (int64, error) {
+	if buffer == nil || buffer.Len() == 0 {
+		return 0, nil
+	}
+	file := filepath.Join(profileDir, filename)
+	size, err := fs.saveBuffer(file, buffer)
+	if err != nil {
+		return 0, fmt.Errorf("saving %s profile: %w", profileType, err)
+	}
+	return size, nil
+}
+
 func (fs *FileProfileStorage) Save(profile *CollectorProfile) error {
 	fs.mu.Lock()
 	defer fs.mu.Unlock()
@@ -111,63 +124,40 @@ func (fs *FileProfileStorage) Save(profile *CollectorProfile) error {
 	// Save profile data
 	var totalSize int64
 
-	// CPU profile
-	if profile.CPUProfile != nil && profile.CPUProfile.Len() > 0 {
-		cpuFile := filepath.Join(profileDir, "cpu.pprof")
-		size, err := fs.saveBuffer(cpuFile, profile.CPUProfile)
-		if err != nil {
-			return fmt.Errorf("saving CPU profile: %w", err)
-		}
+	// Save all profile types
+	if size, err := fs.saveProfileBuffer(profileDir, "cpu.pprof", "CPU", profile.CPUProfile); err != nil {
+		return err
+	} else {
 		totalSize += size
 	}
 
-	// Heap profile
-	if profile.HeapProfile != nil && profile.HeapProfile.Len() > 0 {
-		heapFile := filepath.Join(profileDir, "heap.pprof")
-		size, err := fs.saveBuffer(heapFile, profile.HeapProfile)
-		if err != nil {
-			return fmt.Errorf("saving heap profile: %w", err)
-		}
+	if size, err := fs.saveProfileBuffer(profileDir, "heap.pprof", "heap", profile.HeapProfile); err != nil {
+		return err
+	} else {
 		totalSize += size
 	}
 
-	// Goroutine profile
-	if profile.GoroutineProfile != nil && profile.GoroutineProfile.Len() > 0 {
-		goroutineFile := filepath.Join(profileDir, "goroutine.pprof")
-		size, err := fs.saveBuffer(goroutineFile, profile.GoroutineProfile)
-		if err != nil {
-			return fmt.Errorf("saving goroutine profile: %w", err)
-		}
+	if size, err := fs.saveProfileBuffer(profileDir, "goroutine.pprof", "goroutine", profile.GoroutineProfile); err != nil {
+		return err
+	} else {
 		totalSize += size
 	}
 
-	// Block profile
-	if profile.BlockProfile != nil && profile.BlockProfile.Len() > 0 {
-		blockFile := filepath.Join(profileDir, "block.pprof")
-		size, err := fs.saveBuffer(blockFile, profile.BlockProfile)
-		if err != nil {
-			return fmt.Errorf("saving block profile: %w", err)
-		}
+	if size, err := fs.saveProfileBuffer(profileDir, "block.pprof", "block", profile.BlockProfile); err != nil {
+		return err
+	} else {
 		totalSize += size
 	}
 
-	// Mutex profile
-	if profile.MutexProfile != nil && profile.MutexProfile.Len() > 0 {
-		mutexFile := filepath.Join(profileDir, "mutex.pprof")
-		size, err := fs.saveBuffer(mutexFile, profile.MutexProfile)
-		if err != nil {
-			return fmt.Errorf("saving mutex profile: %w", err)
-		}
+	if size, err := fs.saveProfileBuffer(profileDir, "mutex.pprof", "mutex", profile.MutexProfile); err != nil {
+		return err
+	} else {
 		totalSize += size
 	}
 
-	// Trace data
-	if profile.TraceData != nil && profile.TraceData.Len() > 0 {
-		traceFile := filepath.Join(profileDir, "trace.out")
-		size, err := fs.saveBuffer(traceFile, profile.TraceData)
-		if err != nil {
-			return fmt.Errorf("saving trace data: %w", err)
-		}
+	if size, err := fs.saveProfileBuffer(profileDir, "trace.out", "trace", profile.TraceData); err != nil {
+		return err
+	} else {
 		totalSize += size
 	}
 

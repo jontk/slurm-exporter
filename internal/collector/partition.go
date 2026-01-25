@@ -270,130 +270,58 @@ func getTestPartitions() []partitionInfo {
 
 // collectPartitionUtilization collects partition resource utilization
 //
+// publishPartitionMetrics publishes utilization metrics for a single partition
+func (pc *PartitionCollector) publishPartitionMetrics(ch chan<- prometheus.Metric, name string, jobCount, allocCPUs, totalCPUs, allocNodes, totalNodes int, allocMem, totalMem int64) {
+	pc.SendMetric(ch, pc.BuildMetric(pc.metrics.PartitionJobCount.WithLabelValues(pc.clusterName, name).Desc(),
+		prometheus.GaugeValue, float64(jobCount), pc.clusterName, name))
+	pc.SendMetric(ch, pc.BuildMetric(pc.metrics.PartitionAllocatedCPUs.WithLabelValues(pc.clusterName, name).Desc(),
+		prometheus.GaugeValue, float64(allocCPUs), pc.clusterName, name))
+	pc.SendMetric(ch, pc.BuildMetric(pc.metrics.PartitionAllocatedMemory.WithLabelValues(pc.clusterName, name).Desc(),
+		prometheus.GaugeValue, float64(allocMem), pc.clusterName, name))
+
+	// Calculate and publish utilization ratios
+	cpuUtil, memUtil, nodeUtil := float64(0), float64(0), float64(0)
+	if totalCPUs > 0 {
+		cpuUtil = float64(allocCPUs) / float64(totalCPUs)
+	}
+	if totalMem > 0 {
+		memUtil = float64(allocMem) / float64(totalMem)
+	}
+	if totalNodes > 0 {
+		nodeUtil = float64(allocNodes) / float64(totalNodes)
+	}
+
+	for utilType, util := range map[string]float64{"cpu": cpuUtil, "memory": memUtil, "nodes": nodeUtil} {
+		pc.SendMetric(ch, pc.BuildMetric(pc.metrics.PartitionUtilization.WithLabelValues(pc.clusterName, name, utilType).Desc(),
+			prometheus.GaugeValue, util, pc.clusterName, name, utilType))
+	}
+}
+
 //nolint:unparam
 func (pc *PartitionCollector) collectPartitionUtilization(ctx context.Context, ch chan<- prometheus.Metric) error {
 	_ = ctx
-	// Simulate partition utilization data
+
+	// Partition utilization data
 	partitionUtilization := []struct {
 		Name            string
 		JobCount        int
 		AllocatedNodes  int
 		AllocatedCPUs   int
-		AllocatedMemory int64 // bytes
+		AllocatedMemory int64
 		TotalNodes      int
 		TotalCPUs       int
-		TotalMemory     int64 // bytes
+		TotalMemory     int64
 	}{
-		{
-			Name:            "compute",
-			JobCount:        120,
-			AllocatedNodes:  35,
-			AllocatedCPUs:   1680,
-			AllocatedMemory: 336 * 1024 * 1024 * 1024, // 336GB
-			TotalNodes:      50,
-			TotalCPUs:       2400,
-			TotalMemory:     512 * 1024 * 1024 * 1024, // 512GB
-		},
-		{
-			Name:            "gpu",
-			JobCount:        25,
-			AllocatedNodes:  8,
-			AllocatedCPUs:   384,
-			AllocatedMemory: 192 * 1024 * 1024 * 1024, // 192GB
-			TotalNodes:      10,
-			TotalCPUs:       480,
-			TotalMemory:     256 * 1024 * 1024 * 1024, // 256GB
-		},
-		{
-			Name:            "highmem",
-			JobCount:        8,
-			AllocatedNodes:  3,
-			AllocatedCPUs:   144,
-			AllocatedMemory: 384 * 1024 * 1024 * 1024, // 384GB
-			TotalNodes:      5,
-			TotalCPUs:       240,
-			TotalMemory:     512 * 1024 * 1024 * 1024, // 512GB
-		},
-		{
-			Name:            "debug",
-			JobCount:        3,
-			AllocatedNodes:  1,
-			AllocatedCPUs:   48,
-			AllocatedMemory: 32 * 1024 * 1024 * 1024, // 32GB
-			TotalNodes:      2,
-			TotalCPUs:       96,
-			TotalMemory:     64 * 1024 * 1024 * 1024, // 64GB
-		},
-		{
-			Name:            "maintenance",
-			JobCount:        0,
-			AllocatedNodes:  0,
-			AllocatedCPUs:   0,
-			AllocatedMemory: 0,
-			TotalNodes:      3,
-			TotalCPUs:       144,
-			TotalMemory:     96 * 1024 * 1024 * 1024, // 96GB
-		},
+		{"compute", 120, 35, 1680, 336 * 1024 * 1024 * 1024, 50, 2400, 512 * 1024 * 1024 * 1024},
+		{"gpu", 25, 8, 384, 192 * 1024 * 1024 * 1024, 10, 480, 256 * 1024 * 1024 * 1024},
+		{"highmem", 8, 3, 144, 384 * 1024 * 1024 * 1024, 5, 240, 512 * 1024 * 1024 * 1024},
+		{"debug", 3, 1, 48, 32 * 1024 * 1024 * 1024, 2, 96, 64 * 1024 * 1024 * 1024},
+		{"maintenance", 0, 0, 0, 0, 3, 144, 96 * 1024 * 1024 * 1024},
 	}
 
 	for _, util := range partitionUtilization {
-		// Job count
-		pc.SendMetric(ch, pc.BuildMetric(
-			pc.metrics.PartitionJobCount.WithLabelValues(pc.clusterName, util.Name).Desc(),
-			prometheus.GaugeValue,
-			float64(util.JobCount),
-			pc.clusterName,
-			util.Name,
-		))
-
-		// Allocated resources
-		pc.SendMetric(ch, pc.BuildMetric(
-			pc.metrics.PartitionAllocatedCPUs.WithLabelValues(pc.clusterName, util.Name).Desc(),
-			prometheus.GaugeValue,
-			float64(util.AllocatedCPUs),
-			pc.clusterName,
-			util.Name,
-		))
-
-		pc.SendMetric(ch, pc.BuildMetric(
-			pc.metrics.PartitionAllocatedMemory.WithLabelValues(pc.clusterName, util.Name).Desc(),
-			prometheus.GaugeValue,
-			float64(util.AllocatedMemory),
-			pc.clusterName,
-			util.Name,
-		))
-
-		// Utilization ratios
-		cpuUtilization := float64(0)
-		memoryUtilization := float64(0)
-		nodeUtilization := float64(0)
-
-		if util.TotalCPUs > 0 {
-			cpuUtilization = float64(util.AllocatedCPUs) / float64(util.TotalCPUs)
-		}
-		if util.TotalMemory > 0 {
-			memoryUtilization = float64(util.AllocatedMemory) / float64(util.TotalMemory)
-		}
-		if util.TotalNodes > 0 {
-			nodeUtilization = float64(util.AllocatedNodes) / float64(util.TotalNodes)
-		}
-
-		utilizationTypes := map[string]float64{
-			"cpu":    cpuUtilization,
-			"memory": memoryUtilization,
-			"nodes":  nodeUtilization,
-		}
-
-		for utilizationType, utilization := range utilizationTypes {
-			pc.SendMetric(ch, pc.BuildMetric(
-				pc.metrics.PartitionUtilization.WithLabelValues(pc.clusterName, util.Name, utilizationType).Desc(),
-				prometheus.GaugeValue,
-				utilization,
-				pc.clusterName,
-				util.Name,
-				utilizationType,
-			))
-		}
+		pc.publishPartitionMetrics(ch, util.Name, util.JobCount, util.AllocatedCPUs, util.TotalCPUs,
+			util.AllocatedNodes, util.TotalNodes, util.AllocatedMemory, util.TotalMemory)
 	}
 
 	pc.LogCollectionf("Collected utilization for %d partitions", len(partitionUtilization))

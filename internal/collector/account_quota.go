@@ -708,7 +708,6 @@ func (c *AccountQuotaCollector) Collect(ch chan<- prometheus.Metric) {
 
 func (c *AccountQuotaCollector) collectAccountQuota(ctx context.Context, quota *AccountQuotas) {
 	_ = ctx
-	// CPU Quotas
 	if quota.CPUMinutes != nil {
 		c.accountQuotaLimit.WithLabelValues(quota.AccountName, "cpu", "minutes").Set(quota.CPUMinutes.Limit)
 		c.accountQuotaUsed.WithLabelValues(quota.AccountName, "cpu", "minutes").Set(quota.CPUMinutes.Used)
@@ -716,59 +715,23 @@ func (c *AccountQuotaCollector) collectAccountQuota(ctx context.Context, quota *
 		c.accountQuotaAvailable.WithLabelValues(quota.AccountName, "cpu", "minutes").Set(quota.CPUMinutes.Available)
 		c.accountQuotaUtilization.WithLabelValues(quota.AccountName, "cpu", "minutes").Set(quota.CPUMinutes.UtilizationRate)
 		c.accountQuotaThreshold.WithLabelValues(quota.AccountName, "cpu").Set(quota.CPUMinutes.ThresholdPercent)
-
 		c.accountCPUQuotaMinutes.WithLabelValues(quota.AccountName, "limit").Set(quota.CPUMinutes.Limit)
 		c.accountCPUQuotaMinutes.WithLabelValues(quota.AccountName, "used").Set(quota.CPUMinutes.Used)
 		c.accountCPUQuotaMinutes.WithLabelValues(quota.AccountName, "available").Set(quota.CPUMinutes.Available)
 	}
-
-	// Memory Quotas
 	if quota.MemoryGB != nil {
 		c.accountQuotaLimit.WithLabelValues(quota.AccountName, "memory", "gb").Set(quota.MemoryGB.Limit)
 		c.accountQuotaUsed.WithLabelValues(quota.AccountName, "memory", "gb").Set(quota.MemoryGB.Used)
 		c.accountQuotaReserved.WithLabelValues(quota.AccountName, "memory", "gb").Set(quota.MemoryGB.Reserved)
 		c.accountQuotaAvailable.WithLabelValues(quota.AccountName, "memory", "gb").Set(quota.MemoryGB.Available)
 		c.accountQuotaUtilization.WithLabelValues(quota.AccountName, "memory", "gb").Set(quota.MemoryGB.UtilizationRate)
-
 		c.accountMemoryQuotaGB.WithLabelValues(quota.AccountName, "limit").Set(quota.MemoryGB.Limit)
 		c.accountMemoryQuotaGB.WithLabelValues(quota.AccountName, "used").Set(quota.MemoryGB.Used)
 		c.accountMemoryQuotaGB.WithLabelValues(quota.AccountName, "available").Set(quota.MemoryGB.Available)
 	}
-
-	// GPU Quotas
-	if quota.GPUHours != nil {
-		c.accountQuotaLimit.WithLabelValues(quota.AccountName, "gpu", "hours").Set(quota.GPUHours.Limit)
-		c.accountQuotaUsed.WithLabelValues(quota.AccountName, "gpu", "hours").Set(quota.GPUHours.Used)
-		c.accountQuotaUtilization.WithLabelValues(quota.AccountName, "gpu", "hours").Set(quota.GPUHours.UtilizationRate)
-
-		c.accountGPUQuotaHours.WithLabelValues(quota.AccountName, "limit").Set(quota.GPUHours.Limit)
-		c.accountGPUQuotaHours.WithLabelValues(quota.AccountName, "used").Set(quota.GPUHours.Used)
-	}
-
-	// Storage Quotas
-	if quota.StorageGB != nil {
-		c.accountStorageQuotaGB.WithLabelValues(quota.AccountName, "home", "limit").Set(quota.StorageGB.Limit)
-		c.accountStorageQuotaGB.WithLabelValues(quota.AccountName, "home", "used").Set(quota.StorageGB.Used)
-	}
-	if quota.ScratchGB != nil {
-		c.accountStorageQuotaGB.WithLabelValues(quota.AccountName, "scratch", "limit").Set(quota.ScratchGB.Limit)
-		c.accountStorageQuotaGB.WithLabelValues(quota.AccountName, "scratch", "used").Set(quota.ScratchGB.Used)
-	}
-
-	// Job Quotas
-	if quota.MaxJobs != nil {
-		c.accountJobQuotaLimit.WithLabelValues(quota.AccountName, "max_jobs").Set(float64(quota.MaxJobs.Limit))
-		c.accountJobQuotaCurrent.WithLabelValues(quota.AccountName, "max_jobs").Set(float64(quota.MaxJobs.Current))
-	}
-	if quota.MaxSubmitJobs != nil {
-		c.accountJobQuotaLimit.WithLabelValues(quota.AccountName, "max_submit").Set(float64(quota.MaxSubmitJobs.Limit))
-		c.accountJobQuotaCurrent.WithLabelValues(quota.AccountName, "max_submit").Set(float64(quota.MaxSubmitJobs.Current))
-	}
-
-	// QoS Quotas
+	c.publishSimpleResourceQuotas(quota)
 	for qosName, qosQuota := range quota.QoSLimits {
 		c.accountQoSPriority.WithLabelValues(quota.AccountName, qosName).Set(float64(qosQuota.Priority))
-
 		if qosQuota.CPULimit != nil {
 			c.accountQoSQuotaLimit.WithLabelValues(quota.AccountName, qosName, "cpu").Set(qosQuota.CPULimit.Limit)
 			c.accountQoSQuotaUsed.WithLabelValues(quota.AccountName, qosName, "cpu").Set(qosQuota.CPULimit.Used)
@@ -777,29 +740,46 @@ func (c *AccountQuotaCollector) collectAccountQuota(ctx context.Context, quota *
 			c.accountQoSJobLimit.WithLabelValues(quota.AccountName, qosName).Set(float64(qosQuota.JobLimit.Limit))
 		}
 	}
-
-	// Partition Quotas
 	for partName, partQuota := range quota.PartitionQuotas {
 		c.accountPartitionPriority.WithLabelValues(quota.AccountName, partName).Set(float64(partQuota.Priority))
 		c.accountPartitionMaxJobs.WithLabelValues(quota.AccountName, partName).Set(float64(partQuota.MaxJobsPerUser))
-
 		if partQuota.CPUQuota != nil {
 			c.accountPartitionQuotaLimit.WithLabelValues(quota.AccountName, partName, "cpu").Set(partQuota.CPUQuota.Limit)
 			c.accountPartitionQuotaUsed.WithLabelValues(quota.AccountName, partName, "cpu").Set(partQuota.CPUQuota.Used)
 		}
 	}
-
-	// Metadata
 	c.accountQuotaActive.WithLabelValues(quota.AccountName).Set(boolToFloat64(quota.Active))
 	c.accountQuotaVersion.WithLabelValues(quota.AccountName).Set(float64(quota.QuotaVersion))
 	c.accountQuotaLastModified.WithLabelValues(quota.AccountName).Set(float64(quota.ModifiedAt.Unix()))
-
-	// Grace period
 	c.accountQuotaGracePeriod.WithLabelValues(quota.AccountName).Set(quota.GracePeriod.Hours())
+	c.accountQuotaResetDays.WithLabelValues(quota.AccountName).Set(time.Until(quota.QuotaResetDate).Hours() / 24)
+}
 
-	// Days until reset
-	daysUntilReset := time.Until(quota.QuotaResetDate).Hours() / 24
-	c.accountQuotaResetDays.WithLabelValues(quota.AccountName).Set(daysUntilReset)
+// publishSimpleResourceQuotas publishes GPU, Storage, and Job quotas
+func (c *AccountQuotaCollector) publishSimpleResourceQuotas(quota *AccountQuotas) {
+	if quota.GPUHours != nil {
+		c.accountQuotaLimit.WithLabelValues(quota.AccountName, "gpu", "hours").Set(quota.GPUHours.Limit)
+		c.accountQuotaUsed.WithLabelValues(quota.AccountName, "gpu", "hours").Set(quota.GPUHours.Used)
+		c.accountQuotaUtilization.WithLabelValues(quota.AccountName, "gpu", "hours").Set(quota.GPUHours.UtilizationRate)
+		c.accountGPUQuotaHours.WithLabelValues(quota.AccountName, "limit").Set(quota.GPUHours.Limit)
+		c.accountGPUQuotaHours.WithLabelValues(quota.AccountName, "used").Set(quota.GPUHours.Used)
+	}
+	if quota.StorageGB != nil {
+		c.accountStorageQuotaGB.WithLabelValues(quota.AccountName, "home", "limit").Set(quota.StorageGB.Limit)
+		c.accountStorageQuotaGB.WithLabelValues(quota.AccountName, "home", "used").Set(quota.StorageGB.Used)
+	}
+	if quota.ScratchGB != nil {
+		c.accountStorageQuotaGB.WithLabelValues(quota.AccountName, "scratch", "limit").Set(quota.ScratchGB.Limit)
+		c.accountStorageQuotaGB.WithLabelValues(quota.AccountName, "scratch", "used").Set(quota.ScratchGB.Used)
+	}
+	if quota.MaxJobs != nil {
+		c.accountJobQuotaLimit.WithLabelValues(quota.AccountName, "max_jobs").Set(float64(quota.MaxJobs.Limit))
+		c.accountJobQuotaCurrent.WithLabelValues(quota.AccountName, "max_jobs").Set(float64(quota.MaxJobs.Current))
+	}
+	if quota.MaxSubmitJobs != nil {
+		c.accountJobQuotaLimit.WithLabelValues(quota.AccountName, "max_submit").Set(float64(quota.MaxSubmitJobs.Limit))
+		c.accountJobQuotaCurrent.WithLabelValues(quota.AccountName, "max_submit").Set(float64(quota.MaxSubmitJobs.Current))
+	}
 }
 
 func (c *AccountQuotaCollector) collectAccountUsage(ctx context.Context, accountName string) {

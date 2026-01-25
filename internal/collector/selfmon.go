@@ -104,120 +104,49 @@ func (smc *SelfMonitoringCollector) collectSelfMonitoringMetrics(ctx context.Con
 
 // collectRuntimeMetrics collects exporter runtime and health metrics
 //
+// publishCollectorMetrics publishes metrics for a single collector
+func (smc *SelfMonitoringCollector) publishCollectorMetrics(ch chan<- prometheus.Metric, name string, isUp bool, lastTime time.Time, metricsCount int) {
+	upValue := float64(0)
+	if isUp {
+		upValue = 1
+	}
+	smc.SendMetric(ch, smc.BuildMetric(smc.metrics.CollectorUp.WithLabelValues(name).Desc(),
+		prometheus.GaugeValue, upValue, name))
+	smc.SendMetric(ch, smc.BuildMetric(smc.metrics.LastCollectionTime.WithLabelValues(name).Desc(),
+		prometheus.GaugeValue, float64(lastTime.Unix()), name))
+	smc.SendMetric(ch, smc.BuildMetric(smc.metrics.MetricsExported.WithLabelValues(name, "total").Desc(),
+		prometheus.GaugeValue, float64(metricsCount), name, "total"))
+}
+
 //nolint:unparam
 func (smc *SelfMonitoringCollector) collectRuntimeMetrics(ctx context.Context, ch chan<- prometheus.Metric) error {
 	_ = ctx
-	// Exporter uptime and health
-	smc.SendMetric(ch, smc.BuildMetric(
-		smc.metrics.CollectorUp.WithLabelValues("exporter").Desc(),
-		prometheus.GaugeValue,
-		1,
-		"exporter",
-	))
 
-	// Last collection time (current time)
-	smc.SendMetric(ch, smc.BuildMetric(
-		smc.metrics.LastCollectionTime.WithLabelValues("selfmon").Desc(),
-		prometheus.GaugeValue,
-		float64(time.Now().Unix()),
-		"selfmon",
-	))
+	// Exporter uptime
+	smc.SendMetric(ch, smc.BuildMetric(smc.metrics.CollectorUp.WithLabelValues("exporter").Desc(),
+		prometheus.GaugeValue, 1, "exporter"))
 
-	// Simulate exporter health metrics
+	// Selfmon last collection time
+	smc.SendMetric(ch, smc.BuildMetric(smc.metrics.LastCollectionTime.WithLabelValues("selfmon").Desc(),
+		prometheus.GaugeValue, float64(time.Now().Unix()), "selfmon"))
+
+	// Collector metrics
 	exporterMetrics := []struct {
 		CollectorName      string
 		IsUp               bool
 		LastCollectionTime time.Time
-		CollectionDuration time.Duration
-		ErrorCount         int
-		SuccessCount       int
 		MetricsExported    int
 	}{
-		{
-			CollectorName:      "cluster",
-			IsUp:               true,
-			LastCollectionTime: time.Now().Add(-30 * time.Second),
-			CollectionDuration: 2 * time.Second,
-			ErrorCount:         0,
-			SuccessCount:       120,
-			MetricsExported:    25,
-		},
-		{
-			CollectorName:      "node",
-			IsUp:               true,
-			LastCollectionTime: time.Now().Add(-25 * time.Second),
-			CollectionDuration: 5 * time.Second,
-			ErrorCount:         2,
-			SuccessCount:       118,
-			MetricsExported:    150,
-		},
-		{
-			CollectorName:      "job",
-			IsUp:               true,
-			LastCollectionTime: time.Now().Add(-20 * time.Second),
-			CollectionDuration: 8 * time.Second,
-			ErrorCount:         1,
-			SuccessCount:       119,
-			MetricsExported:    350,
-		},
-		{
-			CollectorName:      "user",
-			IsUp:               true,
-			LastCollectionTime: time.Now().Add(-35 * time.Second),
-			CollectionDuration: 3 * time.Second,
-			ErrorCount:         0,
-			SuccessCount:       120,
-			MetricsExported:    80,
-		},
-		{
-			CollectorName:      "partition",
-			IsUp:               true,
-			LastCollectionTime: time.Now().Add(-28 * time.Second),
-			CollectionDuration: 4 * time.Second,
-			ErrorCount:         0,
-			SuccessCount:       120,
-			MetricsExported:    85,
-		},
-		{
-			CollectorName:      "performance",
-			IsUp:               true,
-			LastCollectionTime: time.Now().Add(-32 * time.Second),
-			CollectionDuration: 6 * time.Second,
-			ErrorCount:         1,
-			SuccessCount:       119,
-			MetricsExported:    53,
-		},
+		{"cluster", true, time.Now().Add(-30 * time.Second), 25},
+		{"node", true, time.Now().Add(-25 * time.Second), 150},
+		{"job", true, time.Now().Add(-20 * time.Second), 350},
+		{"user", true, time.Now().Add(-35 * time.Second), 80},
+		{"partition", true, time.Now().Add(-28 * time.Second), 85},
+		{"performance", true, time.Now().Add(-32 * time.Second), 53},
 	}
 
-	for _, collectorMetric := range exporterMetrics {
-		// Collector up status
-		upValue := float64(0)
-		if collectorMetric.IsUp {
-			upValue = 1
-		}
-		smc.SendMetric(ch, smc.BuildMetric(
-			smc.metrics.CollectorUp.WithLabelValues(collectorMetric.CollectorName).Desc(),
-			prometheus.GaugeValue,
-			upValue,
-			collectorMetric.CollectorName,
-		))
-
-		// Last collection time
-		smc.SendMetric(ch, smc.BuildMetric(
-			smc.metrics.LastCollectionTime.WithLabelValues(collectorMetric.CollectorName).Desc(),
-			prometheus.GaugeValue,
-			float64(collectorMetric.LastCollectionTime.Unix()),
-			collectorMetric.CollectorName,
-		))
-
-		// Metrics exported count
-		smc.SendMetric(ch, smc.BuildMetric(
-			smc.metrics.MetricsExported.WithLabelValues(collectorMetric.CollectorName, "total").Desc(),
-			prometheus.GaugeValue,
-			float64(collectorMetric.MetricsExported),
-			collectorMetric.CollectorName,
-			"total",
-		))
+	for _, m := range exporterMetrics {
+		smc.publishCollectorMetrics(ch, m.CollectorName, m.IsUp, m.LastCollectionTime, m.MetricsExported)
 	}
 
 	smc.LogCollectionf("Collected runtime metrics for %d collectors", len(exporterMetrics))

@@ -96,7 +96,6 @@ tags
 TAGS
 
 # Debug files
-debug
 *.debug
 
 # Air live reloading tool

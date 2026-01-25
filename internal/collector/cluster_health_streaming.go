@@ -1346,129 +1346,53 @@ func (c *ClusterHealthStreamingCollector) collectStreamingMetrics(ctx context.Co
 	)
 }
 
+// publishHealthStatusMetrics publishes core health metrics
+func (c *ClusterHealthStreamingCollector) publishHealthStatusMetrics(ch chan<- prometheus.Metric, systemHealth, perfScore, reliabilityScore float64) {
+	ch <- prometheus.MustNewConstMetric(c.clusterHealthScore, prometheus.GaugeValue, systemHealth, "system", "status")
+	ch <- prometheus.MustNewConstMetric(c.streamingPerformance, prometheus.GaugeValue, perfScore, "system_performance", "overall")
+	ch <- prometheus.MustNewConstMetric(c.streamingPerformance, prometheus.GaugeValue, reliabilityScore, "system_reliability", "overall")
+}
+
+// publishComponentMetrics publishes component health metrics
+func (c *ClusterHealthStreamingCollector) publishComponentMetrics(ch chan<- prometheus.Metric, healthy, degraded, failed int) {
+	ch <- prometheus.MustNewConstMetric(c.componentHealth, prometheus.GaugeValue, float64(healthy), "all", "all", "healthy")
+	ch <- prometheus.MustNewConstMetric(c.componentHealth, prometheus.GaugeValue, float64(degraded), "all", "all", "degraded")
+	ch <- prometheus.MustNewConstMetric(c.componentHealth, prometheus.GaugeValue, float64(failed), "all", "all", "failed")
+}
+
+// publishProcessingMetrics publishes processing status metrics
+func (c *ClusterHealthStreamingCollector) publishProcessingMetrics(ch chan<- prometheus.Metric, capacity float64, latency time.Duration) {
+	ch <- prometheus.MustNewConstMetric(c.streamingPerformance, prometheus.GaugeValue, capacity, "processing_capacity", "overall")
+	ch <- prometheus.MustNewConstMetric(c.streamingPerformance, prometheus.GaugeValue, latency.Seconds(), "processing_latency", "overall")
+}
+
+// publishDetectionMetrics publishes detection status metrics
+func (c *ClusterHealthStreamingCollector) publishDetectionMetrics(ch chan<- prometheus.Metric, coverage, accuracy float64) {
+	ch <- prometheus.MustNewConstMetric(c.detectionAccuracy, prometheus.GaugeValue, coverage, "detection", "coverage")
+	ch <- prometheus.MustNewConstMetric(c.detectionAccuracy, prometheus.GaugeValue, accuracy, "detection", "accuracy")
+}
+
+// publishRiskMetrics publishes risk assessment metrics
+func (c *ClusterHealthStreamingCollector) publishRiskMetrics(ch chan<- prometheus.Metric, overall, operational, security, compliance float64) {
+	ch <- prometheus.MustNewConstMetric(c.riskAssessment, prometheus.GaugeValue, overall, "overall", "all")
+	ch <- prometheus.MustNewConstMetric(c.riskAssessment, prometheus.GaugeValue, operational, "operational", "current")
+	ch <- prometheus.MustNewConstMetric(c.riskAssessment, prometheus.GaugeValue, security, "security", "current")
+	ch <- prometheus.MustNewConstMetric(c.riskAssessment, prometheus.GaugeValue, compliance, "compliance", "current")
+}
+
 func (c *ClusterHealthStreamingCollector) collectHealthStatus(ctx context.Context, ch chan<- prometheus.Metric) {
 	status, err := c.client.GetHealthStreamingStatus(ctx)
 	if err != nil {
 		return
 	}
 
-	// System health metrics
-	ch <- prometheus.MustNewConstMetric(
-		c.clusterHealthScore,
-		prometheus.GaugeValue,
-		status.SystemHealth,
-		"system", "status",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		c.streamingPerformance,
-		prometheus.GaugeValue,
-		status.PerformanceScore,
-		"system_performance", "overall",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		c.streamingPerformance,
-		prometheus.GaugeValue,
-		status.ReliabilityScore,
-		"system_reliability", "overall",
-	)
-
-	// Component health
-	ch <- prometheus.MustNewConstMetric(
-		c.componentHealth,
-		prometheus.GaugeValue,
-		float64(status.ComponentsHealthy),
-		"all", "all", "healthy",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		c.componentHealth,
-		prometheus.GaugeValue,
-		float64(status.ComponentsDegraded),
-		"all", "all", "degraded",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		c.componentHealth,
-		prometheus.GaugeValue,
-		float64(status.ComponentsFailed),
-		"all", "all", "failed",
-	)
-
-	// Processing status
-	ch <- prometheus.MustNewConstMetric(
-		c.streamingPerformance,
-		prometheus.GaugeValue,
-		status.ProcessingCapacity,
-		"processing_capacity", "overall",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		c.streamingPerformance,
-		prometheus.GaugeValue,
-		status.ProcessingLatency.Seconds(),
-		"processing_latency", "overall",
-	)
-
-	// Detection status
-	ch <- prometheus.MustNewConstMetric(
-		c.detectionAccuracy,
-		prometheus.GaugeValue,
-		status.DetectionCoverage,
-		"detection", "coverage",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		c.detectionAccuracy,
-		prometheus.GaugeValue,
-		status.DetectionAccuracy,
-		"detection", "accuracy",
-	)
-
-	// Business status
-	ch <- prometheus.MustNewConstMetric(
-		c.businessImpact,
-		prometheus.GaugeValue,
-		status.BusinessValue,
-		"business_value", "overall",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		c.complianceStatus,
-		prometheus.GaugeValue,
-		status.SLACompliance,
-		"sla", "overall",
-	)
-
-	// Risk metrics
-	ch <- prometheus.MustNewConstMetric(
-		c.riskAssessment,
-		prometheus.GaugeValue,
-		status.OverallRisk,
-		"overall", "all",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		c.riskAssessment,
-		prometheus.GaugeValue,
-		status.OperationalRisk,
-		"operational", "current",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		c.riskAssessment,
-		prometheus.GaugeValue,
-		status.SecurityRisk,
-		"security", "current",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		c.riskAssessment,
-		prometheus.GaugeValue,
-		status.ComplianceRisk,
-		"compliance", "current",
-	)
+	c.publishHealthStatusMetrics(ch, status.SystemHealth, status.PerformanceScore, status.ReliabilityScore)
+	c.publishComponentMetrics(ch, status.ComponentsHealthy, status.ComponentsDegraded, status.ComponentsFailed)
+	c.publishProcessingMetrics(ch, status.ProcessingCapacity, status.ProcessingLatency)
+	c.publishDetectionMetrics(ch, status.DetectionCoverage, status.DetectionAccuracy)
+	ch <- prometheus.MustNewConstMetric(c.businessImpact, prometheus.GaugeValue, status.BusinessValue, "business_value", "overall")
+	ch <- prometheus.MustNewConstMetric(c.complianceStatus, prometheus.GaugeValue, status.SLACompliance, "sla", "overall")
+	c.publishRiskMetrics(ch, status.OverallRisk, status.OperationalRisk, status.SecurityRisk, status.ComplianceRisk)
 }
 
 func (c *ClusterHealthStreamingCollector) collectEventSubscriptions(ctx context.Context, ch chan<- prometheus.Metric) {
@@ -1648,129 +1572,58 @@ func (c *ClusterHealthStreamingCollector) collectProcessingStats(ctx context.Con
 	)
 }
 
+// publishLatencyMetrics publishes performance latency metrics
+func (c *ClusterHealthStreamingCollector) publishLatencyMetrics(ch chan<- prometheus.Metric, latencies map[string]time.Duration) {
+	for name, latency := range latencies {
+		ch <- prometheus.MustNewConstMetric(c.streamingPerformance, prometheus.GaugeValue, latency.Seconds(), "latency_"+name, "measured")
+	}
+}
+
+// publishThroughputMetrics publishes performance throughput metrics
+func (c *ClusterHealthStreamingCollector) publishThroughputMetrics(ch chan<- prometheus.Metric, eventTh, overallTh float64) {
+	ch <- prometheus.MustNewConstMetric(c.streamingPerformance, prometheus.GaugeValue, eventTh, "throughput", "events")
+	ch <- prometheus.MustNewConstMetric(c.streamingPerformance, prometheus.GaugeValue, overallTh, "throughput", "overall")
+}
+
+// publishEfficiencyMetrics publishes performance efficiency metrics
+func (c *ClusterHealthStreamingCollector) publishEfficiencyMetrics(ch chan<- prometheus.Metric, efficiencies map[string]float64) {
+	for name, eff := range efficiencies {
+		ch <- prometheus.MustNewConstMetric(c.streamingPerformance, prometheus.GaugeValue, eff, "efficiency_"+name, "ratio")
+	}
+}
+
+// publishAccuracyMetrics publishes performance accuracy and coverage metrics
+func (c *ClusterHealthStreamingCollector) publishAccuracyMetrics(ch chan<- prometheus.Metric, detection, prediction, monitoring, remediation float64) {
+	ch <- prometheus.MustNewConstMetric(c.detectionAccuracy, prometheus.GaugeValue, detection, "performance", "detection")
+	ch <- prometheus.MustNewConstMetric(c.predictiveHealth, prometheus.GaugeValue, prediction, "performance", "prediction")
+	ch <- prometheus.MustNewConstMetric(c.detectionAccuracy, prometheus.GaugeValue, monitoring, "coverage", "monitoring")
+	ch <- prometheus.MustNewConstMetric(c.detectionAccuracy, prometheus.GaugeValue, remediation, "coverage", "remediation")
+}
+
+// publishBusinessMetrics publishes business impact and cost metrics
+func (c *ClusterHealthStreamingCollector) publishBusinessMetrics(ch chan<- prometheus.Metric, value, cost, satisfaction float64) {
+	ch <- prometheus.MustNewConstMetric(c.businessImpact, prometheus.GaugeValue, value, "performance_value", "delivered")
+	ch <- prometheus.MustNewConstMetric(c.costOptimization, prometheus.GaugeValue, cost, "performance_cost", "saved")
+	ch <- prometheus.MustNewConstMetric(c.businessImpact, prometheus.GaugeValue, satisfaction, "performance", "customer_satisfaction")
+}
+
 func (c *ClusterHealthStreamingCollector) collectPerformanceMetrics(ctx context.Context, ch chan<- prometheus.Metric) {
 	perf, err := c.client.GetHealthStreamingPerformanceMetrics(ctx)
 	if err != nil {
 		return
 	}
 
-	// Latency metrics
-	latencyMetrics := map[string]time.Duration{
-		"end_to_end": perf.EndToEndLatency,
-		"detection":  perf.DetectionLatency,
-		"analysis":   perf.AnalysisLatency,
-		"delivery":   perf.DeliveryLatency,
-		"response":   perf.ResponseLatency,
-		"recovery":   perf.RecoveryLatency,
-	}
-
-	for name, latency := range latencyMetrics {
-		ch <- prometheus.MustNewConstMetric(
-			c.streamingPerformance,
-			prometheus.GaugeValue,
-			latency.Seconds(),
-			"latency_"+name, "measured",
-		)
-	}
-
-	// Throughput metrics
-	ch <- prometheus.MustNewConstMetric(
-		c.streamingPerformance,
-		prometheus.GaugeValue,
-		perf.EventThroughput,
-		"throughput", "events",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		c.streamingPerformance,
-		prometheus.GaugeValue,
-		perf.OverallThroughput,
-		"throughput", "overall",
-	)
-
-	// Efficiency metrics
-	efficiencyMetrics := map[string]float64{
-		"processing":  perf.ProcessingEfficiency,
-		"detection":   perf.DetectionEfficiency,
-		"analysis":    perf.AnalysisEfficiency,
-		"remediation": perf.RemediationEfficiency,
-		"resource":    perf.ResourceEfficiency,
-		"cost":        perf.CostEfficiency,
-	}
-
-	for name, efficiency := range efficiencyMetrics {
-		ch <- prometheus.MustNewConstMetric(
-			c.streamingPerformance,
-			prometheus.GaugeValue,
-			efficiency,
-			"efficiency_"+name, "ratio",
-		)
-	}
-
-	// Accuracy metrics
-	ch <- prometheus.MustNewConstMetric(
-		c.detectionAccuracy,
-		prometheus.GaugeValue,
-		perf.DetectionAccuracy,
-		"performance", "detection",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		c.predictiveHealth,
-		prometheus.GaugeValue,
-		perf.PredictionAccuracy,
-		"performance", "prediction",
-	)
-
-	// Coverage metrics
-	ch <- prometheus.MustNewConstMetric(
-		c.detectionAccuracy,
-		prometheus.GaugeValue,
-		perf.MonitoringCoverage,
-		"coverage", "monitoring",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		c.detectionAccuracy,
-		prometheus.GaugeValue,
-		perf.RemediationCoverage,
-		"coverage", "remediation",
-	)
-
-	// Business metrics
-	ch <- prometheus.MustNewConstMetric(
-		c.businessImpact,
-		prometheus.GaugeValue,
-		perf.ValueDelivered,
-		"performance_value", "delivered",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		c.costOptimization,
-		prometheus.GaugeValue,
-		perf.CostSaved,
-		"performance_cost", "saved",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		c.businessImpact,
-		prometheus.GaugeValue,
-		perf.CustomerSatisfaction,
-		"performance", "customer_satisfaction",
-	)
-
-	// Scalability metrics
-	ch <- prometheus.MustNewConstMetric(
-		c.capacityForecast,
-		prometheus.GaugeValue,
-		perf.ScalabilityIndex,
-		"scalability", "index",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		c.capacityForecast,
-		prometheus.GaugeValue,
-		perf.GrowthCapability,
-		"scalability", "growth_capability",
-	)
+	c.publishLatencyMetrics(ch, map[string]time.Duration{
+		"end_to_end": perf.EndToEndLatency, "detection": perf.DetectionLatency, "analysis": perf.AnalysisLatency,
+		"delivery": perf.DeliveryLatency, "response": perf.ResponseLatency, "recovery": perf.RecoveryLatency,
+	})
+	c.publishThroughputMetrics(ch, perf.EventThroughput, perf.OverallThroughput)
+	c.publishEfficiencyMetrics(ch, map[string]float64{
+		"processing": perf.ProcessingEfficiency, "detection": perf.DetectionEfficiency, "analysis": perf.AnalysisEfficiency,
+		"remediation": perf.RemediationEfficiency, "resource": perf.ResourceEfficiency, "cost": perf.CostEfficiency,
+	})
+	c.publishAccuracyMetrics(ch, perf.DetectionAccuracy, perf.PredictionAccuracy, perf.MonitoringCoverage, perf.RemediationCoverage)
+	c.publishBusinessMetrics(ch, perf.ValueDelivered, perf.CostSaved, perf.CustomerSatisfaction)
+	ch <- prometheus.MustNewConstMetric(c.capacityForecast, prometheus.GaugeValue, perf.ScalabilityIndex, "scalability", "index")
+	ch <- prometheus.MustNewConstMetric(c.capacityForecast, prometheus.GaugeValue, perf.GrowthCapability, "scalability", "growth_capability")
 }

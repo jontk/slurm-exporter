@@ -6,121 +6,142 @@ import (
 	"github.com/jontk/slurm-client"
 )
 
+// createIdleNode creates an idle test node
+func createIdleNode(name string, cpus int, memory int, tmpDisk int, isGPU bool) slurm.Node {
+	features := []string{"haswell", "ib"}
+	if isGPU {
+		features = []string{"skylake", "ib", "gpu"}
+	}
+
+	metadata := map[string]interface{}{
+		"allocated_cpus":    0,
+		"allocated_memory":  0,
+		"tmp_disk":          tmpDisk,
+		"allocated_tmpDisk": 0,
+		"gres":              "",
+		"os":                "Linux",
+		"kernel_version":    "5.15.0",
+	}
+
+	partitions := []string{"compute", "all"}
+	if isGPU {
+		partitions = []string{"gpu", "all"}
+		metadata["gres"] = "gpu:4"
+		metadata["gres_used"] = "gpu:0"
+	}
+
+	return slurm.Node{
+		Name:         name,
+		State:        "idle",
+		CPUs:         cpus,
+		Memory:       memory,
+		Partitions:   partitions,
+		Features:     features,
+		Architecture: "x86_64",
+		Metadata:     metadata,
+	}
+}
+
+// createAllocatedNode creates an allocated test node
+func createAllocatedNode() slurm.Node {
+	return slurm.Node{
+		Name:         "node02",
+		State:        "allocated",
+		CPUs:         64,
+		Memory:       131072,
+		Partitions:   []string{"compute", "all"},
+		Features:     []string{"haswell", "ib"},
+		Architecture: "x86_64",
+		Metadata: map[string]interface{}{
+			"allocated_cpus":    64,
+			"allocated_memory":  65536, // 64GB allocated
+			"tmp_disk":          1000000,
+			"allocated_tmpDisk": 500000,
+			"gres":              "",
+			"os":                "Linux",
+			"kernel_version":    "5.15.0",
+		},
+	}
+}
+
+// createDownNode creates a down test node
+func createDownNode() slurm.Node {
+	return slurm.Node{
+		Name:         "node03",
+		State:        "down",
+		CPUs:         64,
+		Memory:       131072,
+		Partitions:   []string{"compute", "all"},
+		Features:     []string{"haswell", "ib"},
+		Reason:       "Hardware failure",
+		Architecture: "x86_64",
+		Metadata: map[string]interface{}{
+			"allocated_cpus":    0,
+			"allocated_memory":  0,
+			"tmp_disk":          1000000,
+			"allocated_tmpDisk": 0,
+			"gres":              "",
+			"os":                "Linux",
+			"kernel_version":    "5.15.0",
+		},
+	}
+}
+
+// createMixedNode creates a mixed state test node
+func createMixedNode() slurm.Node {
+	return slurm.Node{
+		Name:         "node04",
+		State:        "mixed",
+		CPUs:         64,
+		Memory:       131072,
+		Partitions:   []string{"compute", "all"},
+		Features:     []string{"haswell", "ib"},
+		Architecture: "x86_64",
+		Metadata: map[string]interface{}{
+			"allocated_cpus":    32,
+			"allocated_memory":  32768, // 32GB allocated
+			"tmp_disk":          1000000,
+			"allocated_tmpDisk": 250000,
+			"gres":              "",
+			"os":                "Linux",
+			"kernel_version":    "5.15.0",
+		},
+	}
+}
+
+// createDrainNode creates a draining test node
+func createDrainNode() slurm.Node {
+	return slurm.Node{
+		Name:         "gpu-node02",
+		State:        "drain",
+		CPUs:         32,
+		Memory:       262144,
+		Partitions:   []string{"gpu", "all"},
+		Features:     []string{"skylake", "ib", "gpu"},
+		Reason:       "Maintenance",
+		Architecture: "x86_64",
+		Metadata: map[string]interface{}{
+			"allocated_cpus":    0,
+			"allocated_memory":  0,
+			"tmp_disk":          2000000,
+			"allocated_tmpDisk": 0,
+			"gres":              "gpu:4",
+			"gres_used":         "gpu:0",
+			"os":                "Linux",
+			"kernel_version":    "5.15.0",
+		},
+	}
+}
+
 // GetTestNodes returns test node data
 func GetTestNodes() []slurm.Node {
 	return []slurm.Node{
-		{
-			Name:         "node01",
-			State:        "idle",
-			CPUs:         64,
-			Memory:       131072, // 128GB in MB
-			Partitions:   []string{"compute", "all"},
-			Features:     []string{"haswell", "ib"},
-			Architecture: "x86_64",
-			Metadata: map[string]interface{}{
-				"allocated_cpus":    0,
-				"allocated_memory":  0,
-				"tmp_disk":          1000000, // 1TB in MB
-				"allocated_tmpDisk": 0,
-				"gres":              "",
-				"os":                "Linux",
-				"kernel_version":    "5.15.0",
-			},
-		},
-		{
-			Name:         "node02",
-			State:        "allocated",
-			CPUs:         64,
-			Memory:       131072,
-			Partitions:   []string{"compute", "all"},
-			Features:     []string{"haswell", "ib"},
-			Architecture: "x86_64",
-			Metadata: map[string]interface{}{
-				"allocated_cpus":    64,
-				"allocated_memory":  65536, // 64GB allocated
-				"tmp_disk":          1000000,
-				"allocated_tmpDisk": 500000,
-				"gres":              "",
-				"os":                "Linux",
-				"kernel_version":    "5.15.0",
-			},
-		},
-		{
-			Name:         "node03",
-			State:        "down",
-			CPUs:         64,
-			Memory:       131072,
-			Partitions:   []string{"compute", "all"},
-			Features:     []string{"haswell", "ib"},
-			Reason:       "Hardware failure",
-			Architecture: "x86_64",
-			Metadata: map[string]interface{}{
-				"allocated_cpus":    0,
-				"allocated_memory":  0,
-				"tmp_disk":          1000000,
-				"allocated_tmpDisk": 0,
-				"gres":              "",
-				"os":                "Linux",
-				"kernel_version":    "5.15.0",
-			},
-		},
-		{
-			Name:         "node04",
-			State:        "mixed",
-			CPUs:         64,
-			Memory:       131072,
-			Partitions:   []string{"compute", "all"},
-			Features:     []string{"haswell", "ib"},
-			Architecture: "x86_64",
-			Metadata: map[string]interface{}{
-				"allocated_cpus":    32,
-				"allocated_memory":  32768, // 32GB allocated
-				"tmp_disk":          1000000,
-				"allocated_tmpDisk": 250000,
-				"gres":              "",
-				"os":                "Linux",
-				"kernel_version":    "5.15.0",
-			},
-		},
-		{
-			Name:         "gpu-node01",
-			State:        "idle",
-			CPUs:         32,
-			Memory:       262144, // 256GB
-			Partitions:   []string{"gpu", "all"},
-			Features:     []string{"skylake", "ib", "gpu"},
-			Architecture: "x86_64",
-			Metadata: map[string]interface{}{
-				"allocated_cpus":    0,
-				"allocated_memory":  0,
-				"tmp_disk":          2000000, // 2TB
-				"allocated_tmpDisk": 0,
-				"gres":              "gpu:4",
-				"gres_used":         "gpu:0",
-				"os":                "Linux",
-				"kernel_version":    "5.15.0",
-			},
-		},
-		{
-			Name:         "gpu-node02",
-			State:        "drain",
-			CPUs:         32,
-			Memory:       262144,
-			Partitions:   []string{"gpu", "all"},
-			Features:     []string{"skylake", "ib", "gpu"},
-			Reason:       "Maintenance",
-			Architecture: "x86_64",
-			Metadata: map[string]interface{}{
-				"allocated_cpus":    0,
-				"allocated_memory":  0,
-				"tmp_disk":          2000000,
-				"allocated_tmpDisk": 0,
-				"gres":              "gpu:4",
-				"gres_used":         "gpu:0",
-				"os":                "Linux",
-				"kernel_version":    "5.15.0",
-			},
-		},
+		createIdleNode("node01", 64, 131072, 1000000, false),
+		createAllocatedNode(),
+		createDownNode(),
+		createMixedNode(),
+		createIdleNode("gpu-node01", 32, 262144, 2000000, true),
+		createDrainNode(),
 	}
 }
 

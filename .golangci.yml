@@ -42,7 +42,7 @@ linters:
     dogsled:
       max-blank-identifiers: 2
     dupl:
-      threshold: 150            # Start high, will reduce in Phase 5
+      threshold: 120            # Phase 7: Reduced from 150
     goconst:
       min-len: 3                # Minimum length of string constant
       min-occurrences: 5        # Start high to reduce noise, will lower in Phase 4
@@ -124,13 +124,13 @@ linters:
         - performance
         - style
     gocyclo:
-      min-complexity: 30        # Cyclomatic complexity
+      min-complexity: 25        # Phase 7: Reduced from 30
     funlen:
-      lines: 120                # Maximum function length in lines (reduced from 150 in Phase 5)
-      statements: 60            # Maximum function length in statements (reduced from 80 in Phase 5)
+      lines: 100                # Phase 7: Reduced from 120
+      statements: 50            # Phase 7: Reduced from 60
       ignore-comments: true     # Don't count comment lines
     gocognit:
-      min-complexity: 30        # Cognitive complexity threshold (reduced from 40 in Phase 5)
+      min-complexity: 25        # Phase 7: Reduced from 30
     nestif:
       min-complexity: 5         # Maximum nesting depth (reduced from 7 in Phase 5)
     gosec:

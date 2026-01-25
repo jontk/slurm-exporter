@@ -1450,123 +1450,84 @@ func (c *JobSchedulingStreamingCollector) collectEventFilters(ctx context.Contex
 	}
 }
 
+// publishProcessingEventMetrics publishes processing event counts
+func (c *JobSchedulingStreamingCollector) publishProcessingEventMetrics(ch chan<- prometheus.Metric, total, successful, failed int64) {
+	ch <- prometheus.MustNewConstMetric(c.schedulingEvents, prometheus.CounterValue, float64(total), "processing", "total", "all", "all")
+	ch <- prometheus.MustNewConstMetric(c.schedulingEvents, prometheus.CounterValue, float64(successful), "processing", "successful", "all", "all")
+	ch <- prometheus.MustNewConstMetric(c.schedulingEvents, prometheus.CounterValue, float64(failed), "processing", "failed", "all", "all")
+}
+
+// publishProcessingLatencyMetrics publishes processing latency metrics
+func (c *JobSchedulingStreamingCollector) publishProcessingLatencyMetrics(ch chan<- prometheus.Metric, avg, p95, p99 time.Duration) {
+	ch <- prometheus.MustNewConstMetric(c.schedulingLatency, prometheus.GaugeValue, avg.Seconds(), "processing", "overall", "average")
+	ch <- prometheus.MustNewConstMetric(c.schedulingLatency, prometheus.GaugeValue, p95.Seconds(), "processing", "overall", "p95")
+	ch <- prometheus.MustNewConstMetric(c.schedulingLatency, prometheus.GaugeValue, p99.Seconds(), "processing", "overall", "p99")
+}
+
+// publishThroughputMetrics publishes processing throughput metrics
+func (c *JobSchedulingStreamingCollector) publishThroughputMetrics(ch chan<- prometheus.Metric, current, peak float64) {
+	ch <- prometheus.MustNewConstMetric(c.schedulingThroughput, prometheus.GaugeValue, current, "processing", "current")
+	ch <- prometheus.MustNewConstMetric(c.schedulingThroughput, prometheus.GaugeValue, peak, "processing", "peak")
+}
+
+// publishProcessingEfficiencyMetrics publishes processing efficiency metrics
+func (c *JobSchedulingStreamingCollector) publishProcessingEfficiencyMetrics(ch chan<- prometheus.Metric, resource, queue, compliance float64) {
+	ch <- prometheus.MustNewConstMetric(c.schedulingEfficiency, prometheus.GaugeValue, resource, "processing", "resource")
+	ch <- prometheus.MustNewConstMetric(c.schedulingEfficiency, prometheus.GaugeValue, queue, "processing", "queue")
+	ch <- prometheus.MustNewConstMetric(c.schedulingEfficiency, prometheus.GaugeValue, compliance, "processing", "compliance")
+}
+
+// publishBusinessMetricsProcessing publishes business impact metrics for processing
+func (c *JobSchedulingStreamingCollector) publishBusinessMetricsProcessing(ch chan<- prometheus.Metric, value, cost, gains, improvement float64) {
+	ch <- prometheus.MustNewConstMetric(c.businessValueDelivered, prometheus.GaugeValue, value, "processing", "generated")
+	ch <- prometheus.MustNewConstMetric(c.costEfficiency, prometheus.GaugeValue, cost, "processing", "incurred")
+	ch <- prometheus.MustNewConstMetric(c.optimizationGains, prometheus.GaugeValue, gains, "processing", "gains")
+	ch <- prometheus.MustNewConstMetric(c.optimizationGains, prometheus.GaugeValue, improvement, "processing", "efficiency")
+}
+
 func (c *JobSchedulingStreamingCollector) collectProcessingStats(ctx context.Context, ch chan<- prometheus.Metric) {
 	stats, err := c.client.GetSchedulingEventProcessingStats(ctx)
 	if err != nil {
 		return
 	}
 
-	// Processing metrics
-	ch <- prometheus.MustNewConstMetric(
-		c.schedulingEvents,
-		prometheus.CounterValue,
-		float64(stats.TotalEventsProcessed),
-		"processing", "total", "all", "all",
-	)
+	c.publishProcessingEventMetrics(ch, stats.TotalEventsProcessed, stats.SuccessfulProcessing, stats.FailedProcessing)
+	c.publishProcessingLatencyMetrics(ch, stats.AverageProcessingTime, stats.P95ProcessingTime, stats.P99ProcessingTime)
+	c.publishThroughputMetrics(ch, stats.CurrentThroughput, stats.PeakThroughput)
+	c.publishProcessingEfficiencyMetrics(ch, stats.ResourceEfficiency, stats.QueueEfficiency, stats.ComplianceRate)
+	c.publishBusinessMetricsProcessing(ch, stats.ValueGenerated, stats.CostIncurred, stats.OptimizationGains, stats.EfficiencyImprovement)
+}
 
-	ch <- prometheus.MustNewConstMetric(
-		c.schedulingEvents,
-		prometheus.CounterValue,
-		float64(stats.SuccessfulProcessing),
-		"processing", "successful", "all", "all",
-	)
+// publishLatencyMetricsPerf publishes latency metrics for performance
+func (c *JobSchedulingStreamingCollector) publishLatencyMetricsPerf(ch chan<- prometheus.Metric, latencies map[string]time.Duration) {
+	for name, lat := range latencies {
+		ch <- prometheus.MustNewConstMetric(c.schedulingLatency, prometheus.GaugeValue, lat.Seconds(), "performance", name, "measured")
+	}
+}
 
-	ch <- prometheus.MustNewConstMetric(
-		c.schedulingEvents,
-		prometheus.CounterValue,
-		float64(stats.FailedProcessing),
-		"processing", "failed", "all", "all",
-	)
+// publishPerformanceThroughputMetrics publishes performance throughput metrics
+func (c *JobSchedulingStreamingCollector) publishPerformanceThroughputMetrics(ch chan<- prometheus.Metric, events, transactions float64) {
+	ch <- prometheus.MustNewConstMetric(c.schedulingThroughput, prometheus.GaugeValue, events, "performance", "events")
+	ch <- prometheus.MustNewConstMetric(c.schedulingThroughput, prometheus.GaugeValue, transactions, "performance", "transactions")
+}
 
-	// Performance metrics
-	ch <- prometheus.MustNewConstMetric(
-		c.schedulingLatency,
-		prometheus.GaugeValue,
-		stats.AverageProcessingTime.Seconds(),
-		"processing", "overall", "average",
-	)
+// publishPerformanceEfficiencyMetrics publishes efficiency metrics for performance
+func (c *JobSchedulingStreamingCollector) publishPerformanceEfficiencyMetrics(ch chan<- prometheus.Metric, efficiencies map[string]float64) {
+	for name, eff := range efficiencies {
+		ch <- prometheus.MustNewConstMetric(c.schedulingEfficiency, prometheus.GaugeValue, eff, "performance", name)
+	}
+}
 
-	ch <- prometheus.MustNewConstMetric(
-		c.schedulingLatency,
-		prometheus.GaugeValue,
-		stats.P95ProcessingTime.Seconds(),
-		"processing", "overall", "p95",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		c.schedulingLatency,
-		prometheus.GaugeValue,
-		stats.P99ProcessingTime.Seconds(),
-		"processing", "overall", "p99",
-	)
-
-	// Throughput metrics
-	ch <- prometheus.MustNewConstMetric(
-		c.schedulingThroughput,
-		prometheus.GaugeValue,
-		stats.CurrentThroughput,
-		"processing", "current",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		c.schedulingThroughput,
-		prometheus.GaugeValue,
-		stats.PeakThroughput,
-		"processing", "peak",
-	)
-
-	// Efficiency metrics
-	ch <- prometheus.MustNewConstMetric(
-		c.schedulingEfficiency,
-		prometheus.GaugeValue,
-		stats.ResourceEfficiency,
-		"processing", "resource",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		c.schedulingEfficiency,
-		prometheus.GaugeValue,
-		stats.QueueEfficiency,
-		"processing", "queue",
-	)
-
-	// Business impact
-	ch <- prometheus.MustNewConstMetric(
-		c.businessValueDelivered,
-		prometheus.GaugeValue,
-		stats.ValueGenerated,
-		"processing", "generated",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		c.costEfficiency,
-		prometheus.GaugeValue,
-		stats.CostIncurred,
-		"processing", "incurred",
-	)
-
-	// Optimization metrics
-	ch <- prometheus.MustNewConstMetric(
-		c.optimizationGains,
-		prometheus.GaugeValue,
-		stats.OptimizationGains,
-		"processing", "gains",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		c.optimizationGains,
-		prometheus.GaugeValue,
-		stats.EfficiencyImprovement,
-		"processing", "efficiency",
-	)
-
-	// Compliance metrics
-	ch <- prometheus.MustNewConstMetric(
-		c.schedulingEfficiency,
-		prometheus.GaugeValue,
-		stats.ComplianceRate,
-		"processing", "compliance",
-	)
+// publishQualityMetrics publishes quality and reliability metrics
+func (c *JobSchedulingStreamingCollector) publishQualityMetrics(ch chan<- prometheus.Metric, accuracy, quality, value, sla, optimization, learning, availability, resilience float64) {
+	ch <- prometheus.MustNewConstMetric(c.decisionConfidence, prometheus.GaugeValue, accuracy, "performance", "accuracy")
+	ch <- prometheus.MustNewConstMetric(c.resourceAllocationScore, prometheus.GaugeValue, quality, "performance", "overall")
+	ch <- prometheus.MustNewConstMetric(c.businessValueDelivered, prometheus.GaugeValue, value, "performance", "delivered")
+	ch <- prometheus.MustNewConstMetric(c.slaCompliance, prometheus.GaugeValue, sla, "performance", "attainment")
+	ch <- prometheus.MustNewConstMetric(c.optimizationGains, prometheus.GaugeValue, optimization, "performance", "score")
+	ch <- prometheus.MustNewConstMetric(c.predictionAccuracy, prometheus.GaugeValue, learning, "performance", "learning")
+	ch <- prometheus.MustNewConstMetric(c.streamingHealthScore, prometheus.GaugeValue, availability, "reliability", "availability")
+	ch <- prometheus.MustNewConstMetric(c.streamingHealthScore, prometheus.GaugeValue, resilience, "reliability", "resilience")
 }
 
 func (c *JobSchedulingStreamingCollector) collectPerformanceMetrics(ctx context.Context, ch chan<- prometheus.Metric) {
@@ -1575,120 +1536,16 @@ func (c *JobSchedulingStreamingCollector) collectPerformanceMetrics(ctx context.
 		return
 	}
 
-	// Latency metrics
-	latencyMetrics := map[string]time.Duration{
-		"end_to_end": perf.EndToEndLatency,
-		"processing": perf.ProcessingLatency,
-		"queueing":   perf.QueueingLatency,
-		"network":    perf.NetworkLatency,
-		"storage":    perf.StorageLatency,
-		"p50":        perf.P50Latency,
-		"p90":        perf.P90Latency,
-		"p95":        perf.P95Latency,
-		"p99":        perf.P99Latency,
-		"p999":       perf.P999Latency,
-	}
-
-	for name, latency := range latencyMetrics {
-		ch <- prometheus.MustNewConstMetric(
-			c.schedulingLatency,
-			prometheus.GaugeValue,
-			latency.Seconds(),
-			"performance", name, "measured",
-		)
-	}
-
-	// Throughput metrics
-	ch <- prometheus.MustNewConstMetric(
-		c.schedulingThroughput,
-		prometheus.GaugeValue,
-		perf.EventsPerSecond,
-		"performance", "events",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		c.schedulingThroughput,
-		prometheus.GaugeValue,
-		perf.TransactionsPerSecond,
-		"performance", "transactions",
-	)
-
-	// Efficiency metrics
-	efficiencyMetrics := map[string]float64{
-		"processing": perf.ProcessingEfficiency,
-		"resource":   perf.ResourceEfficiency,
-		"cost":       perf.CostEfficiency,
-		"energy":     perf.EnergyEfficiency,
-		"space":      perf.SpaceEfficiency,
-		"time":       perf.TimeEfficiency,
-	}
-
-	for name, efficiency := range efficiencyMetrics {
-		ch <- prometheus.MustNewConstMetric(
-			c.schedulingEfficiency,
-			prometheus.GaugeValue,
-			efficiency,
-			"performance", name,
-		)
-	}
-
-	// Quality metrics
-	ch <- prometheus.MustNewConstMetric(
-		c.decisionConfidence,
-		prometheus.GaugeValue,
-		perf.ProcessingAccuracy,
-		"performance", "accuracy",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		c.resourceAllocationScore,
-		prometheus.GaugeValue,
-		perf.DataQualityScore,
-		"performance", "overall",
-	)
-
-	// Business metrics
-	ch <- prometheus.MustNewConstMetric(
-		c.businessValueDelivered,
-		prometheus.GaugeValue,
-		perf.BusinessValueDelivered,
-		"performance", "delivered",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		c.slaCompliance,
-		prometheus.GaugeValue,
-		perf.SLAAttainment,
-		"performance", "attainment",
-	)
-
-	// Optimization metrics
-	ch <- prometheus.MustNewConstMetric(
-		c.optimizationGains,
-		prometheus.GaugeValue,
-		perf.OptimizationScore,
-		"performance", "score",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		c.predictionAccuracy,
-		prometheus.GaugeValue,
-		perf.LearningRate,
-		"performance", "learning",
-	)
-
-	// Reliability metrics
-	ch <- prometheus.MustNewConstMetric(
-		c.streamingHealthScore,
-		prometheus.GaugeValue,
-		perf.Availability,
-		"reliability", "availability",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		c.streamingHealthScore,
-		prometheus.GaugeValue,
-		perf.ResilienceScore,
-		"reliability", "resilience",
-	)
+	c.publishLatencyMetricsPerf(ch, map[string]time.Duration{
+		"end_to_end": perf.EndToEndLatency, "processing": perf.ProcessingLatency, "queueing": perf.QueueingLatency,
+		"network": perf.NetworkLatency, "storage": perf.StorageLatency, "p50": perf.P50Latency,
+		"p90": perf.P90Latency, "p95": perf.P95Latency, "p99": perf.P99Latency, "p999": perf.P999Latency,
+	})
+	c.publishPerformanceThroughputMetrics(ch, perf.EventsPerSecond, perf.TransactionsPerSecond)
+	c.publishPerformanceEfficiencyMetrics(ch, map[string]float64{
+		"processing": perf.ProcessingEfficiency, "resource": perf.ResourceEfficiency, "cost": perf.CostEfficiency,
+		"energy": perf.EnergyEfficiency, "space": perf.SpaceEfficiency, "time": perf.TimeEfficiency,
+	})
+	c.publishQualityMetrics(ch, perf.ProcessingAccuracy, perf.DataQualityScore, perf.BusinessValueDelivered, perf.SLAAttainment,
+		perf.OptimizationScore, perf.LearningRate, perf.Availability, perf.ResilienceScore)
 }
