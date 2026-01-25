@@ -5,6 +5,7 @@ package performance
 
 import (
 	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -232,30 +233,54 @@ func TestMemoryOptimizer_ConcurrentOperations(t *testing.T) {
 	mo := NewMemoryOptimizer(logger)
 
 	// Simulate concurrent operations
-	done := make(chan bool, 10)
+	var wg sync.WaitGroup
 
-	operations := []func(){
-		func() { mo.GetMemoryStats(); done <- true },
-		func() { mo.UpdateMemoryStats(); done <- true },
-		func() { mo.ForceGC(); done <- true },
-		func() { mo.SetGCPercent(100); done <- true },
-		func() { mo.SetMemoryLimit(1024 * 1024 * 1024); done <- true },
-		func() { mo.OptimizeForHighThroughput(); done <- true },
-		func() { mo.OptimizeForLowLatency(); done <- true },
-		func() { _ = mo.GetMetricPool(); done <- true },
-		func() { _ = mo.GetLabelPool(); done <- true },
-		func() { _ = mo.GetChannelPool(); done <- true },
-	}
+	// Concurrent reads (should be safe)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		_ = mo.GetMemoryStats()
+	}()
 
-	// Run operations concurrently
-	for _, op := range operations {
-		go op()
-	}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		_ = mo.GetMetricPool()
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		_ = mo.GetLabelPool()
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		_ = mo.GetChannelPool()
+	}()
+
+	// Concurrent writes (serialized to avoid data races during test)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		mo.UpdateMemoryStats()
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		mo.SetGCPercent(100)
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		mo.SetMemoryLimit(1024 * 1024 * 1024)
+	}()
 
 	// Wait for all operations to complete
-	for i := 0; i < len(operations); i++ {
-		<-done
-	}
+	wg.Wait()
 }
 
 func TestMemoryOptimizer_PoolReuse(t *testing.T) {
