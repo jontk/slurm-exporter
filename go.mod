@@ -2,6 +2,8 @@ module github.com/jontk/slurm-exporter
 
 go 1.24.4
 
+replace github.com/jontk/slurm-client => ../slurm-client
+
 require (
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/golang/mock v1.6.0
@@ -12,7 +14,7 @@ require (
 	github.com/prometheus/common v0.62.0
 	github.com/shirou/gopsutil/v3 v3.23.12
 	github.com/sirupsen/logrus v1.9.3
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/otel v1.32.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.32.0
 	go.opentelemetry.io/otel/sdk v1.32.0

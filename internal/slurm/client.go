@@ -74,6 +74,19 @@ func NewClient(cfg *config.SLURMConfig) (*Client, error) {
 				slurm.WithAuth(authProvider),
 			)
 		}
+
+		// Log the detected/configured API version after client creation
+		if err == nil {
+			detectedVersion := client.Version()
+			if cfg.APIVersion == "" {
+				logrus.WithField("version", detectedVersion).Info("Auto-detected SLURM API version")
+			} else {
+				logrus.WithFields(logrus.Fields{
+					"configured": cfg.APIVersion,
+					"actual":     detectedVersion,
+				}).Info("Using configured SLURM API version")
+			}
+		}
 	} else {
 		// Traditional client creation
 		client, err = slurm.NewClientWithVersion(ctx, cfg.APIVersion,
