@@ -50,6 +50,7 @@ type JobsSimpleCollector struct {
 	// Job timing metrics
 	jobQueueTime *prometheus.Desc
 	jobRunTime   *prometheus.Desc
+	jobSubmitTime *prometheus.Desc
 
 	// Job resource metrics
 	jobCPUs   *prometheus.Desc
@@ -101,6 +102,13 @@ func (c *JobsSimpleCollector) initializeMetrics() {
 	c.jobRunTime = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, jobsCollectorSubsystem, "run_time_seconds"),
 		"Time spent running the job",
+		[]string{"job_id", "job_name", "user", "partition"},
+		constLabels,
+	)
+
+	c.jobSubmitTime = prometheus.NewDesc(
+		prometheus.BuildFQName(namespace, jobsCollectorSubsystem, "submit_time"),
+		"Unix timestamp when the job was submitted",
 		[]string{"job_id", "job_name", "user", "partition"},
 		constLabels,
 	)
@@ -224,6 +232,7 @@ func (c *JobsSimpleCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.jobStates
 	ch <- c.jobQueueTime
 	ch <- c.jobRunTime
+	ch <- c.jobSubmitTime
 	ch <- c.jobCPUs
 	ch <- c.jobMemory
 	ch <- c.jobNodes
@@ -323,6 +332,7 @@ func (c *JobsSimpleCollector) collectJobMetrics(ch chan<- prometheus.Metric, job
 	c.collectJobState(ch, ctx)
 	c.collectQueueTime(ch, job, ctx)
 	c.collectRunTime(ch, job, ctx, now)
+	c.collectSubmitTime(ch, job, ctx)
 	c.collectResourceMetrics(ch, job, ctx)
 	c.collectJobInfo(ch, ctx)
 }
@@ -384,6 +394,23 @@ func (c *JobsSimpleCollector) collectRunTime(ch chan<- prometheus.Metric, job sl
 			c.jobRunTime,
 			prometheus.GaugeValue,
 			runTime,
+			ctx.jobID, ctx.jobName, ctx.userName, ctx.partition,
+		)
+	}
+}
+
+// collectSubmitTime collects job submit time metric if applicable
+func (c *JobsSimpleCollector) collectSubmitTime(ch chan<- prometheus.Metric, job slurm.Job, ctx jobContext) {
+	if job.SubmitTime.IsZero() {
+		return
+	}
+
+	if c.shouldCollectMetric("slurm_job_submit_time", MetricTypeGauge, false, false) &&
+		c.shouldCollectWithCardinality("slurm_job_submit_time", ctx.createJobLabels()) {
+		ch <- prometheus.MustNewConstMetric(
+			c.jobSubmitTime,
+			prometheus.GaugeValue,
+			float64(job.SubmitTime.Unix()),
 			ctx.jobID, ctx.jobName, ctx.userName, ctx.partition,
 		)
 	}
