@@ -434,13 +434,27 @@ func (c *PerformanceSimpleCollector) updateHistograms(jobs []slurm.Job) {
 			}
 		}
 
-		// Update run time histogram for completed jobs
-		if job.State == "COMPLETED" && job.EndTime != nil && job.StartTime != nil {
-			runTime := job.EndTime.Sub(*job.StartTime).Seconds()
-			exitStatus := "success"
-			if job.ExitCode != 0 {
-				exitStatus = "failed"
+		// Update run time histogram for completed and running jobs
+		if job.StartTime != nil && !job.StartTime.IsZero() {
+			var runTime float64
+			var exitStatus string
+
+			if job.State == "COMPLETED" && job.EndTime != nil && !job.EndTime.IsZero() {
+				// For completed jobs: use actual run time
+				runTime = job.EndTime.Sub(*job.StartTime).Seconds()
+				exitStatus = "success"
+				if job.ExitCode != 0 {
+					exitStatus = "failed"
+				}
+			} else if job.State == "RUNNING" {
+				// For running jobs: use elapsed time so far
+				runTime = time.Since(*job.StartTime).Seconds()
+				exitStatus = "unknown"
+			} else {
+				// Skip other states (PENDING, FAILED, etc.)
+				return
 			}
+
 			if runTime >= 0 {
 				c.jobRunTimeHistogram.WithLabelValues(partition, qos, exitStatus).Observe(runTime)
 			}

@@ -160,7 +160,7 @@ func (cm *CardinalityManager) setupDefaultLimits() {
 			"job_id": 10000,
 			"user":   1000,
 		},
-		SamplingRate: 0.1, // Sample 10% of job metrics
+		SamplingRate: 1.0, // Collect all job metrics - bounded cardinality allows full sampling
 		TTL:          24 * time.Hour,
 		Priority:     PriorityMedium,
 	}

@@ -316,7 +316,7 @@ func Default() *Config {
 		},
 		SLURM: SLURMConfig{
 			BaseURL:       "http://localhost:6820",
-			APIVersion:    "v0.0.43",
+			APIVersion:    "", // Empty enables auto-detection
 			UseAdapters:   true,
 			Timeout:       30 * time.Second,
 			RetryAttempts: 3,
@@ -884,7 +884,7 @@ func (s *SLURMConfig) Validate() error {
 
 	// Apply default API version if empty
 	if s.APIVersion == "" {
-		s.APIVersion = "v0.0.43"
+		s.APIVersion = "v0.0.44"
 	}
 
 	if err := validateAPIVersion(s.APIVersion); err != nil {
@@ -1703,7 +1703,7 @@ func validateURL(url, field string) error {
 
 // validateAPIVersion validates that the SLURM API version is supported
 func validateAPIVersion(version string) error {
-	supportedVersions := []string{"v0.0.40", "v0.0.41", "v0.0.42", "v0.0.43"}
+	supportedVersions := []string{"v0.0.40", "v0.0.41", "v0.0.42", "v0.0.43", "v0.0.44"}
 
 	// Allow empty version - will use default
 	if version == "" {

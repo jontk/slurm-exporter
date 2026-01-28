@@ -57,29 +57,32 @@ func NewClient(cfg *config.SLURMConfig) (*Client, error) {
 
 	var client slurm.SlurmClient
 
-	if cfg.UseAdapters {
-		// Use adapter pattern for better version compatibility
-		logrus.Info("Creating SLURM client with adapter pattern enabled")
+	// Use adapter pattern for better version compatibility
+	// Adapters provide more complete implementation of standalone operations
+	// especially for older API versions (v0.0.40-v0.0.43)
+	logrus.Info("Creating SLURM client with adapter pattern enabled")
 
-		// When using adapters, we should use the factory pattern from slurm-client
-		// For now, we'll use the standard approach but with auto-detection if no version specified
-		if cfg.APIVersion == "" {
-			client, err = slurm.NewClient(ctx,
-				slurm.WithBaseURL(cfg.BaseURL),
-				slurm.WithAuth(authProvider),
-			)
-		} else {
-			client, err = slurm.NewClientWithVersion(ctx, cfg.APIVersion,
-				slurm.WithBaseURL(cfg.BaseURL),
-				slurm.WithAuth(authProvider),
-			)
+	if cfg.APIVersion == "" {
+		client, err = slurm.NewClient(ctx,
+			slurm.WithBaseURL(cfg.BaseURL),
+			slurm.WithAuth(authProvider),
+			slurm.WithUseAdapters(true),
+		)
+		if err == nil {
+			logrus.WithField("version", client.Version()).Info("Auto-detected SLURM API version")
 		}
 	} else {
-		// Traditional client creation
 		client, err = slurm.NewClientWithVersion(ctx, cfg.APIVersion,
 			slurm.WithBaseURL(cfg.BaseURL),
 			slurm.WithAuth(authProvider),
+			slurm.WithUseAdapters(true),
 		)
+		if err == nil {
+			logrus.WithFields(logrus.Fields{
+				"configured": cfg.APIVersion,
+				"actual":     client.Version(),
+			}).Info("Using configured SLURM API version")
+		}
 	}
 
 	if err != nil {
