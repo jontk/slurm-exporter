@@ -448,7 +448,7 @@ func (c *PerformanceSimpleCollector) updateHistograms(jobs []slurm.Job) {
 				}
 			} else if job.State == "RUNNING" {
 				// For running jobs: use elapsed time so far
-				runTime = time.Now().Sub(*job.StartTime).Seconds()
+				runTime = time.Since(*job.StartTime).Seconds()
 				exitStatus = "unknown"
 			} else {
 				// Skip other states (PENDING, FAILED, etc.)

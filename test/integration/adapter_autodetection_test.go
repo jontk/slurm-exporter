@@ -397,6 +397,8 @@ func (suite *AdapterAutodetectionTestSuite) TestRateLimitingWithAdapter() {
 
 // TestAdapterAutodetectionTestSuite runs the adapter auto-detection test suite
 func TestAdapterAutodetectionSuite(t *testing.T) {
+	t.Parallel()
+
 	if os.Getenv("SKIP_INTEGRATION_TESTS") == "true" {
 		t.Skip("Integration tests skipped")
 	}
