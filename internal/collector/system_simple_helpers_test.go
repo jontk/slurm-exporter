@@ -5,6 +5,7 @@ package collector
 
 import (
 	"os"
+	"runtime"
 	"testing"
 )
 
@@ -32,6 +33,11 @@ func TestReadLoadAverage(t *testing.T) {
 }
 
 func TestReadDiskUsage(t *testing.T) {
+	// Disk usage monitoring is not supported on Windows
+	if runtime.GOOS == "windows" {
+		t.Skip("Skipping test: disk usage monitoring not supported on Windows")
+	}
+
 	// Test reading disk usage for root filesystem
 	stats, err := readDiskUsage("/")
 	if err != nil {
