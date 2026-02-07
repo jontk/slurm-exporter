@@ -449,12 +449,12 @@ func (c *JobsSimpleCollector) collectResourceMetrics(ch chan<- prometheus.Metric
 		)
 	}
 
-	// Memory in bytes
+	// Memory in bytes (MemoryPerNode is in MB per API spec)
 	memoryMB := uint64(0)
 	if job.MemoryPerNode != nil {
 		memoryMB = *job.MemoryPerNode
 	}
-	memoryBytes := c.sanitizeMemory(int(memoryMB))
+	memoryBytes := c.sanitizeMemory(int(memoryMB * 1024 * 1024))
 	if c.shouldCollectMetric("slurm_job_memory_bytes", MetricTypeGauge, false, true) &&
 		c.shouldCollectWithCardinality("slurm_job_memory_bytes", labels) {
 		ch <- prometheus.MustNewConstMetric(
