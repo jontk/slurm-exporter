@@ -570,12 +570,11 @@ func (r *Registry) registerSimpleCollectors(cfg *config.CollectorsConfig, client
 		name    string
 		factory func() Collector
 	}{
-		// Temporarily disabled collectors during API migration:
-		// {cfg.QoS.Enabled, "qos", func() Collector { return NewQoSCollector(client, logger) }},
-		// {cfg.Reservations.Enabled, "reservations", func() Collector { return NewReservationCollector(client, logger) }},
+		{cfg.QoS.Enabled, "qos", func() Collector { return NewQoSCollector(client, logger) }},
+		{cfg.Reservations.Enabled, "reservations", func() Collector { return NewReservationCollector(client, logger) }},
 		{cfg.Partitions.Enabled, "partitions", func() Collector { return NewPartitionsSimpleCollector(client, logger) }},
 		{cfg.Cluster.Enabled, "cluster", func() Collector { return NewClusterSimpleCollector(client, logger) }},
-		// {cfg.Users.Enabled, "users", func() Collector { return NewUsersSimpleCollector(client, logger) }},
+		{cfg.Users.Enabled, "users", func() Collector { return NewUsersSimpleCollector(client, logger) }},
 		// {cfg.Accounts.Enabled, "accounts", func() Collector { return NewAccountsSimpleCollector(client, logger) }},
 		{cfg.Associations.Enabled, "associations", func() Collector { return NewAssociationsSimpleCollector(client, logger) }},
 	}
