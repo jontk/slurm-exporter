@@ -347,7 +347,7 @@ func (c *JobsSimpleCollector) collectJobMetrics(ch chan<- prometheus.Metric, job
 	c.collectRunTime(ch, job, ctx, now)
 	c.collectSubmitTime(ch, job, ctx)
 	c.collectResourceMetrics(ch, job, ctx)
-	c.collectJobInfo(ch, ctx)
+	c.collectJobInfo(ch, job, ctx)
 }
 
 // collectJobState collects job state metric
@@ -518,10 +518,16 @@ func (c *JobsSimpleCollector) calculateNodeCount(nodes []string) int {
 }
 
 // collectJobInfo collects job info metric
-func (c *JobsSimpleCollector) collectJobInfo(ch chan<- prometheus.Metric, ctx jobContext) {
-	// These fields don't exist in slurm.Job, use defaults
-	account := "default"
-	qos := "normal"
+func (c *JobsSimpleCollector) collectJobInfo(ch chan<- prometheus.Metric, job slurm.Job, ctx jobContext) {
+	// Use actual account and QoS from the job
+	account := "unknown"
+	if job.Account != nil {
+		account = *job.Account
+	}
+	qos := "unknown"
+	if job.QoS != nil {
+		qos = *job.QoS
+	}
 
 	infoLabels := map[string]string{
 		"job_id":    ctx.jobID,
