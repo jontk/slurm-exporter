@@ -570,12 +570,13 @@ func (r *Registry) registerSimpleCollectors(cfg *config.CollectorsConfig, client
 		name    string
 		factory func() Collector
 	}{
-		{cfg.QoS.Enabled, "qos", func() Collector { return NewQoSCollector(client, logger) }},
-		{cfg.Reservations.Enabled, "reservations", func() Collector { return NewReservationCollector(client, logger) }},
-		{cfg.Partitions.Enabled, "partitions", func() Collector { return NewPartitionsSimpleCollector(client, logger) }},
+		// Temporarily disabled collectors during API migration:
+		// {cfg.QoS.Enabled, "qos", func() Collector { return NewQoSCollector(client, logger) }},
+		// {cfg.Reservations.Enabled, "reservations", func() Collector { return NewReservationCollector(client, logger) }},
+		// {cfg.Partitions.Enabled, "partitions", func() Collector { return NewPartitionsSimpleCollector(client, logger) }},
 		{cfg.Cluster.Enabled, "cluster", func() Collector { return NewClusterSimpleCollector(client, logger) }},
-		{cfg.Users.Enabled, "users", func() Collector { return NewUsersSimpleCollector(client, logger) }},
-		{cfg.Accounts.Enabled, "accounts", func() Collector { return NewAccountsSimpleCollector(client, logger) }},
+		// {cfg.Users.Enabled, "users", func() Collector { return NewUsersSimpleCollector(client, logger) }},
+		// {cfg.Accounts.Enabled, "accounts", func() Collector { return NewAccountsSimpleCollector(client, logger) }},
 		{cfg.Associations.Enabled, "associations", func() Collector { return NewAssociationsSimpleCollector(client, logger) }},
 	}
 
@@ -597,9 +598,10 @@ func (r *Registry) registerTimeoutCollectors(cfg *config.CollectorsConfig, clien
 		factory func() Collector
 	}{
 		{cfg.Licenses.Enabled, "licenses", func() Collector { return NewLicensesCollector(client, logger, timeout) }},
-		{cfg.Shares.Enabled, "shares", func() Collector { return NewSharesCollector(client, logger, timeout) }},
+		// Temporarily disabled during API migration:
+		// {cfg.Shares.Enabled, "shares", func() Collector { return NewSharesCollector(client, logger, timeout) }},
 		{cfg.Diagnostics.Enabled, "diagnostics", func() Collector { return NewDiagnosticsCollector(client, logger, timeout) }},
-		{cfg.TRES.Enabled, "tres", func() Collector { return NewTRESCollector(client, logger, timeout) }},
+		// {cfg.TRES.Enabled, "tres", func() Collector { return NewTRESCollector(client, logger, timeout) }},
 		{cfg.WCKeys.Enabled, "wckeys", func() Collector { return NewWCKeysCollector(client, logger, timeout) }},
 		{cfg.Clusters.Enabled, "clusters", func() Collector { return NewClustersCollector(client, logger, timeout) }},
 	}
@@ -625,7 +627,8 @@ func (r *Registry) registerConfigurableCollectors(cfg *config.CollectorsConfig, 
 	}{
 		{cfg.Jobs.Enabled, "jobs", func() Collector { return NewJobsSimpleCollector(client, r.logger) }, cfg.Jobs.Filters, cfg.Jobs.Labels},
 		{cfg.Nodes.Enabled, "nodes", func() Collector { return NewNodesSimpleCollector(client, r.logger) }, config.FilterConfig{}, cfg.Nodes.Labels},
-		{cfg.Performance.Enabled, "performance", func() Collector { return NewPerformanceSimpleCollector(client, r.logger) }, config.FilterConfig{}, cfg.Performance.Labels},
+		// Temporarily disabled during API migration:
+		// {cfg.Performance.Enabled, "performance", func() Collector { return NewPerformanceSimpleCollector(client, r.logger) }, config.FilterConfig{}, cfg.Performance.Labels},
 		{cfg.System.Enabled, "system", func() Collector { return NewSystemSimpleCollector(client, r.logger) }, config.FilterConfig{}, cfg.System.Labels},
 	}
 
