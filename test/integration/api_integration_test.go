@@ -55,6 +55,20 @@ func (s *APIIntegrationTestSuite) SetupSuite() {
 	// These tests require actual SLURM cluster with test container orchestration
 	s.T().Skip("Integration tests require SLURM test container infrastructure (not yet implemented)")
 
+	// TODO: Implement test infrastructure using one of these approaches:
+	//   1. testcontainers-go (recommended): https://golang.testcontainers.org/
+	//      - Use official SLURM container image (e.g., ghcr.io/scidas/slurm:23.11)
+	//      - Configure slurmrestd with JWT auth
+	//      - Expose REST API port (default 6820)
+	//   2. Docker Compose: Create docker-compose.test.yml with SLURM services
+	//   3. External cluster: Document connection to existing test cluster
+	//
+	// Prerequisites for test environment:
+	//   - Docker daemon running
+	//   - Network access for container pulls
+	//   - ~2GB memory for SLURM container
+	//   - Port 6820 available (or use random port with :0)
+	//
 	// NOTE: When implementing test infrastructure, use this pattern:
 	// 1. Start test SLURM container
 	// s.container = s.startSLURMContainer()
@@ -93,6 +107,10 @@ func TestAPIIntegrationTestSuite(t *testing.T) {
 }
 
 func (s *APIIntegrationTestSuite) TestFullCollection() {
+	if s.exporter == nil {
+		s.T().Skip("Exporter not initialized - test infrastructure not available")
+	}
+
 	// Submit test jobs
 	jobIDs := s.submitTestJobs(10)
 	defer s.cleanupJobs(jobIDs)
@@ -127,6 +145,10 @@ func (s *APIIntegrationTestSuite) TestFullCollection() {
 }
 
 func (s *APIIntegrationTestSuite) TestConnectionRecovery() {
+	if s.exporter == nil || s.container == nil {
+		s.T().Skip("Test infrastructure not initialized")
+	}
+
 	// Test connection recovery after API downtime
 	ctx := context.Background()
 
@@ -154,8 +176,8 @@ func (s *APIIntegrationTestSuite) TestConnectionRecovery() {
 
 func (s *APIIntegrationTestSuite) TestAPIAuthentication() {
 	// Test different authentication methods
-	s.T().Skip("Skipped - requires test SLURM infrastructure")
-
+	// NOTE: Skipped by SetupSuite until test infrastructure is implemented
+	//
 	// Implementation pattern when test infrastructure is ready:
 	// import slurmauth "github.com/jontk/slurm-client/auth"
 	//
@@ -207,8 +229,8 @@ func (s *APIIntegrationTestSuite) TestAPIAuthentication() {
 
 func (s *APIIntegrationTestSuite) TestAPIVersionCompatibility() {
 	// Test compatibility with different API versions
-	s.T().Skip("Skipped - requires test SLURM infrastructure")
-
+	// NOTE: Skipped by SetupSuite until test infrastructure is implemented
+	//
 	// Implementation pattern when test infrastructure is ready:
 	// import slurmauth "github.com/jontk/slurm-client/auth"
 	//
@@ -238,6 +260,10 @@ func (s *APIIntegrationTestSuite) TestAPIVersionCompatibility() {
 }
 
 func (s *APIIntegrationTestSuite) TestHighVolumeData() {
+	if s.exporter == nil {
+		s.T().Skip("Exporter not initialized - test infrastructure not available")
+	}
+
 	// Test handling of high volume data
 	const jobCount = 1000
 
@@ -266,6 +292,10 @@ func (s *APIIntegrationTestSuite) TestHighVolumeData() {
 }
 
 func (s *APIIntegrationTestSuite) TestConcurrentRequests() {
+	if s.exporter == nil {
+		s.T().Skip("Exporter not initialized - test infrastructure not available")
+	}
+
 	// Test concurrent API requests
 	const concurrency = 10
 
@@ -290,6 +320,10 @@ func (s *APIIntegrationTestSuite) TestConcurrentRequests() {
 }
 
 func (s *APIIntegrationTestSuite) TestAPIRateLimiting() {
+	if s.client == nil || s.exporter == nil {
+		s.T().Skip("Client/exporter not initialized - test infrastructure not available")
+	}
+
 	// Test API rate limiting behavior
 	const requestCount = 50
 
@@ -328,8 +362,39 @@ func (s *APIIntegrationTestSuite) TestAPIRateLimiting() {
 // Helper methods
 
 func (s *APIIntegrationTestSuite) startSLURMContainer() *TestContainer {
-	// This would use Docker or similar to start a test SLURM instance
-	// For now, we'll simulate it
+	// TODO: Implement using testcontainers-go
+	//
+	// Example implementation:
+	// import "github.com/testcontainers/testcontainers-go"
+	//
+	// req := testcontainers.ContainerRequest{
+	// 	Image:        "ghcr.io/scidas/slurm:23.11",
+	// 	ExposedPorts: []string{"6820/tcp"},
+	// 	WaitingFor:   wait.ForHTTP("/openapi.json").WithPort("6820/tcp"),
+	// 	Env: map[string]string{
+	// 		"SLURM_JWT": "test-token-123",
+	// 	},
+	// }
+	// container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+	// 	ContainerRequest: req,
+	// 	Started:          true,
+	// })
+	// if err != nil {
+	// 	s.T().Fatalf("Failed to start container: %v", err)
+	// }
+	//
+	// host, _ := container.Host(ctx)
+	// port, _ := container.MappedPort(ctx, "6820")
+	// return &TestContainer{
+	// 	name:      container.GetContainerID(),
+	// 	port:      port.Int(),
+	// 	apiURL:    fmt.Sprintf("http://%s:%d", host, port.Int()),
+	// 	authToken: "test-token-123",
+	// 	started:   true,
+	// 	container: container, // Store reference for cleanup
+	// }
+
+	// Mock implementation (not functional)
 	container := &TestContainer{
 		name:      "test-slurm",
 		port:      16820,
@@ -354,6 +419,9 @@ func (s *APIIntegrationTestSuite) createExporter() *TestExporter {
 		s.client,
 		logger,
 	)
+
+	// TODO: Collectors should be registered with the registry for proper metric collection
+	// registry.MustRegister(jobsCollector, nodesCollector)
 
 	return &TestExporter{
 		collectors: []collector.Collector{jobsCollector, nodesCollector},
@@ -413,8 +481,12 @@ func (e *TestExporter) CollectMetrics(ctx context.Context) (map[string]float64, 
 		}
 
 		// Convert Prometheus metrics to simple map for testing
+		// TODO: This is a mock implementation - real version should:
+		//   1. Parse prometheus.Metric objects using dto.Metric
+		//   2. Extract metric name, labels, and values
+		//   3. Store in map with unique keys (name + label combinations)
+		//   Currently just drains channel to prevent blocking
 		for range ch {
-			// This is simplified - real implementation would parse metric families
 			metrics["collected_metric"] = 1.0
 		}
 	}
