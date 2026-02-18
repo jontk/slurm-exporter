@@ -320,7 +320,7 @@ metadata:
    ```bash
    # Test connectivity from pod
    kubectl exec -it deployment/slurm-exporter -n slurm-exporter -- \
-     curl -k https://slurm-head:6820/slurm/v0.0.39/ping
+     curl -k https://slurm-head:6820/slurm/v0.0.44/ping
    
    # Check secret configuration
    kubectl get secret slurm-credentials -n slurm-exporter -o yaml

@@ -373,7 +373,7 @@ kubectl describe pods -n slurm-exporter
 
 # Review SLURM API performance
 kubectl exec deployment/slurm-exporter -n slurm-exporter -- \
-  curl -w "%{time_total}" "$SLURM_REST_URL/slurm/v0.0.39/ping"
+  curl -w "%{time_total}" "$SLURM_REST_URL/slurm/v0.0.44/ping"
 ```
 
 #### Memory Issues

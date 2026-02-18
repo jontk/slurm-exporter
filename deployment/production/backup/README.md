@@ -420,7 +420,7 @@ kubectl describe pods -n slurm-exporter
 kubectl exec deployment/slurm-exporter -n slurm-exporter -- curl -v http://localhost:8080/health
 
 # Check SLURM connectivity
-kubectl exec deployment/slurm-exporter -n slurm-exporter -- curl -v "$SLURM_REST_URL/slurm/v0.0.39/ping"
+kubectl exec deployment/slurm-exporter -n slurm-exporter -- curl -v "$SLURM_REST_URL/slurm/v0.0.44/ping"
 ```
 
 ## Best Practices
