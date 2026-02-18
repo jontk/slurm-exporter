@@ -288,7 +288,7 @@ data:
     ```bash
     # Test SLURM API performance
     kubectl exec deployment/slurm-exporter -n slurm-exporter -- \
-      curl -w "%{time_total}" "$SLURM_REST_URL/slurm/v0.0.39/jobs"
+      curl -w "%{time_total}" "$SLURM_REST_URL/slurm/v0.0.44/jobs"
     
     # Check DNS resolution
     kubectl exec deployment/slurm-exporter -n slurm-exporter -- \

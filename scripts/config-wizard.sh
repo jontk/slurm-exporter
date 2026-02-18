@@ -138,7 +138,7 @@ test_slurm_connection() {
         if [[ -n "$auth_header" ]]; then
             cmd="$cmd -H 'Authorization: $auth_header'"
         fi
-        cmd="$cmd '$url/slurm/v0.0.39/ping'"
+        cmd="$cmd '$url/slurm/v0.0.44/ping'"
         
         if eval "$cmd" >/dev/null 2>&1; then
             print_success "SLURM API connection successful!"

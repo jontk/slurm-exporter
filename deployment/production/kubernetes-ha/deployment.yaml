@@ -98,7 +98,7 @@ spec:
         - -c
         - |
           echo "Checking SLURM REST API connectivity..."
-          timeout 30s sh -c 'until curl -f -k "$SLURM_REST_URL/slurm/v0.0.39/ping" >/dev/null 2>&1; do
+          timeout 30s sh -c 'until curl -f -k "$SLURM_REST_URL/slurm/v0.0.44/ping" >/dev/null 2>&1; do
             echo "Waiting for SLURM API..."
             sleep 5
           done'

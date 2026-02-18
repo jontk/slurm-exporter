@@ -71,15 +71,15 @@ kubectl logs deployment/slurm-exporter -n slurm-exporter --tail=100 | grep -E "(
 ```bash
 # Test SLURM API response time
 kubectl exec deployment/slurm-exporter -n slurm-exporter -- \
-  time curl -s "$SLURM_REST_URL/slurm/v0.0.39/ping"
+  time curl -s "$SLURM_REST_URL/slurm/v0.0.44/ping"
 
 # Check SLURM API load
 kubectl exec deployment/slurm-exporter -n slurm-exporter -- \
-  curl -s "$SLURM_REST_URL/slurm/v0.0.39/jobs" | jq '.jobs | length'
+  curl -s "$SLURM_REST_URL/slurm/v0.0.44/jobs" | jq '.jobs | length'
 
 # Test specific slow endpoints
 kubectl exec deployment/slurm-exporter -n slurm-exporter -- \
-  time curl -s "$SLURM_REST_URL/slurm/v0.0.39/nodes" > /dev/null
+  time curl -s "$SLURM_REST_URL/slurm/v0.0.44/nodes" > /dev/null
 ```
 
 ### Infrastructure Analysis
@@ -143,12 +143,12 @@ kubectl rollout restart deployment/slurm-exporter -n slurm-exporter
 ```bash
 # Check SLURM cluster load
 kubectl exec deployment/slurm-exporter -n slurm-exporter -- \
-  curl -s "$SLURM_REST_URL/slurm/v0.0.39/diag" | jq '.statistics'
+  curl -s "$SLURM_REST_URL/slurm/v0.0.44/diag" | jq '.statistics'
 
 # Monitor SLURM response patterns
 for i in {1..10}; do
   kubectl exec deployment/slurm-exporter -n slurm-exporter -- \
-    time curl -s "$SLURM_REST_URL/slurm/v0.0.39/ping" 2>&1 | grep real
+    time curl -s "$SLURM_REST_URL/slurm/v0.0.44/ping" 2>&1 | grep real
   sleep 1
 done
 ```
