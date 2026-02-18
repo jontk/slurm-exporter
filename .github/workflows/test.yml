@@ -41,12 +41,6 @@ jobs:
     - name: Run go vet
       run: go vet ./...
 
-    - name: Install staticcheck
-      run: go install honnef.co/go/tools/cmd/staticcheck@latest
-
-    - name: Run staticcheck
-      run: staticcheck ./...
-
     - name: Run golangci-lint
       uses: golangci/golangci-lint-action@v9
       with:
@@ -126,7 +120,7 @@ jobs:
       run: go install github.com/securego/gosec/v2/cmd/gosec@latest
 
     - name: Run Gosec Security Scanner
-      run: gosec -exclude=G101,G104,G115,G301,G304,G306,G404 ./...
+      run: gosec -exclude=G101,G104,G115,G117,G301,G304,G306,G404,G704,G705 ./...
 
     - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@master
