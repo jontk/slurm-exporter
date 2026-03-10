@@ -73,7 +73,7 @@ The SLURM Prometheus Exporter is designed to provide complete visibility into SL
 ### Prerequisites
 
 - Go 1.21 or higher
-- Access to SLURM REST API (v0.0.40-v0.0.43 supported)
+- Access to SLURM REST API (v0.3.0-v0.3.0 supported)
 - SLURM cluster with REST API enabled
 
 ### Installation
